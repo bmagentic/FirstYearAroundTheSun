@@ -3,7 +3,7 @@ import { ChapterBase } from './ChapterBase';
 import { SoundBank } from '../../systems/SoundBank';
 import { SpriteBank } from '../../systems/SpriteBank';
 
-type StationId = 'couch' | 'ottoman' | 'coffee-table' | 'armchair' | 'floor';
+type StationId = 'sectional' | 'sidetable' | 'coffeetable' | 'barstool' | 'floor';
 
 const HOLD_SECONDS = 1.2;
 const FLOOR_STEPS = 6;
@@ -42,10 +42,10 @@ export class Ch11_Ledges extends ChapterBase {
   preload(): void {
     SpriteBank.preloadInto(this, [
       'caius',
-      'furniture-couch',
-      'furniture-ottoman',
-      'furniture-coffee-table',
-      'furniture-armchair',
+      'furniture-sectional',
+      'furniture-coffeetable',
+      'furniture-sidetable',
+      'furniture-barstool',
       'chelsea-idle',
     ]);
   }
@@ -71,10 +71,10 @@ export class Ch11_Ledges extends ChapterBase {
 
     // Furniture row (the "ledges")
     this.stations = [
-      { id: 'couch', x: 70, width: 96, height: 56, label: 'couch', color: 0x8a5a3a },
-      { id: 'ottoman', x: 180, width: 60, height: 40, label: 'ottoman', color: 0xa67449 },
-      { id: 'coffee-table', x: 260, width: 80, height: 32, label: 'coffee', color: 0x6d4e36 },
-      { id: 'armchair', x: 360, width: 80, height: 60, label: 'armchair', color: 0x8a5a3a },
+      { id: 'sectional', x: 70, width: 96, height: 56, label: 'sectional', color: 0x8a5a3a },
+      { id: 'sidetable', x: 180, width: 60, height: 40, label: 'side table', color: 0xa67449 },
+      { id: 'coffeetable', x: 260, width: 80, height: 32, label: 'coffee', color: 0x6d4e36 },
+      { id: 'barstool', x: 360, width: 80, height: 60, label: 'barstool', color: 0x8a5a3a },
       { id: 'floor', x: W / 2 + 60, width: 0, height: 0, label: 'floor', color: 0 },
     ];
 

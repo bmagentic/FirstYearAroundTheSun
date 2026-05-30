@@ -8,6 +8,7 @@ import { DevMode } from '../systems/DevMode';
 import { TouchControls } from '../ui/TouchControls';
 import { CHAPTER_SCENES } from './chapters/registry';
 import { EncounterManager } from '../systems/EncounterManager';
+import { SpriteBank } from '../systems/SpriteBank';
 import type { RoomId, SaveProfile } from '../types';
 
 const ROOM_PADDING = 32;
@@ -23,7 +24,7 @@ export class HouseScene extends Phaser.Scene {
   private worldLayer!: Phaser.GameObjects.Container;
   private hudLayer!: Phaser.GameObjects.Container;
   private player!: Phaser.GameObjects.Container;
-  private playerBody!: Phaser.GameObjects.Arc;
+  private playerBody: Phaser.GameObjects.Arc | null = null;
   private controls!: TouchControls;
   private roomLabel!: Phaser.GameObjects.Text;
   private transitioning = false;
@@ -48,6 +49,10 @@ export class HouseScene extends Phaser.Scene {
     this.fromEncounter = !!data.fromEncounter;
   }
 
+  preload(): void {
+    SpriteBank.preloadInto(this, ['caius', 'room-nursery-bg']);
+  }
+
   create(): void {
     console.log('[house] create, profile=', this.profile.name, 'room=', this.profile.currentRoom);
     this.cameras.main.setBackgroundColor('#0a0a1f');
@@ -58,10 +63,15 @@ export class HouseScene extends Phaser.Scene {
     this.hudLayer = this.add.container(0, 0).setDepth(100);
 
     this.player = this.add.container(0, 0).setDepth(50);
-    this.playerBody = this.add.circle(0, 0, PLAYER_RADIUS, 0xf7c6a3).setStrokeStyle(2, 0x402c1d);
-    const cheekL = this.add.circle(-4, 2, 2, 0xe89a8a);
-    const cheekR = this.add.circle(4, 2, 2, 0xe89a8a);
-    this.player.add([this.playerBody, cheekL, cheekR]);
+    if (SpriteBank.has(this, 'caius')) {
+      const sprite = this.add.image(0, 0, 'caius').setDisplaySize(PLAYER_RADIUS * 2.5, PLAYER_RADIUS * 3.5);
+      this.player.add(sprite);
+    } else {
+      this.playerBody = this.add.circle(0, 0, PLAYER_RADIUS, 0xf7c6a3).setStrokeStyle(2, 0x402c1d);
+      const cheekL = this.add.circle(-4, 2, 2, 0xe89a8a);
+      const cheekR = this.add.circle(4, 2, 2, 0xe89a8a);
+      this.player.add([this.playerBody, cheekL, cheekR]);
+    }
 
     this.roomLabel = this.add
       .text(this.scale.width / 2, 18, '', {
@@ -181,24 +191,21 @@ export class HouseScene extends Phaser.Scene {
   private drawRoom(def: RoomDef): void {
     const bounds = this.roomBounds();
     const wallPad = 8;
+    const cx = bounds.x + bounds.width / 2;
+    const cy = bounds.y + bounds.height / 2;
 
-    const wall = this.add.rectangle(
-      bounds.x + bounds.width / 2,
-      bounds.y + bounds.height / 2,
-      bounds.width + wallPad * 2,
-      bounds.height + wallPad * 2,
-      def.wallColor,
-    );
-    this.bgLayer.add(wall);
-
-    const floor = this.add.rectangle(
-      bounds.x + bounds.width / 2,
-      bounds.y + bounds.height / 2,
-      bounds.width,
-      bounds.height,
-      def.floorColor,
-    );
-    this.bgLayer.add(floor);
+    const bgKey = `room-${def.id}-bg` as const;
+    if (SpriteBank.has(this, bgKey)) {
+      const bg = this.add
+        .image(cx, cy, bgKey)
+        .setDisplaySize(bounds.width + wallPad * 2, bounds.height + wallPad * 2);
+      this.bgLayer.add(bg);
+    } else {
+      const wall = this.add.rectangle(cx, cy, bounds.width + wallPad * 2, bounds.height + wallPad * 2, def.wallColor);
+      this.bgLayer.add(wall);
+      const floor = this.add.rectangle(cx, cy, bounds.width, bounds.height, def.floorColor);
+      this.bgLayer.add(floor);
+    }
 
     for (const door of def.doorways) {
       const pos = this.doorwayCenter(door);
