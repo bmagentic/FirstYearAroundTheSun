@@ -5,9 +5,10 @@ export type RoomId =
   | 'hallway-lower'
   | 'kitchen'
   | 'living-room'
+  | 'dining'
+  | 'bathroom'
   | 'garage'
-  | 'play-area'
-  | 'backyard';
+  | 'play-area';
 
 export type InterludeId = 'first-days' | 'mama';
 

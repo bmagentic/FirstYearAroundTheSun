@@ -5,7 +5,7 @@ import type Phaser from 'phaser';
  * and `has(scene, key)` in create() to decide whether to use a real sprite or a
  * placeholder shape.
  *
- * MANIFEST resolves the name mismatches between game keys and on-disk paths.
+ * MANIFEST resolves name mismatches between game keys and on-disk paths.
  * Dropping a PNG at the mapped path is the only step needed to activate a sprite.
  *
  * MISSING lists keys we know have no file yet — preloadInto skips the HTTP request
@@ -31,12 +31,34 @@ const MANIFEST: Record<string, string> = {
   'furniture-sidetable':   '/assets/sprites/rooms/living_kitchen/obj_livingroom_sidetable.png',
   'furniture-barstool':    '/assets/sprites/rooms/living_kitchen/obj_kitchen_barstool.png',
 
-  // ── Room backgrounds ────────────────────────────────────────────────────────
-  'room-nursery-bg':    '/assets/sprites/rooms/room_nursery_bg.png',
+  // ── Room backgrounds (top-down, 208×282, ROOM_SCALE=2.0) ────────────────────
+  'room-nursery-bg':         '/assets/sprites/rooms/room_nursery_bg.png',
+  'room-master-bedroom-bg':  '/assets/sprites/rooms/room_master_bedroom_bg.png',
+  'room-hallway-upper-bg':   '/assets/sprites/rooms/room_hallway_upper_bg.png',
+  'room-hallway-lower-bg':   '/assets/sprites/rooms/room_hallway_lower_bg.png',
+  'room-kitchen-bg':         '/assets/sprites/rooms/room_kitchen_bg.png',
+  'room-living-room-bg':     '/assets/sprites/rooms/room_living_room_bg.png',
+  'room-garage-bg':          '/assets/sprites/rooms/room_garage_bg.png',
+  'room-play-area-bg':       '/assets/sprites/rooms/room_play_area_bg.png',
+  'room-dining-bg':          '/assets/sprites/rooms/room_dining_bg.png',
+  'room-bathroom-bg':        '/assets/sprites/rooms/room_bathroom_bg.png',
+
+  // ── Nursery object sprites ────────────────────────────────────────────────
+  'obj-nursery-crib':       '/assets/sprites/rooms/nursery/obj_nursery_crib.png',
+  'obj-nursery-dresser':    '/assets/sprites/rooms/nursery/obj_nursery_dresser.png',
+  'obj-nursery-bookshelf':  '/assets/sprites/rooms/nursery/obj_nursery_bookshelf.png',
+  'obj-nursery-chair':      '/assets/sprites/rooms/nursery/obj_nursery_chair.png',
+  'obj-nursery-floorlamp':  '/assets/sprites/rooms/nursery/obj_nursery_floorlamp.png',
+  'obj-nursery-foxpainting':'/assets/sprites/rooms/nursery/obj_nursery_foxpainting.png',
+  'obj-nursery-toychest':   '/assets/sprites/rooms/nursery/obj_nursery_toychest.png',
 };
 
 // Keys with no file on disk — preloadInto skips the request, has() returns false.
 const MISSING = new Set(['caius-roll', 'caius-crawl-l', 'caius-crawl-r']);
+
+// In dev mode, append a per-session cache-bust so the browser never serves a
+// stale PNG after a regeneration run. No-ops in production (Vite fingerprints assets).
+const BUST = import.meta.env.DEV ? `?v=${Date.now()}` : '';
 
 export const SpriteBank = {
   preloadInto(scene: Phaser.Scene, ids: readonly string[]): void {
@@ -44,7 +66,7 @@ export const SpriteBank = {
       if (MISSING.has(id)) continue;
       if (scene.textures.exists(id)) continue;
       const path = MANIFEST[id] ?? `/assets/sprites/${id}.png`;
-      scene.load.image(id, path);
+      scene.load.image(id, path + BUST);
     }
   },
 
