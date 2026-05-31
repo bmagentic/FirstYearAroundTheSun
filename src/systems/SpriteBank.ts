@@ -51,6 +51,16 @@ const MANIFEST: Record<string, string> = {
   'obj-plush-moomoo':      '/assets/sprites/plushies/obj_plush_moomoo.png',
   'obj-plush-ribbie':      '/assets/sprites/plushies/obj_plush_ribbie.png',
 
+  // ── Living room object sprites ─────────────────────────────────────────────
+  'obj-livingroom-sectional':    '/assets/sprites/rooms/living_kitchen/obj_livingroom_sectional.png',
+  'obj-livingroom-coffeetable':  '/assets/sprites/rooms/living_kitchen/obj_livingroom_coffeetable.png',
+  'obj-livingroom-sidetable':    '/assets/sprites/rooms/living_kitchen/obj_livingroom_sidetable.png',
+  'obj-livingroom-tv':           '/assets/sprites/rooms/living_kitchen/obj_livingroom_tv.png',
+  'obj-livingroom-coffeehutch':  '/assets/sprites/rooms/living_kitchen/obj_livingroom_coffeehutch.png',
+  'obj-livingroom-gallerywall':  '/assets/sprites/rooms/living_kitchen/obj_livingroom_gallerywall.png',
+  'obj-livingroom-horsepainting':'/assets/sprites/rooms/living_kitchen/obj_livingroom_horsepainting.png',
+  'obj-livingroom-clock':        '/assets/sprites/rooms/living_kitchen/obj_livingroom_clock.png',
+
   // ── Nursery object sprites ────────────────────────────────────────────────
   'obj-nursery-crib':       '/assets/sprites/rooms/nursery/obj_nursery_crib.png',
   'obj-nursery-dresser':    '/assets/sprites/rooms/nursery/obj_nursery_dresser.png',

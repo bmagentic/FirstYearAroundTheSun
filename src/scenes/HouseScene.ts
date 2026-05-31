@@ -63,6 +63,18 @@ const NURSERY_OBJECTS: RoomObject[] = [
   { key: 'obj-plush-ribbie',        fx: 0.501, fy: 0.014,  displayW: 50,  displayH: 50  },
 ];
 
+// ── Living room layout ──────────────────────────────────────────────────────
+const LIVINGROOM_OBJECTS: RoomObject[] = [
+  { key: 'obj-livingroom-sectional',     fx: 0.500, fy: 0.500, displayW: 160, displayH: 120 },
+  { key: 'obj-livingroom-coffeetable',   fx: 0.500, fy: 0.350, displayW: 80,  displayH: 50  },
+  { key: 'obj-livingroom-sidetable',     fx: 0.850, fy: 0.500, displayW: 50,  displayH: 50  },
+  { key: 'obj-livingroom-tv',            fx: 0.500, fy: -0.050, displayW: 100, displayH: 60  },
+  { key: 'obj-livingroom-coffeehutch',   fx: 0.100, fy: 0.100, displayW: 70,  displayH: 80  },
+  { key: 'obj-livingroom-gallerywall',   fx: 0.750, fy: 0.000, displayW: 120, displayH: 40,  wallArt: true },
+  { key: 'obj-livingroom-horsepainting', fx: 0.250, fy: 0.000, displayW: 60,  displayH: 50,  wallArt: true },
+  { key: 'obj-livingroom-clock',         fx: 0.950, fy: 0.000, displayW: 30,  displayH: 40,  wallArt: true },
+];
+
 // ── Misc constants ────────────────────────────────────────────────────────────
 const ROOM_PADDING   = 32;
 const DOOR_WIDTH     = 72;
@@ -119,6 +131,15 @@ export class HouseScene extends Phaser.Scene {
       'room-play-area-bg',
       'room-dining-bg',
       'room-bathroom-bg',
+      // Living room object sprites
+      'obj-livingroom-sectional',
+      'obj-livingroom-coffeetable',
+      'obj-livingroom-sidetable',
+      'obj-livingroom-tv',
+      'obj-livingroom-coffeehutch',
+      'obj-livingroom-gallerywall',
+      'obj-livingroom-horsepainting',
+      'obj-livingroom-clock',
       // Nursery object sprites (reference room)
       'obj-nursery-crib',
       'obj-nursery-dresser',
@@ -258,8 +279,8 @@ export class HouseScene extends Phaser.Scene {
     const wallX  = Math.round(BG_WALL_PX * scaleX);
     const wallY  = Math.round(BG_WALL_PX * scaleY);
 
-    // Nursery (and future fully-wired rooms) get wall inset; others use full bounds.
-    if (def.id === 'nursery') {
+    const wiredRooms: RoomId[] = ['nursery', 'living-room'];
+    if (wiredRooms.includes(def.id)) {
       return { x: b.x + wallX, y: b.y + wallY, w: b.width - wallX * 2, h: b.height - wallY * 2 };
     }
     return { x: b.x, y: b.y, w: b.width, h: b.height };
@@ -267,38 +288,37 @@ export class HouseScene extends Phaser.Scene {
 
   // ── Nursery render system ─────────────────────────────────────────────────────
 
+  private roomObjectsFor(def: RoomDef): { objects: RoomObject[]; label: string } | null {
+    switch (def.id) {
+      case 'nursery':     return { objects: NURSERY_OBJECTS,    label: 'NURSERY_OBJECTS' };
+      case 'living-room': return { objects: LIVINGROOM_OBJECTS, label: 'LIVINGROOM_OBJECTS' };
+      default:            return null;
+    }
+  }
+
   private placeRoomObjects(def: RoomDef): void {
-    if (def.id !== 'nursery') return;
+    const cfg = this.roomObjectsFor(def);
+    if (!cfg) return;
 
-    const fz     = this.currentFloorZone;
-    const scaleX = this.roomBounds().width  / BG_NATIVE_W;
-    const scaleY = this.roomBounds().height / BG_NATIVE_H;
-
-    // Correction: display sizes in the NURSERY_OBJECTS array are already in game px
-    // (native px × 2.0 ROOM_SCALE). scaleX/scaleY are the same 2.0 — no need to
-    // re-apply. We use them here only for sub-pixel corrections if the canvas shifts.
-    void scaleX; void scaleY;
-
+    const fz      = this.currentFloorZone;
     const devMode = DevMode.isEnabled();
 
-    // Seed live positions from the source-of-truth array each time the room loads.
     if (devMode) {
       this.devDragPositions = new Map(
-        NURSERY_OBJECTS.map(o => [o.key, { fx: o.fx, fy: o.fy }]),
+        cfg.objects.map(o => [o.key, { fx: o.fx, fy: o.fy }]),
       );
     }
 
-    for (const obj of NURSERY_OBJECTS) {
+    for (const obj of cfg.objects) {
       if (!SpriteBank.has(this, obj.key)) continue;
 
-      // Foot position in game px (bottom-centre of sprite in floor zone)
       const footX = fz.x + fz.w * obj.fx;
       const footY = fz.y + fz.h * obj.fy + obj.displayH;
 
       const sprite = this.add
         .image(footX, footY, obj.key)
         .setDisplaySize(obj.displayW, obj.displayH)
-        .setOrigin(0.5, 1.0);  // foot-anchored: centre-bottom
+        .setOrigin(0.5, 1.0);
 
       sprite.setDepth(obj.wallArt ? 2 : footDepth(footY));
       this.roomSprites.push(sprite);
@@ -313,7 +333,6 @@ export class HouseScene extends Phaser.Scene {
 
         sprite.on('drag', (_ptr: Phaser.Input.Pointer, dragX: number, dragY: number) => {
           sprite.setPosition(dragX, dragY);
-          // Keep depth sorting live during drag (wall art stays pinned at back).
           if (!isWallArt) sprite.setDepth(footDepth(dragY));
         });
 
@@ -322,22 +341,22 @@ export class HouseScene extends Phaser.Scene {
           const newFy = parseFloat(((sprite.y - objDisplayH - fz.y) / fz.h).toFixed(3));
           this.devDragPositions.set(objKey, { fx: newFx, fy: newFy });
           console.log(`[DevMode] dropped ${objKey}: fx=${newFx.toFixed(3)}, fy=${newFy.toFixed(3)}`);
-          this.printNurseryArray();
+          this.printRoomArray(cfg);
         });
       }
     }
   }
 
-  // ── DevMode: nursery position tool ────────────────────────────────────────────
+  // ── DevMode: room position tool ──────────────────────────────────────────────
 
-  private printNurseryArray(): void {
-    const lines = NURSERY_OBJECTS.map(o => {
+  private printRoomArray(cfg: { objects: RoomObject[]; label: string }): void {
+    const lines = cfg.objects.map(o => {
       const { fx, fy } = this.devDragPositions.get(o.key) ?? o;
       const wallArtStr = o.wallArt ? ', wallArt: true' : '';
       return `  { key: '${o.key}', fx: ${fx.toFixed(3)}, fy: ${fy.toFixed(3)}, displayW: ${o.displayW}, displayH: ${o.displayH}${wallArtStr} },`;
     });
     console.log(
-      '[DevMode] NURSERY_OBJECTS paste-ready:\nconst NURSERY_OBJECTS: RoomObject[] = [\n' +
+      `[DevMode] ${cfg.label} paste-ready:\nconst ${cfg.label}: RoomObject[] = [\n` +
       lines.join('\n') +
       '\n];',
     );
