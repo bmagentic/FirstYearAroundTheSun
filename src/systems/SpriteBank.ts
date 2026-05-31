@@ -43,6 +43,14 @@ const MANIFEST: Record<string, string> = {
   'room-dining-bg':          '/assets/sprites/rooms/room_dining_bg.png',
   'room-bathroom-bg':        '/assets/sprites/rooms/room_bathroom_bg.png',
 
+  // ── Plushies ─────────────────────────────────────────────────────────────
+  'obj-plush-francois':    '/assets/sprites/plushies/obj_plush_francois.png',
+  'obj-plush-foxamillion': '/assets/sprites/plushies/obj_plush_foxamillion.png',
+  'obj-plush-deeno':       '/assets/sprites/plushies/obj_plush_deeno.png',
+  'obj-plush-persephone':  '/assets/sprites/plushies/obj_plush_persephone.png',
+  'obj-plush-moomoo':      '/assets/sprites/plushies/obj_plush_moomoo.png',
+  'obj-plush-ribbie':      '/assets/sprites/plushies/obj_plush_ribbie.png',
+
   // ── Nursery object sprites ────────────────────────────────────────────────
   'obj-nursery-crib':       '/assets/sprites/rooms/nursery/obj_nursery_crib.png',
   'obj-nursery-dresser':    '/assets/sprites/rooms/nursery/obj_nursery_dresser.png',

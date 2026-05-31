@@ -46,17 +46,21 @@ type RoomObject = {
 };
 
 // Positions are tuned for the nursery's top-down floor plan.
-// Objects against the top wall (crib, dresser, lamp) have small fy so they sort behind
-// objects in the middle. Character sorts above all when walking toward the bottom.
+// Objects against the top wall have small fy so they sort behind floor objects.
+// Drag in DevMode to tune; dropping prints fx/fy + a full paste-ready array.
 const NURSERY_OBJECTS: RoomObject[] = [
-  { key: 'obj-nursery-crib',        fx: 0.30, fy: 0.08, displayW: 80,  displayH: 80  },
-  { key: 'obj-nursery-dresser',      fx: 0.72, fy: 0.08, displayW: 72,  displayH: 72  },
-  { key: 'obj-nursery-bookshelf',    fx: 0.06, fy: 0.22, displayW: 80,  displayH: 80  },
-  { key: 'obj-nursery-chair',        fx: 0.55, fy: 0.42, displayW: 44,  displayH: 56  },
-  { key: 'obj-nursery-toychest',     fx: 0.26, fy: 0.22, displayW: 56,  displayH: 42  },
-  // Wall art and tall items against the back wall — always render behind floor objects
-  { key: 'obj-nursery-floorlamp',    fx: 0.88, fy: 0.04, displayW: 24,  displayH: 72,  wallArt: true },
-  { key: 'obj-nursery-foxpainting',  fx: 0.58, fy: 0.02, displayW: 40,  displayH: 40,  wallArt: true },
+  { key: 'obj-nursery-crib',        fx: 0.876, fy: 0.804,  displayW: 120, displayH: 120 },
+  { key: 'obj-nursery-dresser',     fx: 0.062, fy: 0.408,  displayW: 86,  displayH: 86  },
+  { key: 'obj-nursery-bookshelf',   fx: 0.193, fy: -0.144, displayW: 179, displayH: 179 },
+  { key: 'obj-nursery-chair',       fx: 0.936, fy: -0.076, displayW: 79,  displayH: 101 },
+  { key: 'obj-nursery-toychest',    fx: 0.091, fy: 0.897,  displayW: 94,  displayH: 70  },
+  { key: 'obj-nursery-foxpainting', fx: 0.051, fy: 0.342,  displayW: 48,  displayH: 48,  wallArt: true },
+  { key: 'obj-plush-francois',      fx: 0.724, fy: -0.051, displayW: 50,  displayH: 50  },
+  { key: 'obj-plush-foxamillion',   fx: 0.587, fy: -0.055, displayW: 50,  displayH: 50  },
+  { key: 'obj-plush-deeno',         fx: 0.812, fy: 0.013,  displayW: 50,  displayH: 50  },
+  { key: 'obj-plush-persephone',    fx: 0.668, fy: 0.015,  displayW: 50,  displayH: 50  },
+  { key: 'obj-plush-moomoo',        fx: 0.434, fy: -0.059, displayW: 50,  displayH: 50  },
+  { key: 'obj-plush-ribbie',        fx: 0.501, fy: 0.014,  displayW: 50,  displayH: 50  },
 ];
 
 // ── Misc constants ────────────────────────────────────────────────────────────
@@ -86,6 +90,8 @@ export class HouseScene extends Phaser.Scene {
   private fromEncounter = false;
   /** Scene-level sprites placed for depth sorting; cleared on every room change. */
   private roomSprites: Phaser.GameObjects.Image[] = [];
+  /** DevMode only: live fx/fy per object key, updated on every drop. */
+  private devDragPositions = new Map<string, { fx: number; fy: number }>();
 
   constructor() {
     super({ key: 'HouseScene' });
@@ -118,9 +124,15 @@ export class HouseScene extends Phaser.Scene {
       'obj-nursery-dresser',
       'obj-nursery-bookshelf',
       'obj-nursery-chair',
-      'obj-nursery-floorlamp',
       'obj-nursery-foxpainting',
       'obj-nursery-toychest',
+      // Plushies (nursery cluster)
+      'obj-plush-francois',
+      'obj-plush-foxamillion',
+      'obj-plush-deeno',
+      'obj-plush-persephone',
+      'obj-plush-moomoo',
+      'obj-plush-ribbie',
     ]);
   }
 
@@ -267,6 +279,15 @@ export class HouseScene extends Phaser.Scene {
     // re-apply. We use them here only for sub-pixel corrections if the canvas shifts.
     void scaleX; void scaleY;
 
+    const devMode = DevMode.isEnabled();
+
+    // Seed live positions from the source-of-truth array each time the room loads.
+    if (devMode) {
+      this.devDragPositions = new Map(
+        NURSERY_OBJECTS.map(o => [o.key, { fx: o.fx, fy: o.fy }]),
+      );
+    }
+
     for (const obj of NURSERY_OBJECTS) {
       if (!SpriteBank.has(this, obj.key)) continue;
 
@@ -281,7 +302,45 @@ export class HouseScene extends Phaser.Scene {
 
       sprite.setDepth(obj.wallArt ? 2 : footDepth(footY));
       this.roomSprites.push(sprite);
+
+      if (devMode) {
+        const objKey      = obj.key;
+        const objDisplayH = obj.displayH;
+        const isWallArt   = !!obj.wallArt;
+
+        sprite.setInteractive();
+        this.input.setDraggable(sprite);
+
+        sprite.on('drag', (_ptr: Phaser.Input.Pointer, dragX: number, dragY: number) => {
+          sprite.setPosition(dragX, dragY);
+          // Keep depth sorting live during drag (wall art stays pinned at back).
+          if (!isWallArt) sprite.setDepth(footDepth(dragY));
+        });
+
+        sprite.on('dragend', () => {
+          const newFx = parseFloat(((sprite.x - fz.x) / fz.w).toFixed(3));
+          const newFy = parseFloat(((sprite.y - objDisplayH - fz.y) / fz.h).toFixed(3));
+          this.devDragPositions.set(objKey, { fx: newFx, fy: newFy });
+          console.log(`[DevMode] dropped ${objKey}: fx=${newFx.toFixed(3)}, fy=${newFy.toFixed(3)}`);
+          this.printNurseryArray();
+        });
+      }
     }
+  }
+
+  // ── DevMode: nursery position tool ────────────────────────────────────────────
+
+  private printNurseryArray(): void {
+    const lines = NURSERY_OBJECTS.map(o => {
+      const { fx, fy } = this.devDragPositions.get(o.key) ?? o;
+      const wallArtStr = o.wallArt ? ', wallArt: true' : '';
+      return `  { key: '${o.key}', fx: ${fx.toFixed(3)}, fy: ${fy.toFixed(3)}, displayW: ${o.displayW}, displayH: ${o.displayH}${wallArtStr} },`;
+    });
+    console.log(
+      '[DevMode] NURSERY_OBJECTS paste-ready:\nconst NURSERY_OBJECTS: RoomObject[] = [\n' +
+      lines.join('\n') +
+      '\n];',
+    );
   }
 
   // ── Room drawing ─────────────────────────────────────────────────────────────
