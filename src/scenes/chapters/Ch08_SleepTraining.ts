@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { ChapterBase } from './ChapterBase';
 import { SoundBank } from '../../systems/SoundBank';
+import { RetryPopup } from '../../ui/RetryPopup';
 
 type Phase = 'stuffies' | 'night';
 
@@ -8,6 +9,7 @@ const STUFFY_COUNT = 6;
 const NIGHT_DURATION_MS = 45_000;
 const URGE_INTERVAL_MS = 7_500;
 const SUCKER_TIMES_MS = [16_000, 32_000];
+const MAX_URGE_MISSES = 3;
 
 export class Ch08_SleepTraining extends ChapterBase {
   private phase: Phase = 'stuffies';
@@ -26,6 +28,8 @@ export class Ch08_SleepTraining extends ChapterBase {
   private nextUrgeAt = 0;
   private suckerScheduled = [...SUCKER_TIMES_MS];
   private statusText!: Phaser.GameObjects.Text;
+  private urgeMisses = 0;
+  private retryPopup!: RetryPopup;
 
   constructor() {
     super('Ch08_SleepTraining', 8);
@@ -37,6 +41,7 @@ export class Ch08_SleepTraining extends ChapterBase {
 
   create(): void {
     this.setup();
+    this.retryPopup = new RetryPopup(this);
     this.cameras.main.setBackgroundColor('#0a0a1f');
     this.statusText = this.add
       .text(this.scale.width / 2, 50, 'Goodnight to the stuffies', {
@@ -162,14 +167,27 @@ export class Ch08_SleepTraining extends ChapterBase {
     }
 
     if (this.urgeButton && this.time.now > this.urgeDeadline) {
-      // Missed
       this.urgeButton.destroy();
       this.urgeButton = null;
       this.chelseaIcon?.destroy();
       this.chelseaIcon = null;
+      this.urgeMisses++;
       this.softFail('urge-missed', 'He cried out. Mama settled him.');
-      this.nextUrgeAt = this.time.now + URGE_INTERVAL_MS;
+      if (this.urgeMisses >= MAX_URGE_MISSES) {
+        this.p2Active = false;
+        this.retryPopup.show(() => this.resetNight(), 'Baby woke up! Try again!');
+      } else {
+        this.nextUrgeAt = this.time.now + URGE_INTERVAL_MS;
+      }
     }
+  }
+
+  private resetNight(): void {
+    this.urgeMisses = 0;
+    this.nightStartMs = this.time.now;
+    this.nextUrgeAt = this.time.now + 3000;
+    this.suckerScheduled = [...SUCKER_TIMES_MS];
+    this.p2Active = true;
   }
 
   private formatHour(h: number): string {
