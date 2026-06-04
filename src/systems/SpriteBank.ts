@@ -37,6 +37,7 @@ const MANIFEST: Record<string, string> = {
   'obj-master-changingtable': '/assets/sprites/rooms/master/obj_master_changingtable.png',
   'obj-master-floormattress': '/assets/sprites/rooms/master/obj_master_floormattress.png',
   'dad-airplane':       '/assets/sprites/brandon/brandon_airplane.png',
+  'brandon-idle':       '/assets/sprites/brandon/south.png',
 
   // ── Garage object sprites ─────────────────────────────────────────────────
   'obj-garage-smeg':          '/assets/sprites/signature/obj_signature_smegfridge.png',
