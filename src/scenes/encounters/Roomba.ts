@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { EncounterBase } from './EncounterBase';
 import { SpriteBank } from '../../systems/SpriteBank';
+import { RetryPopup } from '../../ui/RetryPopup';
 
 const DURATION_MS = 60_000;
 const ROOMBA_SPEED = 75;
@@ -31,6 +32,7 @@ export class Roomba extends EncounterBase {
   private startMs = 0;
   private timerText!: Phaser.GameObjects.Text;
   private statusText!: Phaser.GameObjects.Text;
+  private retryPopup!: RetryPopup;
 
   constructor() {
     super('Roomba', 'roomba');
@@ -42,6 +44,7 @@ export class Roomba extends EncounterBase {
 
   create(): void {
     this.setupEncounter();
+    this.retryPopup = new RetryPopup(this);
     this.cameras.main.setBackgroundColor('#5b4530');
     this.showLabel('Roomba!', 'Tap to move. Reach 3 safe spots.');
 
@@ -121,6 +124,28 @@ export class Roomba extends EncounterBase {
     this.active = true;
   }
 
+  private resetRound(): void {
+    const pa = this.playArea;
+    this.caiusX = pa.x + pa.w / 2;
+    this.caiusY = pa.y + pa.h / 2;
+    this.targetX = this.caiusX;
+    this.targetY = this.caiusY;
+    this.caius.setPosition(this.caiusX, this.caiusY);
+    this.roomba.setPosition(pa.x + 50, pa.y + pa.h - 50);
+    this.rvx = ROOMBA_SPEED;
+    this.rvy = 0;
+    this.reachedCount = 0;
+    for (const z of this.zones) {
+      z.reached = false;
+      const ring = z.obj.list[0] as Phaser.GameObjects.Arc;
+      ring.setFillStyle(0x4ade80, 0.4);
+      z.obj.setScale(1);
+    }
+    this.statusText.setText('0 of 3 safe spots');
+    this.startMs = this.time.now;
+    this.active = true;
+  }
+
   override update(_t: number, delta: number): void {
     if (!this.active) return;
     const dt = delta / 1000;
@@ -165,8 +190,8 @@ export class Roomba extends EncounterBase {
     const rdy = this.roomba.y - this.caiusY;
     if (rdx * rdx + rdy * rdy < 30 * 30) {
       this.active = false;
-      this.softFail('roomba-hit', 'The roomba got him! Try again.');
-      this.time.delayedCall(900, () => this.scene.restart());
+      this.softFail('roomba-hit', 'The roomba got him!');
+      this.retryPopup.show(() => this.resetRound(), 'The roomba got him! Try again!');
       return;
     }
 
@@ -195,8 +220,8 @@ export class Roomba extends EncounterBase {
     this.timerText.setText(String(Math.ceil(remaining / 1000)));
     if (remaining <= 0) {
       this.active = false;
-      this.softFail('timeout', 'Time! Try again.');
-      this.time.delayedCall(900, () => this.scene.restart());
+      this.softFail('timeout', 'Time!');
+      this.retryPopup.show(() => this.resetRound(), "Time's up! Try again!");
     }
   }
 }
