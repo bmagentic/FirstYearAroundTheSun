@@ -79,3 +79,4 @@ Produces the 63-sec post-credits cinematic (Midjourney + Kling) + title/end card
 
 webhook verification after duplicate project deletion
 webhook verification after duplicate project deletion (2)
+verify deploys after Pro upgrade
