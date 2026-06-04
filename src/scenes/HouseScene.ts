@@ -189,8 +189,10 @@ export class HouseScene extends Phaser.Scene {
   private debugLayer: Phaser.GameObjects.Container | null = null;
   /** Throttle debug rejection logs (ms). */
   private lastRejectLog = 0;
-  /** Doors disarmed until player exits all trigger zones after spawn. */
-  private doorsArmed = true;
+  /** Per-door arm state (indexed to currentRoom.doorways). Each door re-arms only
+   *  once the player leaves *that* door's trigger zone — so two doors on the same
+   *  wall can't disarm or re-trigger each other. */
+  private doorArmed: boolean[] = [];
   /** Markers disarmed until player exits all marker/trigger radii after spawn. */
   private markersArmed = true;
   /** DevMode only: live fx/fy per object index in the room array, updated on every drop. */
@@ -364,7 +366,7 @@ export class HouseScene extends Phaser.Scene {
 
   // ── Room entry ──────────────────────────────────────────────────────────────
 
-  private enterRoom(roomId: RoomId, opts: { fromSide?: Side; firstLoad?: boolean }): void {
+  private enterRoom(roomId: RoomId, opts: { fromSide?: Side; fromRoom?: RoomId; firstLoad?: boolean }): void {
     const def = ROOMS[roomId];
     this.currentRoom = def;
 
@@ -399,8 +401,12 @@ export class HouseScene extends Phaser.Scene {
     const fz = this.currentFloorZone;
     let px   = fz.x + fz.w / 2;
     let py   = fz.y + fz.h / 2;
-    if (opts.fromSide) {
-      const entry = def.doorways.find((d) => d.side === opts.fromSide);
+    if (opts.fromRoom || opts.fromSide) {
+      // Match the specific doorway we came through by destination room id. Side is
+      // only a fallback — it's ambiguous when a wall has two doors (hallway-lower).
+      const entry =
+        (opts.fromRoom != null ? def.doorways.find((d) => d.to === opts.fromRoom) : undefined) ??
+        (opts.fromSide != null ? def.doorways.find((d) => d.side === opts.fromSide) : undefined);
       if (entry) {
         const pos  = this.doorwayCenter(entry);
         const clearance = DOOR_WIDTH / 2 + PLAYER_RADIUS + 12;
@@ -414,7 +420,7 @@ export class HouseScene extends Phaser.Scene {
     this.player.setPosition(px, py);
     this.player.setDepth(footDepth(py));
 
-    this.doorsArmed = false;
+    this.doorArmed = def.doorways.map(() => false);
     this.markersArmed = false;
     this.encounters.onEnterRoom(def.encounterChance, performance.now());
     if (!opts.firstLoad) this.cameras.main.fadeIn(TRANSITION_MS, 0, 0, 0);
@@ -1028,8 +1034,6 @@ export class HouseScene extends Phaser.Scene {
     const devMode = DevMode.isEnabled();
     const radialThreshold = DOOR_WIDTH / 2 + r; // 36 + 12 = 48
 
-    let anyTriggerActive = false;
-
     for (let di = 0; di < this.currentRoom.doorways.length; di++) {
       const door   = this.currentRoom.doorways[di]!;
       const center = this.doorwayCenter(door);
@@ -1054,7 +1058,8 @@ export class HouseScene extends Phaser.Scene {
       const radialHit = dist < radialThreshold;
 
       const triggered = (insideNotch && pastEdge) || radialHit;
-      if (triggered) anyTriggerActive = true;
+      // Re-arm this specific door the moment the player is clear of its zone.
+      if (!triggered) this.doorArmed[di] = true;
 
       // DevMode instrumentation
       if (devMode && dist < 80) {
@@ -1072,12 +1077,12 @@ export class HouseScene extends Phaser.Scene {
             ` | fzEdge=${edgeVal.toFixed(1)}` +
             ` | dist=${dist.toFixed(1)} radialThresh=${radialThreshold}` +
             ` | insideNotch=${insideNotch} pastEdge=${pastEdge} radialHit=${radialHit}` +
-            ` | armed=${this.doorsArmed} transitioning=${this.transitioning}`,
+            ` | armed=${this.doorArmed[di]} transitioning=${this.transitioning}`,
           );
         }
       }
 
-      if (!triggered || !this.doorsArmed) continue;
+      if (!triggered || !this.doorArmed[di]) continue;
 
       if (door.locked?.(this.profile)) {
         this.showToast(door.lockMessage ?? 'Locked.');
@@ -1089,10 +1094,6 @@ export class HouseScene extends Phaser.Scene {
       }
       this.transition(door);
       return;
-    }
-
-    if (!this.doorsArmed && !anyTriggerActive) {
-      this.doorsArmed = true;
     }
   }
 
@@ -1114,10 +1115,11 @@ export class HouseScene extends Phaser.Scene {
     if (this.transitioning) return;
     this.transitioning = true;
     SaveManager.flushSessionTime();
-    track('room_changed', { from: this.currentRoom.id, to: door.to, via: door.side });
+    const fromRoom = this.currentRoom.id;
+    track('room_changed', { from: fromRoom, to: door.to, via: door.side });
     this.cameras.main.fadeOut(TRANSITION_MS, 0, 0, 0);
     this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
-      this.enterRoom(door.to, { fromSide: oppositeSide(door.side) });
+      this.enterRoom(door.to, { fromSide: oppositeSide(door.side), fromRoom });
     });
   }
 
