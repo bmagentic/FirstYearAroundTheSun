@@ -14,7 +14,7 @@ import type Phaser from 'phaser';
 
 const MANIFEST: Record<string, string> = {
   // ── Characters ──────────────────────────────────────────────────────────────
-  'caius':              '/assets/sprites/caius/south.png',
+  'caius':              '/assets/sprites/caius-blue/south.png',
   'chelsea-idle':       '/assets/sprites/chelsea/south.png',
   'chelsea-asleep':     '/assets/sprites/chelsea_scrubs/chelsea_rocking.png',
 
@@ -72,7 +72,7 @@ const MANIFEST: Record<string, string> = {
 };
 
 // Keys with no file on disk — preloadInto skips the request, has() returns false.
-const MISSING = new Set(['caius-roll', 'caius-crawl-l', 'caius-crawl-r']);
+const MISSING = new Set<string>([]);
 
 // In dev mode, append a per-session cache-bust so the browser never serves a
 // stale PNG after a regeneration run. No-ops in production (Vite fingerprints assets).

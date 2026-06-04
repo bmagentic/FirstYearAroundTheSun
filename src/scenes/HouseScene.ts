@@ -112,8 +112,6 @@ export class HouseScene extends Phaser.Scene {
   private doorNotches: Rect[] = [];
   /** Collision footprints at the base of floor objects; blocks player movement. */
   private footprints: Rect[] = [];
-  /** Semi-transparent ring shown when player is behind furniture. */
-  private occlusionRing!: Phaser.GameObjects.Arc;
   /** DevMode only: live fx/fy per object key, updated on every drop. */
   private devDragPositions = new Map<string, { fx: number; fy: number }>();
 
@@ -199,20 +197,6 @@ export class HouseScene extends Phaser.Scene {
       .setDepth(101);
     this.hudLayer.add(this.roomLabel);
 
-    this.occlusionRing = this.add
-      .circle(0, 0, PLAYER_RADIUS + 3, 0xfde68a, 0)
-      .setStrokeStyle(2, 0xfde68a, 0.6)
-      .setDepth(50)
-      .setVisible(false);
-    this.tweens.add({
-      targets: this.occlusionRing,
-      alpha: { from: 0.8, to: 0.3 },
-      duration: 600,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut',
-    });
-
     this.controls = new TouchControls(this);
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.onShutdown, this);
@@ -247,7 +231,6 @@ export class HouseScene extends Phaser.Scene {
     }
 
     this.player.setDepth(footDepth(this.player.y));
-    this.updateOcclusionRing();
 
     this.checkMarkerProximity();
     this.checkDoorways();
@@ -364,18 +347,6 @@ export class HouseScene extends Phaser.Scene {
       }
     }
     return true;
-  }
-
-  private updateOcclusionRing(): void {
-    const pd = footDepth(this.player.y);
-    let occluded = false;
-    for (const sprite of this.roomSprites) {
-      if (sprite.depth <= pd) continue;
-      const b = sprite.getBounds();
-      if (b.contains(this.player.x, this.player.y)) { occluded = true; break; }
-    }
-    this.occlusionRing.setPosition(this.player.x, this.player.y);
-    this.occlusionRing.setVisible(occluded);
   }
 
   // ── Room object system ──────────────────────────────────────────────────────
