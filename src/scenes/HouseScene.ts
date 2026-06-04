@@ -31,6 +31,8 @@ function footDepth(footY: number): number {
 }
 
 // ── Nursery layout ───────────────────────────────────────────────────────────
+type Rect = { x: number; y: number; w: number; h: number };
+
 type RoomObject = {
   key: string;
   /** Fractional x in floor zone (0 = left wall, 1 = right wall). */
@@ -43,6 +45,10 @@ type RoomObject = {
   displayH: number;
   /** Wall art renders at back depth and is not depth-sorted with floor objects. */
   wallArt?: boolean;
+  /** Override collision footprint width (defaults to displayW). */
+  footprintW?: number;
+  /** Override collision footprint height (defaults to displayH × 0.30). */
+  footprintH?: number;
 };
 
 // Positions are tuned for the nursery's top-down floor plan.
@@ -102,6 +108,12 @@ export class HouseScene extends Phaser.Scene {
   private fromEncounter = false;
   /** Scene-level sprites placed for depth sorting; cleared on every room change. */
   private roomSprites: Phaser.GameObjects.Image[] = [];
+  /** Walkable extensions through wall insets toward each doorway. */
+  private doorNotches: Rect[] = [];
+  /** Collision footprints at the base of floor objects; blocks player movement. */
+  private footprints: Rect[] = [];
+  /** Semi-transparent ring shown when player is behind furniture. */
+  private occlusionRing!: Phaser.GameObjects.Arc;
   /** DevMode only: live fx/fy per object key, updated on every drop. */
   private devDragPositions = new Map<string, { fx: number; fy: number }>();
 
@@ -187,6 +199,20 @@ export class HouseScene extends Phaser.Scene {
       .setDepth(101);
     this.hudLayer.add(this.roomLabel);
 
+    this.occlusionRing = this.add
+      .circle(0, 0, PLAYER_RADIUS + 3, 0xfde68a, 0)
+      .setStrokeStyle(2, 0xfde68a, 0.6)
+      .setDepth(50)
+      .setVisible(false);
+    this.tweens.add({
+      targets: this.occlusionRing,
+      alpha: { from: 0.8, to: 0.3 },
+      duration: 600,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+    });
+
     this.controls = new TouchControls(this);
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.onShutdown, this);
@@ -211,14 +237,17 @@ export class HouseScene extends Phaser.Scene {
       const nx = this.player.x + v.x * speed * dt;
       const ny = this.player.y + v.y * speed * dt;
 
-      const fz = this.currentFloorZone;
-      const clampedX = Phaser.Math.Clamp(nx, fz.x + PLAYER_RADIUS, fz.x + fz.w - PLAYER_RADIUS);
-      const clampedY = Phaser.Math.Clamp(ny, fz.y + PLAYER_RADIUS, fz.y + fz.h - PLAYER_RADIUS);
-      this.player.setPosition(clampedX, clampedY);
+      if (this.isWalkable(nx, ny)) {
+        this.player.setPosition(nx, ny);
+      } else if (this.isWalkable(nx, this.player.y)) {
+        this.player.setPosition(nx, this.player.y);
+      } else if (this.isWalkable(this.player.x, ny)) {
+        this.player.setPosition(this.player.x, ny);
+      }
     }
 
-    // Depth-sort player by foot position each frame
     this.player.setDepth(footDepth(this.player.y));
+    this.updateOcclusionRing();
 
     this.checkMarkerProximity();
     this.checkDoorways();
@@ -239,12 +268,16 @@ export class HouseScene extends Phaser.Scene {
     this.bgLayer.removeAll(true);
     this.worldLayer.removeAll(true);
     for (const s of this.roomSprites) s.destroy();
-    this.roomSprites = [];
-    this.markers     = [];
-    this.capeMarker  = null;
+    this.roomSprites  = [];
+    this.markers      = [];
+    this.capeMarker   = null;
+    this.doorNotches  = [];
+    this.footprints   = [];
 
     this.drawRoom(def);
     this.currentFloorZone = this.computeFloorZone(def);
+    this.doorNotches      = this.computeDoorNotches(def);
+    this.footprints       = [];
     this.placeRoomObjects(def);
     this.drawMarkers(def);
     this.drawBonusCape(def);
@@ -286,7 +319,66 @@ export class HouseScene extends Phaser.Scene {
     return { x: b.x, y: b.y, w: b.width, h: b.height };
   }
 
-  // ── Nursery render system ─────────────────────────────────────────────────────
+  // ── Walkability ──────────────────────────────────────────────────────────────
+
+  private computeDoorNotches(def: RoomDef): Rect[] {
+    const fz = this.currentFloorZone;
+    const notches: Rect[] = [];
+    for (const door of def.doorways) {
+      const c  = this.doorwayCenter(door);
+      const hw = DOOR_WIDTH / 2;
+      switch (door.side) {
+        case 'bottom':
+          notches.push({ x: c.x - hw, y: fz.y + fz.h, w: DOOR_WIDTH, h: (c.y + 24) - (fz.y + fz.h) });
+          break;
+        case 'top':
+          notches.push({ x: c.x - hw, y: c.y - 24, w: DOOR_WIDTH, h: fz.y - (c.y - 24) });
+          break;
+        case 'right':
+          notches.push({ x: fz.x + fz.w, y: c.y - hw, w: (c.x + 24) - (fz.x + fz.w), h: DOOR_WIDTH });
+          break;
+        case 'left':
+          notches.push({ x: c.x - 24, y: c.y - hw, w: fz.x - (c.x - 24), h: DOOR_WIDTH });
+          break;
+      }
+    }
+    return notches;
+  }
+
+  private isWalkable(px: number, py: number): boolean {
+    const r  = PLAYER_RADIUS;
+    const fz = this.currentFloorZone;
+    const inFloor = px >= fz.x + r && px <= fz.x + fz.w - r &&
+                    py >= fz.y + r && py <= fz.y + fz.h - r;
+    if (!inFloor) {
+      const inNotch = this.doorNotches.some(n =>
+        px >= n.x + r && px <= n.x + n.w - r &&
+        py >= n.y + r && py <= n.y + n.h - r,
+      );
+      if (!inNotch) return false;
+    }
+    for (const fp of this.footprints) {
+      if (px + r > fp.x && px - r < fp.x + fp.w &&
+          py + r > fp.y && py - r < fp.y + fp.h) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private updateOcclusionRing(): void {
+    const pd = footDepth(this.player.y);
+    let occluded = false;
+    for (const sprite of this.roomSprites) {
+      if (sprite.depth <= pd) continue;
+      const b = sprite.getBounds();
+      if (b.contains(this.player.x, this.player.y)) { occluded = true; break; }
+    }
+    this.occlusionRing.setPosition(this.player.x, this.player.y);
+    this.occlusionRing.setVisible(occluded);
+  }
+
+  // ── Room object system ──────────────────────────────────────────────────────
 
   private roomObjectsFor(def: RoomDef): { objects: RoomObject[]; label: string } | null {
     switch (def.id) {
@@ -322,6 +414,12 @@ export class HouseScene extends Phaser.Scene {
 
       sprite.setDepth(obj.wallArt ? 2 : footDepth(footY));
       this.roomSprites.push(sprite);
+
+      if (!obj.wallArt) {
+        const fpW = obj.footprintW ?? obj.displayW;
+        const fpH = obj.footprintH ?? Math.round(obj.displayH * 0.30);
+        this.footprints.push({ x: footX - fpW / 2, y: footY - fpH, w: fpW, h: fpH });
+      }
 
       if (devMode) {
         const objKey      = obj.key;
