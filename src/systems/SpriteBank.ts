@@ -18,6 +18,12 @@ const MANIFEST: Record<string, string> = {
   'chelsea-idle':       '/assets/sprites/chelsea/south.png',
   'chelsea-asleep':     '/assets/sprites/chelsea_scrubs/chelsea_rocking.png',
 
+  // ── Dogs (south-facing idle) ───────────────────────────────────────────────
+  'finn-south':         '/assets/sprites/finn/south.png',
+  'nugget-south':       '/assets/sprites/nugget/south.png',
+  'eevee-south':        '/assets/sprites/eevee/south.png',
+  'soka-south':         '/assets/sprites/soka/south.png',
+
   // ── Ch04 ────────────────────────────────────────────────────────────────────
   'vtech-cube':         '/assets/sprites/portable/obj_portable_vtechcube.png',
 
