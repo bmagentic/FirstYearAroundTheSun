@@ -724,59 +724,78 @@ export class HouseScene extends Phaser.Scene {
     });
   }
 
+  private lastDoorDebug = 0;
+
   private checkDoorways(): void {
     const px = this.player.x;
     const py = this.player.y;
     const fz = this.currentFloorZone;
     const r  = PLAYER_RADIUS;
+    const devMode = DevMode.isEnabled();
 
-    // Notch-based trigger: player inside a notch AND past the floor-zone edge
-    for (const { rect: n, doorIdx } of this.doorNotches) {
-      if (px >= n.x + r && px <= n.x + n.w - r &&
-          py >= n.y + r && py <= n.y + n.h - r) {
-        const door = this.currentRoom.doorways[doorIdx]!;
-        const pastEdge =
+    for (let di = 0; di < this.currentRoom.doorways.length; di++) {
+      const door   = this.currentRoom.doorways[di]!;
+      const center = this.doorwayCenter(door);
+
+      // Notch-based trigger
+      const notch = this.doorNotches.find(dn => dn.doorIdx === di);
+      let insideNotch = false;
+      let pastEdge    = false;
+      if (notch) {
+        const n = notch.rect;
+        insideNotch = px >= n.x + r && px <= n.x + n.w - r &&
+                      py >= n.y + r && py <= n.y + n.h - r;
+        pastEdge =
           (door.side === 'bottom' && py > fz.y + fz.h) ||
           (door.side === 'top'    && py < fz.y) ||
           (door.side === 'right'  && px > fz.x + fz.w) ||
           (door.side === 'left'   && px < fz.x);
-        if (!pastEdge) continue;
+      }
 
-        if (door.locked?.(this.profile)) {
-          this.showToast(door.lockMessage ?? 'Locked.');
-          if      (door.side === 'right')  this.player.x = fz.x + fz.w - r;
-          else if (door.side === 'left')   this.player.x = fz.x + r;
-          else if (door.side === 'bottom') this.player.y = fz.y + fz.h - r;
-          else                             this.player.y = fz.y + r;
-          return;
+      // Radial trigger (always active)
+      const dx = Math.abs(px - center.x);
+      const dy = Math.abs(py - center.y);
+      const isHz    = door.side === 'top' || door.side === 'bottom';
+      const halfW   = isHz ? DOOR_WIDTH / 2 + r : 24 + r;
+      const halfH   = isHz ? 24 + r : DOOR_WIDTH / 2 + r;
+      const radialHit = dx < halfW && dy < halfH;
+
+      // DevMode instrumentation
+      if (devMode) {
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 80) {
+          const now = performance.now();
+          if (now - this.lastDoorDebug > 1000) {
+            this.lastDoorDebug = now;
+            const n = notch?.rect;
+            const edgeVal = door.side === 'bottom' ? fz.y + fz.h :
+                            door.side === 'top'    ? fz.y :
+                            door.side === 'right'  ? fz.x + fz.w : fz.x;
+            console.log(
+              `[DoorDebug] ${door.side}→${door.to} | player=(${px.toFixed(1)},${py.toFixed(1)})` +
+              ` | center=(${center.x.toFixed(1)},${center.y.toFixed(1)})` +
+              ` | notch=${n ? `(${n.x.toFixed(0)},${n.y.toFixed(0)},${n.w.toFixed(0)}×${n.h.toFixed(0)})` : 'none'}` +
+              ` | fzEdge=${edgeVal.toFixed(1)}` +
+              ` | insideNotch=${insideNotch} pastEdge=${pastEdge} radialHit=${radialHit}` +
+              ` | transitioning=${this.transitioning}`,
+            );
+          }
         }
-        this.transition(door);
+      }
+
+      const triggered = (insideNotch && pastEdge) || radialHit;
+      if (!triggered) continue;
+
+      if (door.locked?.(this.profile)) {
+        this.showToast(door.lockMessage ?? 'Locked.');
+        if      (door.side === 'right')  this.player.x = fz.x + fz.w - r;
+        else if (door.side === 'left')   this.player.x = fz.x + r;
+        else if (door.side === 'bottom') this.player.y = fz.y + fz.h - r;
+        else                             this.player.y = fz.y + r;
         return;
       }
-    }
-
-    // Fallback radial check for rooms without notches (non-wired rooms)
-    if (this.doorNotches.length === 0) {
-      for (const door of this.currentRoom.doorways) {
-        const center = this.doorwayCenter(door);
-        const dx     = Math.abs(px - center.x);
-        const dy     = Math.abs(py - center.y);
-        const isHorizontal = door.side === 'top' || door.side === 'bottom';
-        const halfW  = isHorizontal ? DOOR_WIDTH / 2 : 24;
-        const halfH  = isHorizontal ? 24 : DOOR_WIDTH / 2;
-        if (dx < halfW && dy < halfH) {
-          if (door.locked?.(this.profile)) {
-            this.showToast(door.lockMessage ?? 'Locked.');
-            if      (door.side === 'right')  this.player.x -= 24;
-            else if (door.side === 'left')   this.player.x += 24;
-            else if (door.side === 'bottom') this.player.y -= 24;
-            else                             this.player.y += 24;
-            return;
-          }
-          this.transition(door);
-          return;
-        }
-      }
+      this.transition(door);
+      return;
     }
   }
 
