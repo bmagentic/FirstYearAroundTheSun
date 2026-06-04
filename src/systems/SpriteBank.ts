@@ -31,6 +31,18 @@ const MANIFEST: Record<string, string> = {
   'furniture-sidetable':   '/assets/sprites/rooms/living_kitchen/obj_livingroom_sidetable.png',
   'furniture-barstool':    '/assets/sprites/rooms/living_kitchen/obj_kitchen_barstool.png',
 
+  // ── Dining room object sprites ─────────────────────────────────────────────
+  'obj-dining-table':          '/assets/sprites/rooms/dining/obj_dining_table.png',
+  'obj-dining-chair':          '/assets/sprites/rooms/dining/obj_dining_chair.png',
+  'obj-dining-highchair':      '/assets/sprites/rooms/dining/obj_dining_highchair.png',
+  'obj-dining-hutch':          '/assets/sprites/rooms/dining/obj_dining_hutch.png',
+  'obj-dining-basketstand':    '/assets/sprites/rooms/dining/obj_dining_basketstand.png',
+  'obj-dining-familylamp':     '/assets/sprites/rooms/dining/obj_dining_familylamp.png',
+  'obj-dining-familypicture':  '/assets/sprites/rooms/dining/obj_dining_familypicture.png',
+  'obj-dining-floorplant':     '/assets/sprites/rooms/dining/obj_dining_floorplant.png',
+  'obj-dining-planterwall':    '/assets/sprites/rooms/dining/obj_dining_planterwall.png',
+  'obj-dining-wineglassrack':  '/assets/sprites/rooms/dining/obj_dining_wineglassrack.png',
+
   // ── Room backgrounds (top-down, 208×282, ROOM_SCALE=2.0) ────────────────────
   'room-nursery-bg':         '/assets/sprites/rooms/room_nursery_bg.png',
   'room-master-bedroom-bg':  '/assets/sprites/rooms/room_master_bedroom_bg.png',

@@ -146,7 +146,7 @@ export const ROOMS: Record<RoomId, RoomDef> = {
     floorColor: FLOOR.lvp,
     wallColor: WALL.cream,
     accentColor: 0xd4b87a,
-    markers: [{ chapter: 7, x: 0.5, y: 0.5 }],
+    markers: [{ chapter: 7, x: 0.50, y: 0.75 }],
     doorways: [{ side: 'right', position: 0.5, to: 'kitchen' }],
     encounterChance: 0,
   },
