@@ -86,15 +86,15 @@ const LIVINGROOM_OBJECTS: RoomObject[] = [
 
 // ── Dining room layout ─────────────────────────────────────────────────────
 const DINING_OBJECTS: RoomObject[] = [
-  { key: 'obj-dining-table',          fx: 0.450, fy: 0.400, displayW: 256, displayH: 128 },
-  { key: 'obj-dining-chair-east',     fx: 0.250, fy: 0.350, displayW: 64,  displayH: 128 },
-  { key: 'obj-dining-chair-west',     fx: 0.650, fy: 0.350, displayW: 64,  displayH: 128 },
-  { key: 'obj-dining-highchair',      fx: 0.450, fy: 0.600, displayW: 64,  displayH: 128 },
-  { key: 'obj-dining-hutch',          fx: 0.100, fy: 0.100, displayW: 77,  displayH: 115 },
-  { key: 'obj-dining-basketstand',    fx: 0.900, fy: 0.150, displayW: 64,  displayH: 192 },
-  { key: 'obj-dining-familypicture',  fx: 0.150, fy: 0.000, displayW: 90,  displayH: 67,  wallArt: true },
-  { key: 'obj-dining-planterwall',    fx: 0.800, fy: 0.000, displayW: 92,  displayH: 92,  wallArt: true },
-  { key: 'obj-dining-floorplant',     fx: 0.050, fy: 0.800, displayW: 64,  displayH: 128 },
+  { key: 'obj-dining-table',          fx: 0.450, fy: 0.448, displayW: 256, displayH: 128 },
+  { key: 'obj-dining-chair-east',     fx: 0.172, fy: 0.439, displayW: 64,  displayH: 128 },
+  { key: 'obj-dining-chair-west',     fx: 0.724, fy: 0.441, displayW: 64,  displayH: 128 },
+  { key: 'obj-dining-highchair',      fx: 0.441, fy: 0.355, displayW: 64,  displayH: 128 },
+  { key: 'obj-dining-hutch',          fx: 0.091, fy: -0.124, displayW: 77,  displayH: 115 },
+  { key: 'obj-dining-basketstand',    fx: 0.898, fy: 0.644, displayW: 64,  displayH: 192 },
+  { key: 'obj-dining-familypicture',  fx: 0.275, fy: -0.109, displayW: 90,  displayH: 67,  wallArt: true },
+  { key: 'obj-dining-planterwall',    fx: 0.840, fy: -0.118, displayW: 92,  displayH: 92,  wallArt: true },
+  { key: 'obj-dining-floorplant',     fx: 0.063, fy: 0.737, displayW: 64,  displayH: 128 },
 ];
 
 // ── Misc constants ────────────────────────────────────────────────────────────
