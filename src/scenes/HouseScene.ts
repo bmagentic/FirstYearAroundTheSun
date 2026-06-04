@@ -144,13 +144,13 @@ const BATHROOM_OBJECTS: RoomObject[] = [
 const PLAYAREA_OBJECTS: RoomObject[] = [
   { key: 'obj-nursery-toychest',    fx: 0.100, fy: 0.150, displayW: 94,  displayH: 70  },
   { key: 'vtech-cube',              fx: 0.800, fy: 0.300, displayW: 96,  displayH: 96  },
-  { key: 'obj-portable-snackcup',   fx: 0.650, fy: 0.700, displayW: 64,  displayH: 96  },
-  { key: 'obj-plush-francois',      fx: 0.300, fy: 0.400, displayW: 50,  displayH: 50  },
-  { key: 'obj-plush-foxamillion',   fx: 0.450, fy: 0.250, displayW: 50,  displayH: 50  },
-  { key: 'obj-plush-deeno',         fx: 0.600, fy: 0.500, displayW: 50,  displayH: 50  },
-  { key: 'obj-plush-persephone',    fx: 0.200, fy: 0.650, displayW: 50,  displayH: 50  },
-  { key: 'obj-plush-moomoo',        fx: 0.750, fy: 0.600, displayW: 50,  displayH: 50  },
-  { key: 'obj-plush-ribbie',        fx: 0.400, fy: 0.750, displayW: 50,  displayH: 50  },
+  { key: 'obj-portable-snackcup',   fx: 0.650, fy: 0.700, displayW: 51,  displayH: 77  },
+  { key: 'obj-plush-francois',      fx: 0.300, fy: 0.400, displayW: 60,  displayH: 60  },
+  { key: 'obj-plush-foxamillion',   fx: 0.450, fy: 0.250, displayW: 60,  displayH: 60  },
+  { key: 'obj-plush-deeno',         fx: 0.600, fy: 0.500, displayW: 60,  displayH: 60  },
+  { key: 'obj-plush-persephone',    fx: 0.200, fy: 0.650, displayW: 60,  displayH: 60  },
+  { key: 'obj-plush-moomoo',        fx: 0.750, fy: 0.600, displayW: 60,  displayH: 60  },
+  { key: 'obj-plush-ribbie',        fx: 0.400, fy: 0.750, displayW: 60,  displayH: 60  },
 ];
 
 // ── Misc constants ────────────────────────────────────────────────────────────
