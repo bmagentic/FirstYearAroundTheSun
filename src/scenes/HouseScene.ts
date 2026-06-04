@@ -199,6 +199,10 @@ export class HouseScene extends Phaser.Scene {
   private chapterTriggerObjects: Array<{ chapter: number; x: number; y: number; radius: number }> = [];
   /** Bonus chapter trigger (toy chest with cape). */
   private bonusTriggerObject: { x: number; y: number; radius: number } | null = null;
+  /** True after the cape reveal animation has played; prevents re-triggering chest tap. */
+  private bonusRevealed = false;
+  /** False until cape landing animation completes AND player exits the cape's radius. */
+  private bonusLaunchArmed = false;
 
   constructor() {
     super({ key: 'HouseScene' });
@@ -879,7 +883,16 @@ export class HouseScene extends Phaser.Scene {
       const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.bonusTriggerObject.x, this.bonusTriggerObject.y);
       if (d < this.bonusTriggerObject.radius) {
         anyActive = true;
-        if (this.markersArmed) { this.attemptLaunchBonus(); return; }
+        if (!this.bonusRevealed && this.markersArmed) {
+          this.revealBonusCape();
+          return;
+        }
+        if (this.bonusRevealed && this.bonusLaunchArmed) {
+          this.launchBonusChapter();
+          return;
+        }
+      } else if (this.bonusRevealed && !this.bonusLaunchArmed) {
+        this.bonusLaunchArmed = true;
       }
     }
 
@@ -888,14 +901,20 @@ export class HouseScene extends Phaser.Scene {
     }
   }
 
-  private attemptLaunchBonus(): void {
-    if (this.transitioning) return;
-    track('bonus_marker_touched', { room: this.currentRoom.id });
-    this.transitioning = true;
-    SaveManager.flushSessionTime();
+  private revealBonusCape(): void {
+    if (this.transitioning || this.bonusRevealed) return;
+    this.bonusRevealed = true;
+    track('bonus_chest_opened', { room: this.currentRoom.id });
 
     const bt = this.bonusTriggerObject;
     if (!bt) return;
+
+    const fz = this.currentFloorZone;
+    const px = this.player.x;
+    const landX = px < bt.x
+      ? Math.min(bt.x + 100, fz.x + fz.w - PLAYER_RADIUS)
+      : Math.max(bt.x - 100, fz.x + PLAYER_RADIUS);
+    const landY = Phaser.Math.Clamp(bt.y + 40, fz.y + PLAYER_RADIUS, fz.y + fz.h - PLAYER_RADIUS);
 
     // FLAG: cape visual is programmatic — swap for sprite when available
     const cape = this.add.rectangle(bt.x, bt.y - 10, 22, 28, 0xdc2626)
@@ -903,29 +922,72 @@ export class HouseScene extends Phaser.Scene {
     const collar = this.add.rectangle(bt.x, bt.y - 24, 14, 5, 0xfde047)
       .setAlpha(0).setDepth(50);
 
-    // Cape rises out of chest with flourish
+    // Phase 1: cape rises out of chest
     this.tweens.add({
       targets: [cape, collar],
       y: '-=40',
       alpha: 1,
-      duration: 600,
+      duration: 500,
       ease: 'Back.easeOut',
     });
+
+    // Phase 2: arc to landing spot
     this.tweens.add({
       targets: cape,
-      scaleX: 1.3,
-      scaleY: 1.3,
-      duration: 400,
-      delay: 600,
-      yoyo: true,
+      x: landX,
+      y: landY,
+      duration: 600,
+      delay: 550,
+      ease: 'Sine.easeInOut',
+    });
+    this.tweens.add({
+      targets: collar,
+      x: landX,
+      y: landY - 14,
+      duration: 600,
+      delay: 550,
       ease: 'Sine.easeInOut',
     });
 
-    this.time.delayedCall(1200, () => {
-      this.cameras.main.fadeOut(260, 0, 0, 0);
-      this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
-        this.scene.start('BonusChapter', { profile: this.profile });
+    // Phase 3: settle beat + pulse at landing spot
+    this.time.delayedCall(1250, () => {
+      this.tweens.add({
+        targets: cape,
+        scaleX: 1.2,
+        scaleY: 1.2,
+        duration: 300,
+        yoyo: true,
+        ease: 'Sine.easeInOut',
       });
+
+      this.tweens.add({
+        targets: cape,
+        alpha: 0.7,
+        duration: 800,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      });
+
+      bt.x = landX;
+      bt.y = landY;
+      this.bonusLaunchArmed = false;
+      const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, landX, landY);
+      if (d >= bt.radius) {
+        this.bonusLaunchArmed = true;
+      }
+    });
+  }
+
+  private launchBonusChapter(): void {
+    if (this.transitioning) return;
+    track('bonus_marker_touched', { room: this.currentRoom.id });
+    this.transitioning = true;
+    SaveManager.flushSessionTime();
+
+    this.cameras.main.fadeOut(260, 0, 0, 0);
+    this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+      this.scene.start('BonusChapter', { profile: this.profile });
     });
   }
 
