@@ -1,6 +1,6 @@
 # Caius Birthday Game — Build Checkpoint (CONSOLIDATED)
 
-**Updated:** 2026-06-03
+**Updated:** 2026-06-04
 **Birthday:** 6/4 · **Party / true ship:** 6/6
 **Status:** Single source of truth for the build. Lives in the repo; both the Mac session and the browser session read and update THIS file.
 
@@ -9,18 +9,12 @@
 ## TL;DR — where this actually is
 
 - All art generation is COMPLETE (PixelLab work done; only regenerate if playtest surfaces something).
-- Top-down room system is built and proven: floor zones, foot-anchored sprites, depth sorting by feet, dev-mode drag-to-position tool that prints a paste-ready ROOM_OBJECTS array to the browser console.
-- **Nursery = finished reference room** (objects placed, sized, baked, committed).
-- **Living room = wired, awaiting drag-placement** (manifest keys added, LIVINGROOM_OBJECTS array with rough positions, drag tool generalized).
-- Remaining gap: place the other rooms, wire chapter scenes to real sprites, walk the game end to end, deploy, playtest.
-
-## THE ROOM LOOP (repeat per room)
-1. Confirm the room's object sprites are on disk AND in the SpriteBank manifest (plushies taught us: on disk ≠ mapped).
-2. Build/confirm its ROOM_OBJECTS array with rough positions.
-3. Dev mode on → drag-place in browser → copy newest console array.
-4. Bake the array into HouseScene, tsc clean, commit, push.
-
-**Room status:** nursery DONE · living-room wired/unplaced · master, kitchen, dining, bathroom, garage, play-area, hallway-upper, hallway-lower not started.
+- Top-down room system is built and proven: floor zones, foot-anchored sprites, depth sorting by feet, dev-mode drag-to-position tool.
+- **ALL TEN ROOMS placed and baked** — nursery, master-bedroom, bathroom, hallway-upper, hallway-lower, kitchen, dining, living-room, play-area, garage. Objects drag-tuned, arrays committed.
+- All chapter scenes and encounters wired to real sprites via SpriteBank (circle/rect primitives removed).
+- Fail states + RetryPopup standard across every minigame and encounter.
+- Chelsea-doorway and cape sprites wired. Door-label fog-of-war and marker re-arm guard active.
+- Deployed on Vercel Pro (single project, duplicate deleted).
 
 ---
 
@@ -31,30 +25,49 @@ Chapter homes: nursery M2/M3/M4/M8 · master M5 · dining M7 · living M6/M9/M11
 
 ---
 
-## FLAGGED — do not lose
-- [ ] Living room may have M2/M4 chapter markers wrongly assigned (terminal reported chapters 2,4,6,9,11 there). Verify markers in-room; fix rooms.ts assignment if wrong.
-- [ ] Remove `caius-roll`, `caius-crawl-l`, `caius-crawl-r` from SpriteBank MISSING set (files exist now) so Ch4/Ch5 use real art.
-- [ ] Kitchen vs living-room object split (open-concept): decide which pieces render in which room when placing the kitchen.
-- [ ] M11 cruise chain (sectional → coffee table → side table → bar stool) must be placed in a traversable line — layout feeds the chapter mechanic.
+## TONIGHT'S COMPLETED WORK (6/3–6/4 session)
 
-## GARAGE: locked-state visual + unlock beat (M12)
-- **Locked-door visual (build with garage room):** door must clearly read LOCKED all game. System exists (`locked?` check, tinted door, toast + bump-back in checkDoorways). Upgrade: lock/chain icon on the door gap + garage-specific "won't budge" feedback.
-- **Unlock caption (build with M12 flow):** on locked→unlocked after final rocket sub-system, fire one-time caption pointing the player to the garage. Potential line (not final): *"\*click\* ...was that the garage door unlocking? - Caius"*.
+### Sprite swaps — all scenes now use real sprites
+- **Chapters:** Ch04 (caius-roll, vtech-cube), Ch05 (bed, chelsea-asleep, dad-airplane, caius), Ch07 (caius, chelsea-idle, obj-dining-highchair), Ch11 (caius, chelsea-idle, furniture-sectional/coffeetable/sidetable/barstool)
+- **Encounters:** SnotSucker (caius), FaceWash (caius), BottleWait (caius, obj-portable-bottle-filled), ChangingTable (caius, obj-master-changingtable), Roomba (caius, obj-portable-roomba)
+- **BonusChapter:** caius sprite (buildings + cape stay programmatic by design)
+- **Still programmatic:** Ch06 dog-stealing circles (dog sprites exist but small; functional), Ch08 crib/stuffies (no stuffy sprites), Ch09 walker frame + obstacles + Chelsea rect (no walker sprite exists), Ch12 subsystem panel interiors, food circles in Ch07
+
+### Fail states + RetryPopup standard
+Shared `RetryPopup` component (dims scene, shows message, pauses timers/tweens, tap-to-retry).
+| Scene | Fail condition | Threshold |
+|---|---|---|
+| Ch05 HoliDadInn | Falls off bed (ph1) | 3 falls |
+| Ch06 GrabBag | Timer ends below WIN | <6 grabbed |
+| Ch07 FirstBites | Wrong responses (early-out) | Can't reach 10 |
+| Ch08 SleepTraining | Urge misses (ph2) | 3 misses → restart night |
+| Ch09 MazeWalker | Obstacle collisions | 5 hits (500ms cooldown) |
+| Ch10 Chatterbox | Queue empty, not enough matches | <5 base matches |
+| Ch11 Ledges | Early grip releases | 3 slips |
+| Ch12 Liftoff | **No fail state** | Finale is not losable |
+| BonusChapter | Missed toys | >6 misses (of 20 drops, need 14) |
+| SnotSucker | Hit by sucker | 2 of 3 swoops hit |
+| FaceWash | Cloth hits or wrong tap | 2 misses |
+| BottleWait | Patience reaches zero | Patience bar empty |
+| ChangingTable | Rolls off edge | Immediate |
+| Roomba | Contact or timeout | Immediate |
+
+### Infrastructure patterns
+- **Rocket-as-M12-trigger:** garage room's rocket object has `chapterTrigger: 12`, gated by `locked?` check until all prior chapters complete.
+- **Cape-chest-as-Bonus-trigger:** play-area toychest has `bonusTrigger: true`. Two-phase flow: `revealBonusCape` (chest tap → cape arcs to center-left floor) → `launchBonusChapter` (walk to landed cape → bonus launches). Strict re-arm between phases. Cape trigger radius ~26px.
+- **Door-label fog-of-war:** room door labels only show rooms the player has visited (completed chapters whose room matches the door target).
+- **Marker re-arm guard:** `markersArmed` flag starts false on room entry, re-arms only after player exits ALL marker/trigger radii. Prevents auto-fire on room load.
+- **Chelsea-doorway sprite:** wired as doorway sprite in room transitions.
 
 ---
 
-## REMAINING WORK (priority order)
-1. **Place remaining rooms** (room loop above). Living room next.
-2. **Wire chapter scenes to real sprites** (most scenes still placeholder; only Ch4/Ch5/Ch11 + HouseScene reference SpriteBank).
-3. **Walk it end to end:** boot → menu → house → Ch1 → Interlude I; then Ch11 → Ch12 → PostCredits (Chelsea doorway 3-sec linger). Fix transition sequencing.
-4. **Encounters** wired to HouseScene zones; save/load restores room; mobility gating verified; iOS tilt prompt + swipe fallback (Ch4, Ch5p1, Ch8, Bonus); Brutus unlock; Ch10 red cape.
-5. **Remaining sprites (non-generation-blocking):** Chelsea doorway (non-negotiable) / asleep / window; dad-sitting; Poe walk+sit; Duckie constellation; stuffies; food + UI can placeholder.
-6. **Audio:** music-box lullaby placeholder (Ch5p2, Interludes); per-chapter SFX; Chelsea recording is v1.1 by filename swap. Brandon has audio files to organize.
-7. **Deploy to Vercel EARLY** for real iOS testing; then friend playtest; then edits.
-8. **LAST: title card + end/dedication card**, styled to the cinematic look once the Midjourney anchor is locked. Dedication text locked: "For Chelsea, who made all of this possible."
-
-## Parallel: cinematic session (separate context)
-Produces the 63-sec post-credits cinematic (Midjourney + Kling) + title/end card art; hands files back; makes NO game/room decisions. Drop-in target: PostCreditsScene.
+## FLAGGED — open items
+- [ ] `chelsea-asleep` maps to `chelsea_rocking.png` — no true sleeping pose on disk. Ch05 uses it as-is.
+- [ ] Ch06 dog walk-frame polish — dogs use south-facing sprites only, could use directional frames.
+- [ ] Ch09 has no walker sprite — uses programmatic shapes (circle body + rect frame). No walker art exists on disk.
+- [ ] Ch08 stuffies are programmatic circles — no stuffy sprites on disk.
+- [ ] Food circles in Ch07 are programmatic — no food sprites.
+- [ ] Kitchen vs living-room object split (open-concept): some objects may overlap visually.
 
 ---
 
@@ -74,9 +87,6 @@ Produces the 63-sec post-credits cinematic (Midjourney + Kling) + title/end card
 | Ch12 intro words | "Mama. Dada." · Post-credits word: "Mama!" (joyful) |
 | Cut order if behind | Ch3 → cutscene first; drop BottleWait + FaceWash; NEVER cut interludes / post-credits / Ch1 audio / Ch5 lullaby |
 | Dedication | "For Chelsea, who made all of this possible." — non-negotiable |
+| Deploy | Vercel Pro, single project (duplicate deleted), pushes to main trigger deploy |
 
-**Room status:** nursery DONE · living-room DONE · dining DONE · master-bedroom DONE · garage wired/unplaced · kitchen wired/unplaced · bathroom wired/unplaced · play-area wired/unplaced · hallway-upper not started · hallway-lower not started.
-
-webhook verification after duplicate project deletion
-webhook verification after duplicate project deletion (2)
-verify deploys after Pro upgrade
+**Room status:** ALL TEN ROOMS PLACED AND BAKED — nursery, master-bedroom, bathroom, hallway-upper, hallway-lower, kitchen, dining, living-room, play-area, garage.
