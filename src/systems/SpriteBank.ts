@@ -55,6 +55,7 @@ const MANIFEST: Record<string, string> = {
 
   // ── Play-area portables ───────────────────────────────────────────────────
   'obj-portable-snackcup':    '/assets/sprites/portable/obj_portable_snackcup.png',
+  'obj-portable-roomba':      '/assets/sprites/portable/obj_portable_roomba.png',
 
   // ── Ch11 furniture (reconciled to available sprites) ────────────────────────
   'furniture-sectional':   '/assets/sprites/rooms/living_kitchen/obj_livingroom_sectional.png',
