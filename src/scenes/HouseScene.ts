@@ -74,14 +74,14 @@ const NURSERY_OBJECTS: RoomObject[] = [
 
 // ── Living room layout ──────────────────────────────────────────────────────
 const LIVINGROOM_OBJECTS: RoomObject[] = [
-  { key: 'obj-livingroom-sectional-west', fx: 0.500, fy: 0.600, displayW: 288, displayH: 173,
+  { key: 'obj-livingroom-sectional-west', fx: 0.185, fy: 0.455, displayW: 288, displayH: 173,
     footprintRects: [
       { dx: -144, dy: -173, w: 80, h: 173 },
       { dx: -144, dy: -52,  w: 288, h: 52 },
     ] },
-  { key: 'obj-livingroom-sidetable',      fx: 0.880, fy: 0.550, displayW: 106, displayH: 106 },
-  { key: 'obj-livingroom-tv',             fx: 0.500, fy: 0.020, displayW: 128, displayH: 64,  wallArt: true },
-  { key: 'obj-livingroom-coffeehutch',    fx: 0.100, fy: 0.150, displayW: 153, displayH: 229 },
+  { key: 'obj-livingroom-sidetable',      fx: 0.611, fy: 0.504, displayW: 106, displayH: 106 },
+  { key: 'obj-livingroom-tv',             fx: 0.225, fy: 0.946, displayW: 128, displayH: 64,  wallArt: true },
+  { key: 'obj-livingroom-coffeehutch',    fx: 0.915, fy: 0.631, displayW: 153, displayH: 229 },
 ];
 
 // ── Misc constants ────────────────────────────────────────────────────────────
