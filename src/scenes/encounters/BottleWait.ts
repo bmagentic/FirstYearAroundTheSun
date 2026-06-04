@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { EncounterBase } from './EncounterBase';
+import { SpriteBank } from '../../systems/SpriteBank';
 
 const FILL_TIME_MS = 30_000;
 const PATIENCE_DRAIN_PER_SEC = 0.18;
@@ -21,6 +22,10 @@ export class BottleWait extends EncounterBase {
     super('BottleWait', 'bottle-wait');
   }
 
+  preload(): void {
+    SpriteBank.preloadInto(this, ['caius', 'obj-portable-bottle-filled']);
+  }
+
   create(): void {
     this.setupEncounter();
     this.cameras.main.setBackgroundColor('#352840');
@@ -29,20 +34,18 @@ export class BottleWait extends EncounterBase {
     const W = this.scale.width;
     const H = this.scale.height;
 
-    // Bottle shape at top
+    // Bottle shape at top — sprite used as shell, liquid fill overlays it
     const bottleX = W / 2;
     const bottleTop = 120;
     this.bottleHeight = 200;
     this.bottleY = bottleTop + this.bottleHeight / 2;
-    this.add.rectangle(bottleX, bottleTop - 10, 30, 20, 0xe6c4a0).setStrokeStyle(2, 0x6b4530);
-    const bottleShell = this.add.rectangle(bottleX, this.bottleY, 80, this.bottleHeight).setStrokeStyle(3, 0xe6e6f5);
-    void bottleShell;
+    this.add.image(bottleX, this.bottleY, 'obj-portable-bottle-filled').setDisplaySize(80, this.bottleHeight).setAlpha(0.25);
     this.bottleLiquid = this.add
       .rectangle(bottleX, this.bottleY + this.bottleHeight / 2, 74, 0, 0xfff3c7)
       .setOrigin(0.5, 1);
 
     // Caius
-    this.add.circle(W / 2, H * 0.66, 22, 0xf7c6a3).setStrokeStyle(2, 0x402c1d);
+    this.add.image(W / 2, H * 0.66, 'caius').setDisplaySize(44, 44);
 
     // Patience bar
     this.add
