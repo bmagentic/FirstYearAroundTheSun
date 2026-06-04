@@ -52,7 +52,8 @@ const MANIFEST: Record<string, string> = {
   'obj-plush-ribbie':      '/assets/sprites/plushies/obj_plush_ribbie.png',
 
   // ── Living room object sprites ─────────────────────────────────────────────
-  'obj-livingroom-sectional':    '/assets/sprites/rooms/living_kitchen/obj_livingroom_sectional.png',
+  'obj-livingroom-sectional':      '/assets/sprites/rooms/living_kitchen/obj_livingroom_sectional.png',
+  'obj-livingroom-sectional-west': '/assets/sprites/rooms/living_kitchen/obj_livingroom_sectional_west.png',
   'obj-livingroom-coffeetable':  '/assets/sprites/rooms/living_kitchen/obj_livingroom_coffeetable.png',
   'obj-livingroom-sidetable':    '/assets/sprites/rooms/living_kitchen/obj_livingroom_sidetable.png',
   'obj-livingroom-tv':           '/assets/sprites/rooms/living_kitchen/obj_livingroom_tv.png',

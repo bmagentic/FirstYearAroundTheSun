@@ -60,8 +60,10 @@ export const ROOMS: Record<RoomId, RoomDef> = {
     accentColor: 0xf6c87d,
     markers: [
       { chapter: 1, x: 0.30, y: 0.30 },
-      { chapter: 3, x: 0.70, y: 0.30 },
-      { chapter: 8, x: 0.50, y: 0.65 },
+      { chapter: 2, x: 0.70, y: 0.30 },
+      { chapter: 3, x: 0.30, y: 0.65 },
+      { chapter: 4, x: 0.70, y: 0.65 },
+      { chapter: 8, x: 0.50, y: 0.45 },
     ],
     doorways: [{ side: 'bottom', position: 0.5, to: 'hallway-upper' }],
     encounterChance: 0,
@@ -156,11 +158,9 @@ export const ROOMS: Record<RoomId, RoomDef> = {
     wallColor: WALL.dusty,
     accentColor: 0xf7e3c0,
     markers: [
-      { chapter: 2,  x: 0.28, y: 0.30 },
-      { chapter: 4,  x: 0.72, y: 0.30 },
-      { chapter: 6,  x: 0.28, y: 0.65 },
-      { chapter: 9,  x: 0.72, y: 0.65 },
-      { chapter: 11, x: 0.50, y: 0.45 },
+      { chapter: 6,  x: 0.28, y: 0.35 },
+      { chapter: 9,  x: 0.72, y: 0.35 },
+      { chapter: 11, x: 0.50, y: 0.65 },
     ],
     doorways: [
       { side: 'top',  position: 0.5, to: 'hallway-lower' },
