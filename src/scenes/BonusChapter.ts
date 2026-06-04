@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { ChapterBase } from './chapters/ChapterBase';
 import { SaveManager } from '../systems/SaveManager';
 import { track } from '../systems/Analytics';
+import { SpriteBank } from '../systems/SpriteBank';
 
 const DURATION_MS = 60_000;
 const SPAWN_INTERVAL_MS = 900;
@@ -31,6 +32,10 @@ export class BonusChapter extends ChapterBase {
     super('BonusChapter', 0);
   }
 
+  preload(): void {
+    SpriteBank.preloadInto(this, ['caius']);
+  }
+
   create(): void {
     this.setup();
     this.cameras.main.setBackgroundColor('#7aa8d8');
@@ -50,7 +55,7 @@ export class BonusChapter extends ChapterBase {
     this.caius = this.add.container(W / 2, H - 150);
     const dadArms = this.add.rectangle(0, 22, 120, 16, 0xe6c4a0).setStrokeStyle(1, 0x6b4530);
     const cape = this.add.triangle(0, -4, -20, 0, 20, 0, 0, 36, 0xb91c1c).setStrokeStyle(1, 0xfde68a);
-    const body = this.add.circle(0, 0, 16, 0xf7c6a3).setStrokeStyle(2, 0x402c1d);
+    const body = this.add.image(0, 0, 'caius').setDisplaySize(32, 32);
     this.caius.add([dadArms, cape, body]);
     this.dragX = W / 2;
 
