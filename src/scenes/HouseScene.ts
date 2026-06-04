@@ -100,10 +100,10 @@ const DINING_OBJECTS: RoomObject[] = [
 // ── Master bedroom layout ──────────────────────────────────────────────────
 // Bed is the M5 centerpiece (crawl stage); Soka's bed-curl sprite goes at ~(0.65, 0.15) later.
 const MASTER_OBJECTS: RoomObject[] = [
-  { key: 'bed',                       fx: 0.500, fy: 0.050, displayW: 320, displayH: 240 },
+  { key: 'bed',                       fx: 0.500, fy: 0.050, displayW: 282, displayH: 211 },
   { key: 'obj-master-dresser',        fx: 0.100, fy: 0.500, displayW: 128, displayH: 192 },
-  { key: 'obj-master-changingtable',  fx: 0.900, fy: 0.400, displayW: 96,  displayH: 128 },
-  { key: 'obj-master-floormattress',  fx: 0.750, fy: 0.700, displayW: 128, displayH: 64  },
+  { key: 'obj-master-changingtable',  fx: 0.900, fy: 0.400, displayW: 106, displayH: 141 },
+  { key: 'obj-master-floormattress',  fx: 0.750, fy: 0.700, displayW: 141, displayH: 70  },
   { key: 'obj-livingroom-tv',         fx: 0.500, fy: 0.000, displayW: 128, displayH: 64,  wallArt: true },
 ];
 
