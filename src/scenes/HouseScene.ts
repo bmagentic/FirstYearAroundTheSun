@@ -74,7 +74,7 @@ const LIVINGROOM_OBJECTS: RoomObject[] = [
   { key: 'obj-livingroom-sectional-west', fx: 0.500, fy: 0.600, displayW: 288, displayH: 173 },
   { key: 'obj-livingroom-sidetable',      fx: 0.880, fy: 0.550, displayW: 106, displayH: 106 },
   { key: 'obj-livingroom-tv',             fx: 0.500, fy: 0.020, displayW: 128, displayH: 64,  wallArt: true },
-  { key: 'obj-livingroom-coffeehutch',    fx: 0.100, fy: 0.150, displayW: 180, displayH: 269 },
+  { key: 'obj-livingroom-coffeehutch',    fx: 0.100, fy: 0.150, displayW: 153, displayH: 229 },
 ];
 
 // ── Misc constants ────────────────────────────────────────────────────────────
@@ -146,14 +146,10 @@ export class HouseScene extends Phaser.Scene {
       'room-dining-bg',
       'room-bathroom-bg',
       // Living room object sprites
-      'obj-livingroom-sectional',
-      'obj-livingroom-coffeetable',
+      'obj-livingroom-sectional-west',
       'obj-livingroom-sidetable',
       'obj-livingroom-tv',
       'obj-livingroom-coffeehutch',
-      'obj-livingroom-gallerywall',
-      'obj-livingroom-horsepainting',
-      'obj-livingroom-clock',
       // Nursery object sprites (reference room)
       'obj-nursery-crib',
       'obj-nursery-dresser',
