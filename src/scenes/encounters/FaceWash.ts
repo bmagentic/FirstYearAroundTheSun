@@ -1,11 +1,13 @@
 import Phaser from 'phaser';
 import { EncounterBase } from './EncounterBase';
 import { SpriteBank } from '../../systems/SpriteBank';
+import { RetryPopup } from '../../ui/RetryPopup';
 
 type Side = 'left' | 'right' | 'top' | 'bottom';
 const SIDES: Side[] = ['left', 'right', 'top', 'bottom'];
 const OPPOSITE: Record<Side, Side> = { left: 'right', right: 'left', top: 'bottom', bottom: 'top' };
 const AVOIDS_NEEDED = 4;
+const MAX_MISSES = 2;
 
 export class FaceWash extends EncounterBase {
   private caius!: Phaser.GameObjects.Container;
@@ -14,7 +16,9 @@ export class FaceWash extends EncounterBase {
   private buttons: Record<Side, Phaser.GameObjects.Container> = {} as Record<Side, Phaser.GameObjects.Container>;
   private accepting = false;
   private avoided = 0;
+  private misses = 0;
   private clothTween: Phaser.Tweens.Tween | null = null;
+  private retryPopup!: RetryPopup;
 
   constructor() {
     super('FaceWash', 'face-wash');
@@ -26,6 +30,7 @@ export class FaceWash extends EncounterBase {
 
   create(): void {
     this.setupEncounter();
+    this.retryPopup = new RetryPopup(this);
     this.cameras.main.setBackgroundColor('#2e3b54');
     this.showLabel('Face & Hands Wash', 'Tap the OPPOSITE direction to dodge');
 
@@ -81,9 +86,14 @@ export class FaceWash extends EncounterBase {
       onComplete: () => {
         if (!this.accepting) return;
         this.accepting = false;
+        this.misses++;
         this.softFail('washed', 'Got him!');
         this.cloth.setVisible(false);
-        this.time.delayedCall(600, () => this.nextSwipe());
+        if (this.misses >= MAX_MISSES) {
+          this.retryPopup.show(() => this.resetRound(), 'That washcloth is fast! Try again!');
+        } else {
+          this.time.delayedCall(600, () => this.nextSwipe());
+        }
       },
     });
   }
@@ -108,10 +118,24 @@ export class FaceWash extends EncounterBase {
         },
       });
     } else {
+      this.misses++;
       this.softFail('wrong-tap', 'Wrong side!');
       this.cloth.setVisible(false);
-      this.time.delayedCall(600, () => this.nextSwipe());
+      if (this.misses >= MAX_MISSES) {
+        this.retryPopup.show(() => this.resetRound(), 'That washcloth is fast! Try again!');
+      } else {
+        this.time.delayedCall(600, () => this.nextSwipe());
+      }
     }
+  }
+
+  private resetRound(): void {
+    this.avoided = 0;
+    this.misses = 0;
+    this.accepting = false;
+    this.cloth.setVisible(false);
+    this.cloth.setAlpha(1);
+    this.time.delayedCall(400, () => this.nextSwipe());
   }
 
   private sidePosition(s: Side): { x: number; y: number } {
