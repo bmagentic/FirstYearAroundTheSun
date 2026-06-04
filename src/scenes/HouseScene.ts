@@ -56,6 +56,8 @@ type RoomObject = {
   conditional?: (profile: SaveProfile) => boolean;
   /** Touching this object launches the given chapter (replaces a marker). */
   chapterTrigger?: number;
+  /** Touching this object launches the bonus chapter (when bonusChapterReady). */
+  bonusTrigger?: boolean;
 };
 
 // Positions are tuned for the nursery's top-down floor plan.
@@ -142,7 +144,7 @@ const BATHROOM_OBJECTS: RoomObject[] = [
 
 // ── Play area layout ───────────────────────────────────────────────────────
 const PLAYAREA_OBJECTS: RoomObject[] = [
-  { key: 'obj-nursery-toychest',    fx: 0.100, fy: 0.150, displayW: 94,  displayH: 70  },
+  { key: 'obj-nursery-toychest',    fx: 0.100, fy: 0.150, displayW: 94,  displayH: 70, bonusTrigger: true },
   { key: 'vtech-cube',              fx: 0.800, fy: 0.300, displayW: 96,  displayH: 96  },
   { key: 'obj-portable-snackcup',   fx: 0.650, fy: 0.700, displayW: 51,  displayH: 77  },
   { key: 'obj-plush-francois',      fx: 0.300, fy: 0.400, displayW: 60,  displayH: 60  },
@@ -173,7 +175,6 @@ export class HouseScene extends Phaser.Scene {
   private roomLabel!: Phaser.GameObjects.Text;
   private transitioning = false;
   private markers: Array<{ chapter: number; x: number; y: number }> = [];
-  private capeMarker: { x: number; y: number } | null = null;
   private toastText: Phaser.GameObjects.Text | null = null;
   private devModeUnsub: (() => void) | null = null;
   private encounters = new EncounterManager();
@@ -196,6 +197,8 @@ export class HouseScene extends Phaser.Scene {
   private devDragPositions = new Map<number, { fx: number; fy: number }>();
   /** Objects that launch a chapter when touched (replaces numbered markers). */
   private chapterTriggerObjects: Array<{ chapter: number; x: number; y: number; radius: number }> = [];
+  /** Bonus chapter trigger (toy chest with cape). */
+  private bonusTriggerObject: { x: number; y: number; radius: number } | null = null;
 
   constructor() {
     super({ key: 'HouseScene' });
@@ -369,7 +372,7 @@ export class HouseScene extends Phaser.Scene {
     this.roomSprites  = [];
     this.markers      = [];
     this.chapterTriggerObjects = [];
-    this.capeMarker   = null;
+    this.bonusTriggerObject = null;
     this.doorNotches  = [];
     this.footprints   = [];
     this.footprintKeys = [];
@@ -384,7 +387,6 @@ export class HouseScene extends Phaser.Scene {
     this.clipFootprintsAroundDoors();
     this.drawDebugOverlays();
     this.drawMarkers(def);
-    this.drawBonusCape(def);
     this.roomLabel.setText(def.label);
 
     const fz = this.currentFloorZone;
@@ -688,6 +690,24 @@ export class HouseScene extends Phaser.Scene {
         });
       }
 
+      // Bonus trigger: toy chest glows after Ch10 complete
+      if (obj.bonusTrigger && bonusChapterReady(this.profile)) {
+        const triggerRadius = Math.max(obj.displayW, obj.displayH) * 0.6;
+        this.bonusTriggerObject = {
+          x: footX,
+          y: footY - obj.displayH / 2,
+          radius: triggerRadius,
+        };
+        this.tweens.add({
+          targets: sprite,
+          scale: 1.08,
+          duration: 900,
+          yoyo: true,
+          repeat: -1,
+          ease: 'Sine.easeInOut',
+        });
+      }
+
       if (devMode) {
         const objIndex    = oi;
         const objKey      = obj.key;
@@ -811,37 +831,6 @@ export class HouseScene extends Phaser.Scene {
     }
   }
 
-  private drawBonusCape(def: RoomDef): void {
-    if (def.id !== 'play-area') return;
-    if (!bonusChapterReady(this.profile)) return;
-
-    const bounds = this.roomBounds();
-    const x      = bounds.x + bounds.width  * 0.25;
-    const y      = bounds.y + bounds.height * 0.35;
-
-    const cape   = this.add.rectangle(x, y, 22, 26, 0xdc2626).setStrokeStyle(2, 0xfde047);
-    const collar = this.add.rectangle(x, y - 12, 12, 4, 0xfde047);
-    const label  = this.add
-      .text(x, y + 22, 'CAPE', {
-        fontFamily: 'system-ui, sans-serif',
-        fontSize: '10px',
-        color: '#fde047',
-        fontStyle: 'bold',
-      })
-      .setOrigin(0.5);
-    this.tweens.add({
-      targets: cape,
-      scaleX: 1.15,
-      scaleY: 1.15,
-      duration: 700,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut',
-    });
-    this.worldLayer.add([cape, collar, label]);
-    this.capeMarker = { x, y };
-  }
-
   // ── Interaction ──────────────────────────────────────────────────────────────
 
   private checkMarkerProximity(): void {
@@ -859,9 +848,9 @@ export class HouseScene extends Phaser.Scene {
         return;
       }
     }
-    if (this.capeMarker) {
-      const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.capeMarker.x, this.capeMarker.y);
-      if (d < 26) this.attemptLaunchBonus();
+    if (this.bonusTriggerObject) {
+      const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.bonusTriggerObject.x, this.bonusTriggerObject.y);
+      if (d < this.bonusTriggerObject.radius) this.attemptLaunchBonus();
     }
   }
 
@@ -870,9 +859,39 @@ export class HouseScene extends Phaser.Scene {
     track('bonus_marker_touched', { room: this.currentRoom.id });
     this.transitioning = true;
     SaveManager.flushSessionTime();
-    this.cameras.main.fadeOut(260, 0, 0, 0);
-    this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
-      this.scene.start('BonusChapter', { profile: this.profile });
+
+    const bt = this.bonusTriggerObject;
+    if (!bt) return;
+
+    // FLAG: cape visual is programmatic — swap for sprite when available
+    const cape = this.add.rectangle(bt.x, bt.y - 10, 22, 28, 0xdc2626)
+      .setStrokeStyle(2, 0xfde047).setAlpha(0).setDepth(50);
+    const collar = this.add.rectangle(bt.x, bt.y - 24, 14, 5, 0xfde047)
+      .setAlpha(0).setDepth(50);
+
+    // Cape rises out of chest with flourish
+    this.tweens.add({
+      targets: [cape, collar],
+      y: '-=40',
+      alpha: 1,
+      duration: 600,
+      ease: 'Back.easeOut',
+    });
+    this.tweens.add({
+      targets: cape,
+      scaleX: 1.3,
+      scaleY: 1.3,
+      duration: 400,
+      delay: 600,
+      yoyo: true,
+      ease: 'Sine.easeInOut',
+    });
+
+    this.time.delayedCall(1200, () => {
+      this.cameras.main.fadeOut(260, 0, 0, 0);
+      this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+        this.scene.start('BonusChapter', { profile: this.profile });
+      });
     });
   }
 
