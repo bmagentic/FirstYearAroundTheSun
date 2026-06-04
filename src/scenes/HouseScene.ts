@@ -191,6 +191,8 @@ export class HouseScene extends Phaser.Scene {
   private lastRejectLog = 0;
   /** Doors disarmed until player exits all trigger zones after spawn. */
   private doorsArmed = true;
+  /** Markers disarmed until player exits all marker/trigger radii after spawn. */
+  private markersArmed = true;
   /** DevMode only: live fx/fy per object index in the room array, updated on every drop. */
   private devDragPositions = new Map<number, { fx: number; fy: number }>();
   /** Objects that launch a chapter when touched (replaces numbered markers). */
@@ -406,6 +408,7 @@ export class HouseScene extends Phaser.Scene {
     this.player.setDepth(footDepth(py));
 
     this.doorsArmed = false;
+    this.markersArmed = false;
     this.encounters.onEnterRoom(def.encounterChance, performance.now());
     if (!opts.firstLoad) this.cameras.main.fadeIn(TRANSITION_MS, 0, 0, 0);
     this.transitioning = false;
@@ -855,23 +858,32 @@ export class HouseScene extends Phaser.Scene {
   // ── Interaction ──────────────────────────────────────────────────────────────
 
   private checkMarkerProximity(): void {
+    let anyActive = false;
+
     for (const marker of this.markers) {
       const dist = Phaser.Math.Distance.Between(this.player.x, this.player.y, marker.x, marker.y);
       if (dist < 26) {
-        this.attemptLaunchChapter(marker.chapter);
-        return;
+        anyActive = true;
+        if (this.markersArmed) { this.attemptLaunchChapter(marker.chapter); return; }
       }
     }
     for (const trigger of this.chapterTriggerObjects) {
       const dist = Phaser.Math.Distance.Between(this.player.x, this.player.y, trigger.x, trigger.y);
       if (dist < trigger.radius) {
-        this.attemptLaunchChapter(trigger.chapter);
-        return;
+        anyActive = true;
+        if (this.markersArmed) { this.attemptLaunchChapter(trigger.chapter); return; }
       }
     }
     if (this.bonusTriggerObject) {
       const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.bonusTriggerObject.x, this.bonusTriggerObject.y);
-      if (d < this.bonusTriggerObject.radius) this.attemptLaunchBonus();
+      if (d < this.bonusTriggerObject.radius) {
+        anyActive = true;
+        if (this.markersArmed) { this.attemptLaunchBonus(); return; }
+      }
+    }
+
+    if (!this.markersArmed && !anyActive) {
+      this.markersArmed = true;
     }
   }
 
