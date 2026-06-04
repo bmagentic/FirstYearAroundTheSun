@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { InterludeBase } from './InterludeBase';
 import { SoundBank } from '../../systems/SoundBank';
+import { SpriteBank } from '../../systems/SpriteBank';
 
 type Task = { label: string; icon: string };
 
@@ -40,6 +41,7 @@ export class Interlude02_Mama extends InterludeBase {
   }
 
   preload(): void {
+    SpriteBank.preloadInto(this, ['chelsea-idle', 'caius']);
     SoundBank.preload('lullaby');
   }
 
@@ -75,8 +77,11 @@ export class Interlude02_Mama extends InterludeBase {
     const matY = H * 0.72;
     this.add.ellipse(W / 2, matY, 220, 90, 0x6b8e5a).setStrokeStyle(2, 0xfde68a, 0.3);
     this.caius = this.add.container(W / 2, matY - 8);
-    const body = this.add.circle(0, 0, 14, 0xf7c6a3).setStrokeStyle(2, 0x402c1d);
-    this.caius.add(body);
+    if (SpriteBank.has(this, 'caius')) {
+      this.caius.add(this.add.image(0, 0, 'caius').setDisplaySize(28, 28));
+    } else {
+      this.caius.add(this.add.circle(0, 0, 14, 0xf7c6a3).setStrokeStyle(2, 0x402c1d));
+    }
 
     // Chelsea position anchors
     this.chelseaTaskX = W / 2;
@@ -85,9 +90,13 @@ export class Interlude02_Mama extends InterludeBase {
     this.chelseaCaiusY = matY - 30;
 
     this.chelsea = this.add.container(this.chelseaTaskX, this.chelseaTaskY);
-    const head = this.add.circle(0, -22, 14, 0xf5c7a3).setStrokeStyle(2, 0x6b4530);
-    const torso = this.add.rectangle(0, 10, 32, 50, 0x7c5fb0).setStrokeStyle(2, 0xfde68a, 0.7);
-    this.chelsea.add([torso, head]);
+    if (SpriteBank.has(this, 'chelsea-idle')) {
+      this.chelsea.add(this.add.image(0, -6, 'chelsea-idle').setDisplaySize(32, 82));
+    } else {
+      const head = this.add.circle(0, -22, 14, 0xf5c7a3).setStrokeStyle(2, 0x6b4530);
+      const torso = this.add.rectangle(0, 10, 32, 50, 0x7c5fb0).setStrokeStyle(2, 0xfde68a, 0.7);
+      this.chelsea.add([torso, head]);
+    }
 
     // Call button
     this.callBtn = this.add.container(W / 2, H - 130);
