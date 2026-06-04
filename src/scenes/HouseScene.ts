@@ -135,11 +135,10 @@ const KITCHEN_OBJECTS: RoomObject[] = [
 ];
 
 // ── Bathroom layout ────────────────────────────────────────────────────────
-// FLAG: tubwater (96×32 strip) reads as a flat puddle, not a room object — included but may cut.
 const BATHROOM_OBJECTS: RoomObject[] = [
-  { key: 'obj-bathroom-showercurtain', fx: 0.500, fy: 0.050, displayW: 128, displayH: 192 },
-  { key: 'obj-bathroom-rubberduck',    fx: 0.700, fy: 0.300, displayW: 64,  displayH: 64  },
-  { key: 'obj-bathroom-bathproducts',  fx: 0.150, fy: 0.400, displayW: 64,  displayH: 64  },
+  { key: 'obj-bathroom-showercurtain', fx: 0.709, fy: -0.086, displayW: 128, displayH: 192 },
+  { key: 'obj-bathroom-rubberduck',    fx: 0.920, fy: 0.053,  displayW: 64,  displayH: 64  },
+  { key: 'obj-bathroom-bathproducts',  fx: 0.970, fy: 0.491,  displayW: 64,  displayH: 64  },
 ];
 
 // ── Play area layout ───────────────────────────────────────────────────────
