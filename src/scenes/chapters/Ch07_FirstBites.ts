@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { ChapterBase } from './ChapterBase';
+import { SpriteBank } from '../../systems/SpriteBank';
 
 type FoodKind = 'good' | 'bad';
 type Food = {
@@ -38,6 +39,10 @@ export class Ch07_FirstBites extends ChapterBase {
     super('Ch07_FirstBites', 7);
   }
 
+  preload(): void {
+    SpriteBank.preloadInto(this, ['caius', 'chelsea-idle', 'obj-dining-highchair']);
+  }
+
   create(): void {
     this.setup();
     this.cameras.main.setBackgroundColor('#3a2515');
@@ -49,20 +54,32 @@ export class Ch07_FirstBites extends ChapterBase {
     this.add.rectangle(W / 2, H / 2 - 60, W - 40, 200, 0x6b4530).setStrokeStyle(2, 0xb88c5a, 0.4);
 
     // Caius in high chair
-    const chair = this.add.rectangle(W / 2, H / 2 + 60, 160, 200, 0x4f6a3d).setStrokeStyle(2, 0xfde68a, 0.4);
+    if (SpriteBank.has(this, 'obj-dining-highchair')) {
+      this.add.image(W / 2, H / 2 + 60, 'obj-dining-highchair').setDisplaySize(160, 200);
+    } else {
+      this.add.rectangle(W / 2, H / 2 + 60, 160, 200, 0x4f6a3d).setStrokeStyle(2, 0xfde68a, 0.4);
+    }
     const tray = this.add.rectangle(W / 2, H / 2 + 10, 180, 16, 0x8a6540);
-    this.add.circle(W / 2, H / 2 - 20, 24, 0xf7c6a3).setStrokeStyle(2, 0x402c1d);
+    if (SpriteBank.has(this, 'caius')) {
+      this.add.image(W / 2, H / 2 - 20, 'caius').setDisplaySize(48, 48);
+    } else {
+      this.add.circle(W / 2, H / 2 - 20, 24, 0xf7c6a3).setStrokeStyle(2, 0x402c1d);
+    }
 
     // Chelsea on left side (the spoon holder)
-    const chelsea = this.add.rectangle(60, H / 2, 50, 90, 0x7c5fb0).setStrokeStyle(2, 0xfde68a, 0.7);
-    this.add
-      .text(chelsea.x, chelsea.y - 50, 'Mama', {
-        fontFamily: 'system-ui, sans-serif',
-        fontSize: '10px',
-        color: '#fde68a',
-        fontStyle: 'bold',
-      })
-      .setOrigin(0.5);
+    if (SpriteBank.has(this, 'chelsea-idle')) {
+      this.add.image(60, H / 2, 'chelsea-idle').setDisplaySize(50, 120);
+    } else {
+      const chelsea = this.add.rectangle(60, H / 2, 50, 90, 0x7c5fb0).setStrokeStyle(2, 0xfde68a, 0.7);
+      this.add
+        .text(chelsea.x, chelsea.y - 50, 'Mama', {
+          fontFamily: 'system-ui, sans-serif',
+          fontSize: '10px',
+          color: '#fde68a',
+          fontStyle: 'bold',
+        })
+        .setOrigin(0.5);
+    }
 
     this.chelseaReact = this.add
       .text(60, H / 2 + 60, '', {
@@ -109,7 +126,6 @@ export class Ch07_FirstBites extends ChapterBase {
       this.nextSpoon();
     });
 
-    void chair;
     void tray;
   }
 

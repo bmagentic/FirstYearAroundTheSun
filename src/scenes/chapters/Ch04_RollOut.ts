@@ -12,7 +12,7 @@ export class Ch04_RollOut extends ChapterBase {
   private caius!: Phaser.GameObjects.Container;
   private vx = 0;
   private vy = 0;
-  private cube!: Phaser.GameObjects.Rectangle;
+  private cube!: Phaser.GameObjects.GameObject & { x: number; y: number };
   private obstacles: Phaser.GameObjects.Rectangle[] = [];
   private playArea!: { x: number; y: number; w: number; h: number };
   private active = false;
@@ -42,17 +42,21 @@ export class Ch04_RollOut extends ChapterBase {
     // Cube goal
     const cubeX = x + w - CUBE_SIZE;
     const cubeY = y + CUBE_SIZE;
-    this.cube = this.add
-      .rectangle(cubeX, cubeY, CUBE_SIZE, CUBE_SIZE, 0xe24a4a)
-      .setStrokeStyle(2, 0xfde68a, 0.9);
-    this.add
-      .text(cubeX, cubeY, 'CUBE', {
-        fontFamily: 'system-ui, sans-serif',
-        fontSize: '9px',
-        color: '#fde68a',
-        fontStyle: 'bold',
-      })
-      .setOrigin(0.5);
+    if (SpriteBank.has(this, 'vtech-cube')) {
+      this.cube = this.add.image(cubeX, cubeY, 'vtech-cube').setDisplaySize(CUBE_SIZE, CUBE_SIZE);
+    } else {
+      this.cube = this.add
+        .rectangle(cubeX, cubeY, CUBE_SIZE, CUBE_SIZE, 0xe24a4a)
+        .setStrokeStyle(2, 0xfde68a, 0.9);
+      this.add
+        .text(cubeX, cubeY, 'CUBE', {
+          fontFamily: 'system-ui, sans-serif',
+          fontSize: '9px',
+          color: '#fde68a',
+          fontStyle: 'bold',
+        })
+        .setOrigin(0.5);
+    }
     this.tweens.add({
       targets: this.cube,
       scale: 1.1,
