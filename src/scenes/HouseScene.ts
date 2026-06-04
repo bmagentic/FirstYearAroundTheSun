@@ -71,14 +71,14 @@ const NURSERY_OBJECTS: RoomObject[] = [
 
 // ── Living room layout ──────────────────────────────────────────────────────
 const LIVINGROOM_OBJECTS: RoomObject[] = [
-  { key: 'obj-livingroom-sectional',     fx: 0.500, fy: 0.500, displayW: 160, displayH: 120 },
-  { key: 'obj-livingroom-coffeetable',   fx: 0.500, fy: 0.350, displayW: 80,  displayH: 50  },
-  { key: 'obj-livingroom-sidetable',     fx: 0.850, fy: 0.500, displayW: 50,  displayH: 50  },
-  { key: 'obj-livingroom-tv',            fx: 0.500, fy: -0.050, displayW: 100, displayH: 60  },
-  { key: 'obj-livingroom-coffeehutch',   fx: 0.100, fy: 0.100, displayW: 70,  displayH: 80  },
-  { key: 'obj-livingroom-gallerywall',   fx: 0.750, fy: 0.000, displayW: 120, displayH: 40,  wallArt: true },
-  { key: 'obj-livingroom-horsepainting', fx: 0.250, fy: 0.000, displayW: 60,  displayH: 50,  wallArt: true },
-  { key: 'obj-livingroom-clock',         fx: 0.950, fy: 0.000, displayW: 30,  displayH: 40,  wallArt: true },
+  { key: 'obj-livingroom-sectional',     fx: 0.500, fy: 0.600, displayW: 240, displayH: 144 },
+  { key: 'obj-livingroom-coffeetable',   fx: 0.500, fy: 0.400, displayW: 128, displayH: 64  },
+  { key: 'obj-livingroom-sidetable',     fx: 0.880, fy: 0.550, displayW: 96,  displayH: 96  },
+  { key: 'obj-livingroom-tv',            fx: 0.500, fy: 0.020, displayW: 128, displayH: 64,  wallArt: true },
+  { key: 'obj-livingroom-coffeehutch',   fx: 0.100, fy: 0.150, displayW: 128, displayH: 192 },
+  { key: 'obj-livingroom-gallerywall',   fx: 0.750, fy: 0.000, displayW: 192, displayH: 128, wallArt: true },
+  { key: 'obj-livingroom-horsepainting', fx: 0.200, fy: 0.000, displayW: 128, displayH: 96,  wallArt: true },
+  { key: 'obj-livingroom-clock',         fx: 0.950, fy: 0.000, displayW: 64,  displayH: 64,  wallArt: true },
 ];
 
 // ── Misc constants ────────────────────────────────────────────────────────────
