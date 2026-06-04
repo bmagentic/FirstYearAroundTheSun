@@ -94,8 +94,8 @@ const DINING_OBJECTS: RoomObject[] = [
   { key: 'obj-dining-basketstand',    fx: 0.900, fy: 0.150, displayW: 64,  displayH: 192 },
   { key: 'obj-dining-familylamp',     fx: 0.450, fy: 0.000, displayW: 256, displayH: 64,  wallArt: true },
   { key: 'obj-dining-familypicture',  fx: 0.150, fy: 0.000, displayW: 128, displayH: 96,  wallArt: true },
-  { key: 'obj-dining-planterwall',    fx: 0.800, fy: 0.000, displayW: 192, displayH: 192, wallArt: true },
-  { key: 'obj-dining-wineglassrack',  fx: 0.900, fy: 0.000, displayW: 96,  displayH: 64,  wallArt: true },
+  { key: 'obj-dining-planterwall',    fx: 0.800, fy: 0.000, displayW: 144, displayH: 144, wallArt: true },
+  { key: 'obj-dining-wineglassrack',  fx: 0.900, fy: 0.000, displayW: 67,  displayH: 45,  wallArt: true },
   { key: 'obj-dining-floorplant',     fx: 0.050, fy: 0.800, displayW: 64,  displayH: 128 },
 ];
 
