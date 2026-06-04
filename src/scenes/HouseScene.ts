@@ -112,6 +112,12 @@ export class HouseScene extends Phaser.Scene {
   private doorNotches: Rect[] = [];
   /** Collision footprints at the base of floor objects; blocks player movement. */
   private footprints: Rect[] = [];
+  /** Footprint key names for debug logging. */
+  private footprintKeys: string[] = [];
+  /** DevMode debug overlay container. */
+  private debugLayer: Phaser.GameObjects.Container | null = null;
+  /** Throttle debug rejection logs (ms). */
+  private lastRejectLog = 0;
   /** DevMode only: live fx/fy per object key, updated on every drop. */
   private devDragPositions = new Map<string, { fx: number; fy: number }>();
 
@@ -227,6 +233,8 @@ export class HouseScene extends Phaser.Scene {
         this.player.setPosition(nx, this.player.y);
       } else if (this.isWalkable(this.player.x, ny)) {
         this.player.setPosition(this.player.x, ny);
+      } else if (DevMode.isEnabled()) {
+        this.logWalkRejection(this.player.x, this.player.y, nx, ny);
       }
     }
 
@@ -256,13 +264,17 @@ export class HouseScene extends Phaser.Scene {
     this.capeMarker   = null;
     this.doorNotches  = [];
     this.footprints   = [];
+    this.footprintKeys = [];
+    if (this.debugLayer) { this.debugLayer.destroy(); this.debugLayer = null; }
 
     this.drawRoom(def);
     this.currentFloorZone = this.computeFloorZone(def);
     this.doorNotches      = this.computeDoorNotches(def);
     this.footprints       = [];
+    this.footprintKeys    = [];
     this.placeRoomObjects(def);
     this.clipFootprintsAroundDoors();
+    this.drawDebugOverlays();
     this.drawMarkers(def);
     this.drawBonusCape(def);
     this.roomLabel.setText(def.label);
@@ -363,11 +375,109 @@ export class HouseScene extends Phaser.Scene {
     const zones = this.doorNotches.map(n => ({
       x: n.x - m, y: n.y - m, w: n.w + m * 2, h: n.h + m * 2,
     }));
-    this.footprints = this.footprints.filter(fp =>
-      !zones.some(z =>
+    const keep = this.footprints.map((fp, i) => ({
+      fp, key: this.footprintKeys[i],
+      ok: !zones.some(z =>
         fp.x + fp.w > z.x && fp.x < z.x + z.w &&
         fp.y + fp.h > z.y && fp.y < z.y + z.h,
       ),
+    }));
+    if (DevMode.isEnabled()) {
+      for (const k of keep) {
+        if (!k.ok) console.log(`[DevMode] clipped footprint "${k.key}" — overlaps door clearance`);
+      }
+    }
+    const kept = keep.filter(k => k.ok);
+    this.footprints = kept.map(k => k.fp);
+    this.footprintKeys = kept.map(k => k.key ?? '?');
+  }
+
+  // ── DevMode: collision debug ────────────────────────────────────────────────
+
+  private drawDebugOverlays(): void {
+    if (this.debugLayer) { this.debugLayer.destroy(); this.debugLayer = null; }
+    if (!DevMode.isEnabled()) return;
+
+    this.debugLayer = this.add.container(0, 0).setDepth(90);
+
+    // Floor zone — green
+    const fz = this.currentFloorZone;
+    this.debugLayer.add(
+      this.add.rectangle(fz.x + fz.w / 2, fz.y + fz.h / 2, fz.w, fz.h, 0x00ff00, 0.12)
+        .setStrokeStyle(1, 0x00ff00, 0.6),
+    );
+
+    // Door notches — blue
+    for (const n of this.doorNotches) {
+      this.debugLayer.add(
+        this.add.rectangle(n.x + n.w / 2, n.y + n.h / 2, n.w, n.h, 0x0088ff, 0.25)
+          .setStrokeStyle(1, 0x0088ff, 0.8),
+      );
+    }
+
+    // Footprints — red
+    for (const fp of this.footprints) {
+      this.debugLayer.add(
+        this.add.rectangle(fp.x + fp.w / 2, fp.y + fp.h / 2, fp.w, fp.h, 0xff0000, 0.18)
+          .setStrokeStyle(1, 0xff0000, 0.7),
+      );
+    }
+
+    // Door trigger zones — yellow outline (matches checkDoorways halfW/halfH)
+    for (const door of this.currentRoom.doorways) {
+      const c  = this.doorwayCenter(door);
+      const hz = door.side === 'top' || door.side === 'bottom';
+      const tw = (hz ? DOOR_WIDTH / 2 : 24) * 2;
+      const th = (hz ? 24 : DOOR_WIDTH / 2) * 2;
+      this.debugLayer.add(
+        this.add.rectangle(c.x, c.y, tw, th, 0xffff00, 0.0)
+          .setStrokeStyle(2, 0xffff00, 0.9),
+      );
+    }
+  }
+
+  private logWalkRejection(cx: number, cy: number, nx: number, ny: number): void {
+    const now = performance.now();
+    if (now - this.lastRejectLog < 300) return;
+    this.lastRejectLog = now;
+
+    const r  = PLAYER_RADIUS;
+    const fz = this.currentFloorZone;
+    const inFloor = nx >= fz.x + r && nx <= fz.x + fz.w - r &&
+                    ny >= fz.y + r && ny <= fz.y + fz.h - r;
+    const inNotch = this.doorNotches.some(n =>
+      nx >= n.x + r && nx <= n.x + n.w - r &&
+      ny >= n.y + r && ny <= n.y + n.h - r,
+    );
+    const doorClear = PLAYER_RADIUS + 6;
+    const inDoorApproach = this.doorNotches.some(n =>
+      nx >= n.x - doorClear && nx <= n.x + n.w + doorClear &&
+      ny >= n.y - doorClear && ny <= n.y + n.h + doorClear,
+    );
+
+    let reason: string;
+    if (!inFloor && !inNotch) {
+      reason = `OUTSIDE bounds (inFloor=${inFloor}, inNotch=${inNotch})`;
+      const edges = [];
+      if (nx < fz.x + r) edges.push(`left: need x>=${(fz.x + r).toFixed(1)}`);
+      if (nx > fz.x + fz.w - r) edges.push(`right: need x<=${(fz.x + fz.w - r).toFixed(1)}`);
+      if (ny < fz.y + r) edges.push(`top: need y>=${(fz.y + r).toFixed(1)}`);
+      if (ny > fz.y + fz.h - r) edges.push(`bottom: need y<=${(fz.y + fz.h - r).toFixed(1)}`);
+      reason += ` [${edges.join(', ')}]`;
+    } else if (inDoorApproach) {
+      reason = 'IN door approach but still rejected (should not happen!)';
+    } else {
+      const blocked = this.footprints.findIndex(fp =>
+        nx + r > fp.x && nx - r < fp.x + fp.w &&
+        ny + r > fp.y && ny - r < fp.y + fp.h,
+      );
+      reason = blocked >= 0
+        ? `FOOTPRINT #${blocked} (${this.footprintKeys[blocked] ?? '?'}) rect=(${this.footprints[blocked]!.x.toFixed(0)},${this.footprints[blocked]!.y.toFixed(0)},${this.footprints[blocked]!.w.toFixed(0)}×${this.footprints[blocked]!.h.toFixed(0)})`
+        : 'unknown (all axes rejected individually)';
+    }
+
+    console.log(
+      `[Walk BLOCKED] pos=(${cx.toFixed(1)},${cy.toFixed(1)}) → (${nx.toFixed(1)},${ny.toFixed(1)}) | ${reason}`,
     );
   }
 
@@ -412,6 +522,7 @@ export class HouseScene extends Phaser.Scene {
         const fpW = obj.footprintW ?? obj.displayW;
         const fpH = obj.footprintH ?? Math.round(obj.displayH * 0.30);
         this.footprints.push({ x: footX - fpW / 2, y: footY - fpH, w: fpW, h: fpH });
+        this.footprintKeys.push(obj.key);
       }
 
       if (devMode) {
