@@ -97,6 +97,16 @@ const DINING_OBJECTS: RoomObject[] = [
   { key: 'obj-dining-floorplant',     fx: 0.063, fy: 0.737, displayW: 64,  displayH: 128 },
 ];
 
+// ── Master bedroom layout ──────────────────────────────────────────────────
+// Bed is the M5 centerpiece (crawl stage); Soka's bed-curl sprite goes at ~(0.65, 0.15) later.
+const MASTER_OBJECTS: RoomObject[] = [
+  { key: 'bed',                       fx: 0.500, fy: 0.050, displayW: 320, displayH: 240 },
+  { key: 'obj-master-dresser',        fx: 0.100, fy: 0.500, displayW: 128, displayH: 192 },
+  { key: 'obj-master-changingtable',  fx: 0.900, fy: 0.400, displayW: 96,  displayH: 128 },
+  { key: 'obj-master-floormattress',  fx: 0.750, fy: 0.700, displayW: 128, displayH: 64  },
+  { key: 'obj-livingroom-tv',         fx: 0.500, fy: 0.000, displayW: 128, displayH: 64,  wallArt: true },
+];
+
 // ── Misc constants ────────────────────────────────────────────────────────────
 const ROOM_PADDING   = 32;
 const DOOR_WIDTH     = 72;
@@ -182,6 +192,11 @@ export class HouseScene extends Phaser.Scene {
       'obj-dining-floorplant',
       'obj-dining-planterwall',
       'obj-dining-wineglassrack',
+      // Master bedroom object sprites
+      'bed',
+      'obj-master-dresser',
+      'obj-master-changingtable',
+      'obj-master-floormattress',
       // Nursery object sprites (reference room)
       'obj-nursery-crib',
       'obj-nursery-dresser',
@@ -338,7 +353,7 @@ export class HouseScene extends Phaser.Scene {
     const wallX  = Math.round(BG_WALL_PX * scaleX);
     const wallY  = Math.round(BG_WALL_PX * scaleY);
 
-    const wiredRooms: RoomId[] = ['nursery', 'living-room'];
+    const wiredRooms: RoomId[] = ['nursery', 'living-room', 'dining', 'master-bedroom'];
     if (wiredRooms.includes(def.id)) {
       return { x: b.x + wallX, y: b.y + wallY, w: b.width - wallX * 2, h: b.height - wallY * 2 };
     }
@@ -524,8 +539,9 @@ export class HouseScene extends Phaser.Scene {
     switch (def.id) {
       case 'nursery':     return { objects: NURSERY_OBJECTS,    label: 'NURSERY_OBJECTS' };
       case 'living-room': return { objects: LIVINGROOM_OBJECTS, label: 'LIVINGROOM_OBJECTS' };
-      case 'dining':      return { objects: DINING_OBJECTS,     label: 'DINING_OBJECTS' };
-      default:            return null;
+      case 'dining':          return { objects: DINING_OBJECTS,     label: 'DINING_OBJECTS' };
+      case 'master-bedroom': return { objects: MASTER_OBJECTS,    label: 'MASTER_OBJECTS' };
+      default:               return null;
     }
   }
 

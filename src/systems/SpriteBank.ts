@@ -23,6 +23,9 @@ const MANIFEST: Record<string, string> = {
 
   // ── Ch05 ────────────────────────────────────────────────────────────────────
   'bed':                '/assets/sprites/rooms/master/obj_master_bed.png',
+  'obj-master-dresser':       '/assets/sprites/rooms/master/obj_master_dresser.png',
+  'obj-master-changingtable': '/assets/sprites/rooms/master/obj_master_changingtable.png',
+  'obj-master-floormattress': '/assets/sprites/rooms/master/obj_master_floormattress.png',
   'dad-airplane':       '/assets/sprites/brandon/brandon_airplane.png',
 
   // ── Ch11 furniture (reconciled to available sprites) ────────────────────────
