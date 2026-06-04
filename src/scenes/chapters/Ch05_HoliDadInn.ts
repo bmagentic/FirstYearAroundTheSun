@@ -2,13 +2,15 @@ import Phaser from 'phaser';
 import { ChapterBase } from './ChapterBase';
 import { SoundBank } from '../../systems/SoundBank';
 import { SpriteBank } from '../../systems/SpriteBank';
+import { RetryPopup } from '../../ui/RetryPopup';
 
 type Phase = 'p1' | 'p2';
 
 const PHASE1_DURATION_MS = 20_000;
 const TILT_INTERVAL_MS = 2_400;
-const SLIDE_SPEED = 38; // px/sec away from center per tilt unit
+const SLIDE_SPEED = 38;
 const RECOVERY_PUSH = 60;
+const MAX_FALLS = 3;
 
 export class Ch05_HoliDadInn extends ChapterBase {
   private phase: Phase = 'p1';
@@ -28,6 +30,8 @@ export class Ch05_HoliDadInn extends ChapterBase {
   private phase1StartMs = 0;
   private nextTiltAt = 0;
   private p1Active = false;
+  private falls = 0;
+  private retryPopup!: RetryPopup;
 
   // Phase 2
   private p2Active = false;
@@ -50,6 +54,7 @@ export class Ch05_HoliDadInn extends ChapterBase {
 
   create(): void {
     this.setup();
+    this.retryPopup = new RetryPopup(this);
     this.cameras.main.setBackgroundColor('#1a1430');
 
     const W = this.scale.width;
@@ -279,8 +284,8 @@ export class Ch05_HoliDadInn extends ChapterBase {
   private failPhase1(reason: string): void {
     if (!this.p1Active) return;
     this.p1Active = false;
+    this.falls++;
     this.softFail(reason, 'Dad caught him. Try again!');
-    // Brief airplane swoop visual
     const airplane = this.add
       .text(this.bedX, this.bedY - this.bedH / 2 - 40, '✈ Super Baby!', {
         fontFamily: 'system-ui, sans-serif',
@@ -296,15 +301,27 @@ export class Ch05_HoliDadInn extends ChapterBase {
       duration: 900,
       onComplete: () => airplane.destroy(),
     });
-    // Reset and restart phase 1
-    this.time.delayedCall(900, () => {
-      this.caiusX = this.bedX + 10;
-      this.caius.setPosition(this.caiusX, this.caiusY);
-      this.bedTilt = 0;
-      this.tweens.add({ targets: this.bedRect, angle: 0, duration: 200 });
-      this.phase1StartMs = this.time.now;
-      this.nextTiltAt = this.time.now + 1200;
-      this.p1Active = true;
-    });
+    if (this.falls >= MAX_FALLS) {
+      this.time.delayedCall(900, () => {
+        this.retryPopup.show(() => this.resetPhase1(), 'Too many tumbles! Try again!');
+      });
+    } else {
+      this.time.delayedCall(900, () => this.resumePhase1());
+    }
+  }
+
+  private resumePhase1(): void {
+    this.caiusX = this.bedX + 10;
+    this.caius.setPosition(this.caiusX, this.caiusY);
+    this.bedTilt = 0;
+    this.tweens.add({ targets: this.bedRect, angle: 0, duration: 200 });
+    this.phase1StartMs = this.time.now;
+    this.nextTiltAt = this.time.now + 1200;
+    this.p1Active = true;
+  }
+
+  private resetPhase1(): void {
+    this.falls = 0;
+    this.resumePhase1();
   }
 }
