@@ -142,15 +142,15 @@ const BATHROOM_OBJECTS: RoomObject[] = [
 
 // ── Play area layout ───────────────────────────────────────────────────────
 const PLAYAREA_OBJECTS: RoomObject[] = [
-  { key: 'obj-nursery-toychest',    fx: 0.100, fy: 0.150, displayW: 94,  displayH: 70, bonusTrigger: true },
-  { key: 'vtech-cube',              fx: 0.800, fy: 0.300, displayW: 67,  displayH: 67  },
-  { key: 'obj-portable-roomba',     fx: 0.500, fy: 0.850, displayW: 64,  displayH: 64  },
-  { key: 'obj-plush-francois',      fx: 0.300, fy: 0.400, displayW: 60,  displayH: 60  },
-  { key: 'obj-plush-foxamillion',   fx: 0.450, fy: 0.250, displayW: 60,  displayH: 60  },
-  { key: 'obj-plush-deeno',         fx: 0.600, fy: 0.500, displayW: 60,  displayH: 60  },
-  { key: 'obj-plush-persephone',    fx: 0.200, fy: 0.650, displayW: 60,  displayH: 60  },
-  { key: 'obj-plush-moomoo',        fx: 0.750, fy: 0.600, displayW: 60,  displayH: 60  },
-  { key: 'obj-plush-ribbie',        fx: 0.400, fy: 0.750, displayW: 60,  displayH: 60  },
+  { key: 'obj-nursery-toychest',    fx: 0.906, fy: -0.023, displayW: 94,  displayH: 70, bonusTrigger: true },
+  { key: 'vtech-cube',              fx: 0.729, fy: 0.518,  displayW: 67,  displayH: 67  },
+  { key: 'obj-portable-roomba',     fx: 0.067, fy: 0.892,  displayW: 64,  displayH: 64  },
+  { key: 'obj-plush-francois',      fx: 0.237, fy: 0.378,  displayW: 60,  displayH: 60  },
+  { key: 'obj-plush-foxamillion',   fx: 0.325, fy: 0.270,  displayW: 60,  displayH: 60  },
+  { key: 'obj-plush-deeno',         fx: 0.742, fy: 0.317,  displayW: 60,  displayH: 60  },
+  { key: 'obj-plush-persephone',    fx: 0.285, fy: 0.557,  displayW: 60,  displayH: 60  },
+  { key: 'obj-plush-moomoo',        fx: 0.813, fy: 0.678,  displayW: 60,  displayH: 60  },
+  { key: 'obj-plush-ribbie',        fx: 0.201, fy: 0.682,  displayW: 60,  displayH: 60  },
 ];
 
 // ── Misc constants ────────────────────────────────────────────────────────────
