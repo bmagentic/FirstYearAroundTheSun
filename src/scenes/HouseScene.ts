@@ -262,6 +262,7 @@ export class HouseScene extends Phaser.Scene {
     this.doorNotches      = this.computeDoorNotches(def);
     this.footprints       = [];
     this.placeRoomObjects(def);
+    this.clipFootprintsAroundDoors();
     this.drawMarkers(def);
     this.drawBonusCape(def);
     this.roomLabel.setText(def.label);
@@ -331,15 +332,23 @@ export class HouseScene extends Phaser.Scene {
   private isWalkable(px: number, py: number): boolean {
     const r  = PLAYER_RADIUS;
     const fz = this.currentFloorZone;
+
     const inFloor = px >= fz.x + r && px <= fz.x + fz.w - r &&
                     py >= fz.y + r && py <= fz.y + fz.h - r;
-    if (!inFloor) {
-      const inNotch = this.doorNotches.some(n =>
-        px >= n.x + r && px <= n.x + n.w - r &&
-        py >= n.y + r && py <= n.y + n.h - r,
-      );
-      if (!inNotch) return false;
-    }
+    const inNotch = this.doorNotches.some(n =>
+      px >= n.x + r && px <= n.x + n.w - r &&
+      py >= n.y + r && py <= n.y + n.h - r,
+    );
+    if (!inFloor && !inNotch) return false;
+
+    // Door approach zones (notch + margin into floor zone) are always passable
+    const doorClear = PLAYER_RADIUS + 6;
+    const inDoorApproach = this.doorNotches.some(n =>
+      px >= n.x - doorClear && px <= n.x + n.w + doorClear &&
+      py >= n.y - doorClear && py <= n.y + n.h + doorClear,
+    );
+    if (inDoorApproach) return true;
+
     for (const fp of this.footprints) {
       if (px + r > fp.x && px - r < fp.x + fp.w &&
           py + r > fp.y && py - r < fp.y + fp.h) {
@@ -347,6 +356,19 @@ export class HouseScene extends Phaser.Scene {
       }
     }
     return true;
+  }
+
+  private clipFootprintsAroundDoors(): void {
+    const m = PLAYER_RADIUS + 6;
+    const zones = this.doorNotches.map(n => ({
+      x: n.x - m, y: n.y - m, w: n.w + m * 2, h: n.h + m * 2,
+    }));
+    this.footprints = this.footprints.filter(fp =>
+      !zones.some(z =>
+        fp.x + fp.w > z.x && fp.x < z.x + z.w &&
+        fp.y + fp.h > z.y && fp.y < z.y + z.h,
+      ),
+    );
   }
 
   // ── Room object system ──────────────────────────────────────────────────────
