@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { EncounterBase } from './EncounterBase';
 import { SpriteBank } from '../../systems/SpriteBank';
+import { RetryPopup } from '../../ui/RetryPopup';
 
 const FILL_TIME_MS = 30_000;
 const PATIENCE_DRAIN_PER_SEC = 0.18;
@@ -17,6 +18,7 @@ export class BottleWait extends EncounterBase {
   private pacifier!: Phaser.GameObjects.Container;
   private active = false;
   private startMs = 0;
+  private retryPopup!: RetryPopup;
 
   constructor() {
     super('BottleWait', 'bottle-wait');
@@ -28,6 +30,7 @@ export class BottleWait extends EncounterBase {
 
   create(): void {
     this.setupEncounter();
+    this.retryPopup = new RetryPopup(this);
     this.cameras.main.setBackgroundColor('#352840');
     this.showLabel('Bottle Wait', 'Tap the pacifier to stay calm while it fills');
 
@@ -80,6 +83,16 @@ export class BottleWait extends EncounterBase {
     this.startMs = this.time.now;
   }
 
+  private resetRound(): void {
+    this.patience = 1;
+    this.bottleFill = 0;
+    this.bottleLiquid.height = 0;
+    this.patienceBar.width = this.patienceBarMaxW;
+    this.patienceBar.fillColor = 0x4ade80;
+    this.startMs = this.time.now;
+    this.active = true;
+  }
+
   private suck(): void {
     if (!this.active) return;
     this.patience = Math.min(1, this.patience + PACIFIER_BOOST);
@@ -100,7 +113,7 @@ export class BottleWait extends EncounterBase {
     if (this.patience <= 0) {
       this.active = false;
       this.softFail('cried-out', 'Tears! Try the pacifier sooner.');
-      this.time.delayedCall(1100, () => this.scene.restart());
+      this.retryPopup.show(() => this.resetRound(), 'Tears! Tap the pacifier sooner!');
       return;
     }
 
