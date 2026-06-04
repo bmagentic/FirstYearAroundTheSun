@@ -118,6 +118,8 @@ export class HouseScene extends Phaser.Scene {
   private debugLayer: Phaser.GameObjects.Container | null = null;
   /** Throttle debug rejection logs (ms). */
   private lastRejectLog = 0;
+  /** Doors disarmed until player exits all trigger zones after spawn. */
+  private doorsArmed = true;
   /** DevMode only: live fx/fy per object key, updated on every drop. */
   private devDragPositions = new Map<string, { fx: number; fy: number }>();
 
@@ -286,14 +288,18 @@ export class HouseScene extends Phaser.Scene {
       const entry = def.doorways.find((d) => d.side === opts.fromSide);
       if (entry) {
         const pos  = this.doorwayCenter(entry);
-        const back = PLAYER_RADIUS * 2;
-        px = pos.x + (entry.side === 'left' ? back : entry.side === 'right' ? -back : 0);
-        py = pos.y + (entry.side === 'top'  ? back : entry.side === 'bottom' ? -back : 0);
+        const clearance = DOOR_WIDTH / 2 + PLAYER_RADIUS + 12;
+        px = pos.x + (entry.side === 'left' ? clearance : entry.side === 'right' ? -clearance : 0);
+        py = pos.y + (entry.side === 'top'  ? clearance : entry.side === 'bottom' ? -clearance : 0);
       }
     }
+    const r = PLAYER_RADIUS;
+    px = Phaser.Math.Clamp(px, fz.x + r, fz.x + fz.w - r);
+    py = Phaser.Math.Clamp(py, fz.y + r, fz.y + fz.h - r);
     this.player.setPosition(px, py);
     this.player.setDepth(footDepth(py));
 
+    this.doorsArmed = false;
     this.encounters.onEnterRoom(def.encounterChance, performance.now());
     if (!opts.firstLoad) this.cameras.main.fadeIn(TRANSITION_MS, 0, 0, 0);
     this.transitioning = false;
@@ -730,12 +736,15 @@ export class HouseScene extends Phaser.Scene {
     const fz = this.currentFloorZone;
     const r  = PLAYER_RADIUS;
     const devMode = DevMode.isEnabled();
+    const radialThreshold = DOOR_WIDTH / 2 + r; // 36 + 12 = 48
+
+    let anyTriggerActive = false;
 
     for (let di = 0; di < this.currentRoom.doorways.length; di++) {
       const door   = this.currentRoom.doorways[di]!;
       const center = this.doorwayCenter(door);
 
-      // Notch-based trigger — circle-vs-rect (expand notch by PLAYER_RADIUS)
+      // Notch-based trigger — circle-vs-rect
       const notch = this.doorNotches.find(dn => dn.doorIdx === di);
       let insideNotch = false;
       let pastEdge    = false;
@@ -752,34 +761,33 @@ export class HouseScene extends Phaser.Scene {
 
       // Radial trigger — true Euclidean distance
       const dist = Phaser.Math.Distance.Between(px, py, center.x, center.y);
-      const radialThreshold = DOOR_WIDTH / 2 + r; // 36 + 12 = 48
       const radialHit = dist < radialThreshold;
 
+      const triggered = (insideNotch && pastEdge) || radialHit;
+      if (triggered) anyTriggerActive = true;
+
       // DevMode instrumentation
-      if (devMode) {
-        if (dist < 80) {
-          const now = performance.now();
-          if (now - this.lastDoorDebug > 1000) {
-            this.lastDoorDebug = now;
-            const n = notch?.rect;
-            const edgeVal = door.side === 'bottom' ? fz.y + fz.h :
-                            door.side === 'top'    ? fz.y :
-                            door.side === 'right'  ? fz.x + fz.w : fz.x;
-            console.log(
-              `[DoorDebug] ${door.side}→${door.to} | player=(${px.toFixed(1)},${py.toFixed(1)})` +
-              ` | center=(${center.x.toFixed(1)},${center.y.toFixed(1)})` +
-              ` | notch=${n ? `(${n.x.toFixed(0)},${n.y.toFixed(0)},${n.w.toFixed(0)}×${n.h.toFixed(0)})` : 'none'}` +
-              ` | fzEdge=${edgeVal.toFixed(1)}` +
-              ` | dist=${dist.toFixed(1)} radialThresh=${radialThreshold}` +
-              ` | insideNotch=${insideNotch} pastEdge=${pastEdge} radialHit=${radialHit}` +
-              ` | transitioning=${this.transitioning}`,
-            );
-          }
+      if (devMode && dist < 80) {
+        const now = performance.now();
+        if (now - this.lastDoorDebug > 1000) {
+          this.lastDoorDebug = now;
+          const n = notch?.rect;
+          const edgeVal = door.side === 'bottom' ? fz.y + fz.h :
+                          door.side === 'top'    ? fz.y :
+                          door.side === 'right'  ? fz.x + fz.w : fz.x;
+          console.log(
+            `[DoorDebug] ${door.side}→${door.to} | player=(${px.toFixed(1)},${py.toFixed(1)})` +
+            ` | center=(${center.x.toFixed(1)},${center.y.toFixed(1)})` +
+            ` | notch=${n ? `(${n.x.toFixed(0)},${n.y.toFixed(0)},${n.w.toFixed(0)}×${n.h.toFixed(0)})` : 'none'}` +
+            ` | fzEdge=${edgeVal.toFixed(1)}` +
+            ` | dist=${dist.toFixed(1)} radialThresh=${radialThreshold}` +
+            ` | insideNotch=${insideNotch} pastEdge=${pastEdge} radialHit=${radialHit}` +
+            ` | armed=${this.doorsArmed} transitioning=${this.transitioning}`,
+          );
         }
       }
 
-      const triggered = (insideNotch && pastEdge) || radialHit;
-      if (!triggered) continue;
+      if (!triggered || !this.doorsArmed) continue;
 
       if (door.locked?.(this.profile)) {
         this.showToast(door.lockMessage ?? 'Locked.');
@@ -791,6 +799,10 @@ export class HouseScene extends Phaser.Scene {
       }
       this.transition(door);
       return;
+    }
+
+    if (!this.doorsArmed && !anyTriggerActive) {
+      this.doorsArmed = true;
     }
   }
 
