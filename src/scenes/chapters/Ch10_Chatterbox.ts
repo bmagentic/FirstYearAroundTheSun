@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { ChapterBase } from './ChapterBase';
 import { SaveManager } from '../../systems/SaveManager';
 import { track } from '../../systems/Analytics';
+import { RetryPopup } from '../../ui/RetryPopup';
 import type { Nickname } from '../../types';
 
 type Target = { id: string; label: string; color: number; x: number; y: number };
@@ -52,6 +53,8 @@ export class Ch10_Chatterbox extends ChapterBase {
   private statusText!: Phaser.GameObjects.Text;
   private nicknameText!: Phaser.GameObjects.Text;
 
+  private retryPopup!: RetryPopup;
+
   // Brutus secret
   private brutusSpeck: Phaser.GameObjects.Arc | null = null;
   private brutusTaps = 0;
@@ -62,6 +65,7 @@ export class Ch10_Chatterbox extends ChapterBase {
 
   create(): void {
     this.setup();
+    this.retryPopup = new RetryPopup(this);
     this.cameras.main.setBackgroundColor('#1f140e');
 
     const W = this.scale.width;
@@ -160,6 +164,13 @@ export class Ch10_Chatterbox extends ChapterBase {
     if (this.matchedBaseIds.size >= WIN_BASE && this.active) {
       this.active = false;
       this.win();
+      return;
+    }
+
+    if (this.spawnQueue.length === 0 && this.bubbles.length === 0 && this.active) {
+      this.active = false;
+      this.softFail('round-incomplete', 'Not enough matches');
+      this.retryPopup.show(() => this.resetRound());
     }
   }
 
@@ -269,6 +280,28 @@ export class Ch10_Chatterbox extends ChapterBase {
       this.brutusSpeck?.destroy();
       this.brutusSpeck = null;
     }
+  }
+
+  private resetRound(): void {
+    for (const b of this.bubbles) {
+      b.alive = false;
+      b.container.destroy();
+    }
+    this.bubbles = [];
+    this.selected = null;
+    this.matchedBaseIds.clear();
+    this.statusText.setText(`0 / ${WIN_BASE} matched`);
+    this.nicknameText.setText('');
+
+    const queue: BubbleDef[] = [];
+    queue.push(...BASE_BUBBLES);
+    queue.push(...NICKNAME_BUBBLES);
+    queue.push(...BASE_BUBBLES.slice(0, 3));
+    Phaser.Utils.Array.Shuffle(queue);
+    this.spawnQueue = queue;
+
+    this.nextSpawnAt = this.time.now + 600;
+    this.active = true;
   }
 
   private win(): void {
