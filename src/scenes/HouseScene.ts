@@ -113,11 +113,11 @@ const MASTER_OBJECTS: RoomObject[] = [
 // ── Garage layout ──────────────────────────────────────────────────────────
 // SMEG is the reveal centerpiece. Rocket appears only after garage unlocks (Ch11 complete).
 const GARAGE_OBJECTS: RoomObject[] = [
-  { key: 'obj-garage-smeg',      fx: 0.900, fy: 0.350, displayW: 72,  displayH: 144 },
-  { key: 'obj-garage-cabinets',  fx: 0.100, fy: 0.150, displayW: 115, displayH: 173 },
-  { key: 'obj-garage-workbench', fx: 0.500, fy: 0.050, displayW: 192, displayH: 96  },
-  { key: 'obj-garage-bike',      fx: 0.100, fy: 0.700, displayW: 91,  displayH: 122 },
-  { key: 'obj-garage-rocket-ready', fx: 0.600, fy: 0.450, displayW: 96, displayH: 128,
+  { key: 'obj-garage-smeg',      fx: 0.075, fy: -0.023, displayW: 72,  displayH: 144 },
+  { key: 'obj-garage-cabinets',  fx: 0.893, fy: -0.032, displayW: 115, displayH: 173 },
+  { key: 'obj-garage-workbench', fx: 0.494, fy: 0.877,  displayW: 192, displayH: 96  },
+  { key: 'obj-garage-bike',      fx: 0.922, fy: 0.804,  displayW: 91,  displayH: 122 },
+  { key: 'obj-garage-rocket-ready', fx: 0.467, fy: 0.353, displayW: 96, displayH: 128,
     footprintW: 48, footprintH: 40,
     conditional: (p) => p.completedChapters.includes(11),
     chapterTrigger: 12 },
