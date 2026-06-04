@@ -285,6 +285,8 @@ export class HouseScene extends Phaser.Scene {
       'obj-plush-persephone',
       'obj-plush-moomoo',
       'obj-plush-ribbie',
+      // Bonus chest reveal cape
+      'obj-cape-red',
     ]);
   }
 
@@ -921,11 +923,14 @@ export class HouseScene extends Phaser.Scene {
     landX = Phaser.Math.Clamp(landX, fz.x + PLAYER_RADIUS + 10, fz.x + fz.w - PLAYER_RADIUS - 10);
     landY = Phaser.Math.Clamp(landY, fz.y + PLAYER_RADIUS + 10, fz.y + fz.h - PLAYER_RADIUS - 10);
 
-    // FLAG: cape visual is programmatic — swap for sprite when available
-    const cape = this.add.rectangle(bt.x, bt.y - 10, 22, 28, 0xdc2626)
-      .setStrokeStyle(2, 0xfde047).setAlpha(0).setDepth(50);
+    // Cape rises from the chest, arcs to the floor, and settles as the bonus trigger.
+    const useCapeSprite = SpriteBank.has(this, 'obj-cape-red');
+    const cape: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle = useCapeSprite
+      ? this.add.image(bt.x, bt.y - 10, 'obj-cape-red').setDisplaySize(28, 34).setAlpha(0).setDepth(50)
+      : this.add.rectangle(bt.x, bt.y - 10, 22, 28, 0xdc2626).setStrokeStyle(2, 0xfde047).setAlpha(0).setDepth(50);
+    // Collar accent only shows for the programmatic fallback; the sprite includes its own.
     const collar = this.add.rectangle(bt.x, bt.y - 24, 14, 5, 0xfde047)
-      .setAlpha(0).setDepth(50);
+      .setAlpha(0).setDepth(50).setVisible(!useCapeSprite);
 
     // Phase 1: cape rises out of chest
     this.tweens.add({

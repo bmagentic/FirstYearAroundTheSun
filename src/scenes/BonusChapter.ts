@@ -36,7 +36,7 @@ export class BonusChapter extends ChapterBase {
   }
 
   preload(): void {
-    SpriteBank.preloadInto(this, ['caius']);
+    SpriteBank.preloadInto(this, ['caius', 'obj-cape-red']);
   }
 
   create(): void {
@@ -58,7 +58,9 @@ export class BonusChapter extends ChapterBase {
     // Caius with cape + Dad's airplane arms
     this.caius = this.add.container(W / 2, H - 150);
     const dadArms = this.add.rectangle(0, 22, 120, 16, 0xe6c4a0).setStrokeStyle(1, 0x6b4530);
-    const cape = this.add.triangle(0, -4, -20, 0, 20, 0, 0, 36, 0xb91c1c).setStrokeStyle(1, 0xfde68a);
+    const cape = SpriteBank.has(this, 'obj-cape-red')
+      ? this.add.image(0, 6, 'obj-cape-red').setDisplaySize(38, 42)
+      : this.add.triangle(0, -4, -20, 0, 20, 0, 0, 36, 0xb91c1c).setStrokeStyle(1, 0xfde68a);
     const body = this.add.image(0, 0, 'caius').setDisplaySize(32, 32);
     this.caius.add([dadArms, cape, body]);
     this.dragX = W / 2;

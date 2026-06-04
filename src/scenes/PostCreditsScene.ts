@@ -36,7 +36,7 @@ export class PostCreditsScene extends Phaser.Scene {
   }
 
   preload(): void {
-    SpriteBank.preloadInto(this, ['obj-garage-rocket-ready', 'chelsea-idle']);
+    SpriteBank.preloadInto(this, ['obj-garage-rocket-ready', 'chelsea-idle', 'chelsea-doorway']);
     SoundBank.preload('rocket-launch');
     SoundBank.preload('lullaby');
     SoundBank.preload('caius-laugh');
@@ -184,9 +184,11 @@ export class PostCreditsScene extends Phaser.Scene {
       ease: 'Sine.easeInOut',
     });
 
-    // Chelsea standing alone — FLAG: chelsea-doorway sprite doesn't exist yet, using chelsea-idle as stand-in
+    // Chelsea standing alone in the doorway
     const chelsea = this.add.container(W / 2 + 80, H * 0.45);
-    if (SpriteBank.has(this, 'chelsea-idle')) {
+    if (SpriteBank.has(this, 'chelsea-doorway')) {
+      chelsea.add(this.add.image(0, -10, 'chelsea-doorway').setDisplaySize(28, 76));
+    } else if (SpriteBank.has(this, 'chelsea-idle')) {
       chelsea.add(this.add.image(0, -10, 'chelsea-idle').setDisplaySize(28, 76));
     } else {
       const torso = this.add.rectangle(0, 0, 28, 56, 0x7c5fb0).setStrokeStyle(2, 0xfde68a, 0.9);

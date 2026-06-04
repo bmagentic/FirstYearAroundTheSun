@@ -17,6 +17,10 @@ const MANIFEST: Record<string, string> = {
   'caius':              '/assets/sprites/caius-blue/south.png',
   'chelsea-idle':       '/assets/sprites/chelsea/south.png',
   'chelsea-asleep':     '/assets/sprites/chelsea_scrubs/chelsea_rocking.png',
+  'chelsea-doorway':    '/assets/sprites/chelsea/chelsea-doorway.png',
+
+  // ── Portables ───────────────────────────────────────────────────────────────
+  'obj-cape-red':       '/assets/sprites/portables/obj-cape-red.png',
 
   // ── Dogs (south-facing idle) ───────────────────────────────────────────────
   'finn-south':         '/assets/sprites/finn/south.png',
