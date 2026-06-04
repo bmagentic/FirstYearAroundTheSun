@@ -130,7 +130,7 @@ export const ROOMS: Record<RoomId, RoomDef> = {
     floorColor: FLOOR.light,
     wallColor: WALL.cream,
     accentColor: 0xfff3c4,
-    markers: [{ chapter: 7, x: 0.5, y: 0.5 }],
+    markers: [],
     doorways: [
       { side: 'top',    position: 0.5, to: 'hallway-lower' },
       { side: 'left',   position: 0.5, to: 'dining' },
@@ -146,7 +146,7 @@ export const ROOMS: Record<RoomId, RoomDef> = {
     floorColor: FLOOR.lvp,
     wallColor: WALL.cream,
     accentColor: 0xd4b87a,
-    markers: [],
+    markers: [{ chapter: 7, x: 0.5, y: 0.5 }],
     doorways: [{ side: 'right', position: 0.5, to: 'kitchen' }],
     encounterChance: 0,
   },
