@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { ChapterBase } from './ChapterBase';
 import { SpriteBank } from '../../systems/SpriteBank';
+import { RetryPopup } from '../../ui/RetryPopup';
 
 type DogId = 'finn' | 'nugget' | 'eevee' | 'soka';
 
@@ -42,6 +43,7 @@ export class Ch06_GrabBag extends ChapterBase {
   private timerText!: Phaser.GameObjects.Text;
   private playArea = { x: 30, y: 110, w: 0, h: 0 };
   private nextSpawnAt = 0;
+  private retryPopup!: RetryPopup;
 
   constructor() {
     super('Ch06_GrabBag', 6);
@@ -53,6 +55,7 @@ export class Ch06_GrabBag extends ChapterBase {
 
   create(): void {
     this.setup();
+    this.retryPopup = new RetryPopup(this);
     this.cameras.main.setBackgroundColor('#2a1a0e');
 
     const W = this.scale.width;
@@ -262,10 +265,8 @@ export class Ch06_GrabBag extends ChapterBase {
       this.scoreText.setText(star ? '★ STAR!' : 'Got enough!');
       this.completeChapter();
     } else {
-      this.softFail('not-enough', `${this.grabbed} grabbed. Need ${WIN}+. Try again.`);
-      this.time.delayedCall(1400, () => {
-        this.scene.restart();
-      });
+      this.softFail('not-enough', `${this.grabbed} grabbed. Need ${WIN}+.`);
+      this.retryPopup.show(() => this.scene.restart(), `Only ${this.grabbed} toys! Need ${WIN}. Try again!`);
     }
   }
 }
