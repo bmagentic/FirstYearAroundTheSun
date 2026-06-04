@@ -78,3 +78,4 @@ Produces the 63-sec post-credits cinematic (Midjourney + Kling) + title/end card
 **Room status:** nursery DONE · living-room DONE · dining DONE · master-bedroom DONE · garage wired/unplaced · kitchen wired/unplaced · bathroom wired/unplaced · play-area wired/unplaced · hallway-upper not started · hallway-lower not started.
 
 webhook verification after duplicate project deletion
+webhook verification after duplicate project deletion (2)
