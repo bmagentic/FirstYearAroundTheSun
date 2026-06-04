@@ -320,22 +320,31 @@ export class HouseScene extends Phaser.Scene {
   private computeDoorNotches(def: RoomDef): Rect[] {
     const fz = this.currentFloorZone;
     const notches: Rect[] = [];
+    const overlap = 10;
     for (const door of def.doorways) {
       const c  = this.doorwayCenter(door);
       const hw = DOOR_WIDTH / 2;
       switch (door.side) {
-        case 'bottom':
-          notches.push({ x: c.x - hw, y: fz.y + fz.h, w: DOOR_WIDTH, h: (c.y + 24) - (fz.y + fz.h) });
+        case 'bottom': {
+          const top = fz.y + fz.h - overlap;
+          notches.push({ x: c.x - hw, y: top, w: DOOR_WIDTH, h: (c.y + 24) - top });
           break;
-        case 'top':
-          notches.push({ x: c.x - hw, y: c.y - 24, w: DOOR_WIDTH, h: fz.y - (c.y - 24) });
+        }
+        case 'top': {
+          const bot = fz.y + overlap;
+          notches.push({ x: c.x - hw, y: c.y - 24, w: DOOR_WIDTH, h: bot - (c.y - 24) });
           break;
-        case 'right':
-          notches.push({ x: fz.x + fz.w, y: c.y - hw, w: (c.x + 24) - (fz.x + fz.w), h: DOOR_WIDTH });
+        }
+        case 'right': {
+          const left = fz.x + fz.w - overlap;
+          notches.push({ x: left, y: c.y - hw, w: (c.x + 24) - left, h: DOOR_WIDTH });
           break;
-        case 'left':
-          notches.push({ x: c.x - 24, y: c.y - hw, w: fz.x - (c.x - 24), h: DOOR_WIDTH });
+        }
+        case 'left': {
+          const right = fz.x + overlap;
+          notches.push({ x: c.x - 24, y: c.y - hw, w: right - (c.x - 24), h: DOOR_WIDTH });
           break;
+        }
       }
     }
     return notches;
