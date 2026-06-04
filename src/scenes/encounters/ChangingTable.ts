@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { EncounterBase } from './EncounterBase';
+import { SpriteBank } from '../../systems/SpriteBank';
 
 const SURVIVE_MS = 20_000;
 const TILT_INTERVAL_MS = 1_400;
@@ -9,7 +10,7 @@ const RECOVERY_PUSH = 70;
 export class ChangingTable extends EncounterBase {
   private caiusX = 0;
   private caius!: Phaser.GameObjects.Container;
-  private table!: Phaser.GameObjects.Rectangle;
+  private table!: Phaser.GameObjects.Image;
   private tableX = 0;
   private tableY = 0;
   private tableW = 280;
@@ -23,6 +24,10 @@ export class ChangingTable extends EncounterBase {
     super('ChangingTable', 'changing-table');
   }
 
+  preload(): void {
+    SpriteBank.preloadInto(this, ['caius', 'obj-master-changingtable']);
+  }
+
   create(): void {
     this.setupEncounter();
     this.cameras.main.setBackgroundColor('#2a1410');
@@ -33,13 +38,13 @@ export class ChangingTable extends EncounterBase {
 
     this.tableX = W / 2;
     this.tableY = H / 2;
-    this.table = this.add.rectangle(this.tableX, this.tableY, this.tableW, 100, 0xc9a35d).setStrokeStyle(2, 0x6b4530);
+    this.table = this.add.image(this.tableX, this.tableY, 'obj-master-changingtable').setDisplaySize(this.tableW, 100);
     this.add.rectangle(this.tableX - 120, this.tableY + 90, 10, 90, 0x6b4530);
     this.add.rectangle(this.tableX + 120, this.tableY + 90, 10, 90, 0x6b4530);
 
     this.caiusX = this.tableX;
     this.caius = this.add.container(this.caiusX, this.tableY - 12);
-    this.caius.add(this.add.circle(0, 0, 14, 0xf7c6a3).setStrokeStyle(2, 0x402c1d));
+    this.caius.add(this.add.image(0, 0, 'caius').setDisplaySize(28, 28));
 
     this.timerText = this.add
       .text(W / 2, 60, '20', {
