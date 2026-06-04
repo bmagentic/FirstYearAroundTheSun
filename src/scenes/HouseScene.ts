@@ -358,12 +358,12 @@ export class HouseScene extends Phaser.Scene {
     const inFloor = px >= fz.x + r && px <= fz.x + fz.w - r &&
                     py >= fz.y + r && py <= fz.y + fz.h - r;
     const inNotch = this.doorNotches.some(({ rect: n }) =>
-      px >= n.x + r && px <= n.x + n.w - r &&
-      py >= n.y + r && py <= n.y + n.h - r,
+      px >= n.x && px <= n.x + n.w &&
+      py >= n.y && py <= n.y + n.h,
     );
     if (!inFloor && !inNotch) return false;
 
-    const doorClear = PLAYER_RADIUS + 6;
+    const doorClear = r + 6;
     const inDoorApproach = this.doorNotches.some(({ rect: n }) =>
       px >= n.x - doorClear && px <= n.x + n.w + doorClear &&
       py >= n.y - doorClear && py <= n.y + n.h + doorClear,
@@ -432,14 +432,12 @@ export class HouseScene extends Phaser.Scene {
       );
     }
 
-    // Door trigger zones — yellow outline (matches checkDoorways halfW/halfH)
+    // Door trigger zones — yellow circle (matches checkDoorways radial threshold)
+    const radialThreshold = DOOR_WIDTH / 2 + PLAYER_RADIUS;
     for (const door of this.currentRoom.doorways) {
-      const c  = this.doorwayCenter(door);
-      const hz = door.side === 'top' || door.side === 'bottom';
-      const tw = (hz ? DOOR_WIDTH / 2 : 24) * 2;
-      const th = (hz ? 24 : DOOR_WIDTH / 2) * 2;
+      const c = this.doorwayCenter(door);
       this.debugLayer.add(
-        this.add.rectangle(c.x, c.y, tw, th, 0xffff00, 0.0)
+        this.add.circle(c.x, c.y, radialThreshold, 0xffff00, 0.0)
           .setStrokeStyle(2, 0xffff00, 0.9),
       );
     }
@@ -455,10 +453,10 @@ export class HouseScene extends Phaser.Scene {
     const inFloor = nx >= fz.x + r && nx <= fz.x + fz.w - r &&
                     ny >= fz.y + r && ny <= fz.y + fz.h - r;
     const inNotch = this.doorNotches.some(({ rect: n }) =>
-      nx >= n.x + r && nx <= n.x + n.w - r &&
-      ny >= n.y + r && ny <= n.y + n.h - r,
+      nx >= n.x && nx <= n.x + n.w &&
+      ny >= n.y && ny <= n.y + n.h,
     );
-    const doorClear = PLAYER_RADIUS + 6;
+    const doorClear = r + 6;
     const inDoorApproach = this.doorNotches.some(({ rect: n }) =>
       nx >= n.x - doorClear && nx <= n.x + n.w + doorClear &&
       ny >= n.y - doorClear && ny <= n.y + n.h + doorClear,
@@ -737,14 +735,14 @@ export class HouseScene extends Phaser.Scene {
       const door   = this.currentRoom.doorways[di]!;
       const center = this.doorwayCenter(door);
 
-      // Notch-based trigger
+      // Notch-based trigger — circle-vs-rect (expand notch by PLAYER_RADIUS)
       const notch = this.doorNotches.find(dn => dn.doorIdx === di);
       let insideNotch = false;
       let pastEdge    = false;
       if (notch) {
         const n = notch.rect;
-        insideNotch = px >= n.x + r && px <= n.x + n.w - r &&
-                      py >= n.y + r && py <= n.y + n.h - r;
+        insideNotch = px >= n.x && px <= n.x + n.w &&
+                      py >= n.y && py <= n.y + n.h;
         pastEdge =
           (door.side === 'bottom' && py > fz.y + fz.h) ||
           (door.side === 'top'    && py < fz.y) ||
@@ -752,17 +750,13 @@ export class HouseScene extends Phaser.Scene {
           (door.side === 'left'   && px < fz.x);
       }
 
-      // Radial trigger (always active)
-      const dx = Math.abs(px - center.x);
-      const dy = Math.abs(py - center.y);
-      const isHz    = door.side === 'top' || door.side === 'bottom';
-      const halfW   = isHz ? DOOR_WIDTH / 2 + r : 24 + r;
-      const halfH   = isHz ? 24 + r : DOOR_WIDTH / 2 + r;
-      const radialHit = dx < halfW && dy < halfH;
+      // Radial trigger — true Euclidean distance
+      const dist = Phaser.Math.Distance.Between(px, py, center.x, center.y);
+      const radialThreshold = DOOR_WIDTH / 2 + r; // 36 + 12 = 48
+      const radialHit = dist < radialThreshold;
 
       // DevMode instrumentation
       if (devMode) {
-        const dist = Math.sqrt(dx * dx + dy * dy);
         if (dist < 80) {
           const now = performance.now();
           if (now - this.lastDoorDebug > 1000) {
@@ -776,6 +770,7 @@ export class HouseScene extends Phaser.Scene {
               ` | center=(${center.x.toFixed(1)},${center.y.toFixed(1)})` +
               ` | notch=${n ? `(${n.x.toFixed(0)},${n.y.toFixed(0)},${n.w.toFixed(0)}×${n.h.toFixed(0)})` : 'none'}` +
               ` | fzEdge=${edgeVal.toFixed(1)}` +
+              ` | dist=${dist.toFixed(1)} radialThresh=${radialThreshold}` +
               ` | insideNotch=${insideNotch} pastEdge=${pastEdge} radialHit=${radialHit}` +
               ` | transitioning=${this.transitioning}`,
             );
