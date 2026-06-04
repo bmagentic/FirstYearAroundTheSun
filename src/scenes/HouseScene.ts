@@ -107,6 +107,47 @@ const MASTER_OBJECTS: RoomObject[] = [
   { key: 'obj-livingroom-tv',         fx: 0.500, fy: 0.000, displayW: 128, displayH: 64,  wallArt: true },
 ];
 
+// ── Garage layout ──────────────────────────────────────────────────────────
+// SMEG is the reveal centerpiece. rocket_ready is M12 cutscene only (not placed here).
+const GARAGE_OBJECTS: RoomObject[] = [
+  { key: 'obj-garage-smeg',      fx: 0.900, fy: 0.350, displayW: 96,  displayH: 192 },
+  { key: 'obj-garage-cabinets',  fx: 0.100, fy: 0.150, displayW: 128, displayH: 192 },
+  { key: 'obj-garage-workbench', fx: 0.500, fy: 0.050, displayW: 192, displayH: 96  },
+  { key: 'obj-garage-bike',      fx: 0.100, fy: 0.700, displayW: 96,  displayH: 128 },
+];
+
+// ── Kitchen layout ─────────────────────────────────────────────────────────
+// FLAG: chandelier is a ceiling fixture (same issue as dining pendant) — may be cut.
+const KITCHEN_OBJECTS: RoomObject[] = [
+  { key: 'obj-kitchen-fridge',     fx: 0.200, fy: 0.050, displayW: 128, displayH: 192 },
+  { key: 'obj-kitchen-range',      fx: 0.550, fy: 0.050, displayW: 96,  displayH: 192 },
+  { key: 'obj-kitchen-barstool',   fx: 0.750, fy: 0.500, displayW: 64,  displayH: 128 },
+  { key: 'obj-kitchen-barstool',   fx: 0.850, fy: 0.500, displayW: 64,  displayH: 128 },
+  { key: 'obj-kitchen-chandelier', fx: 0.450, fy: 0.000, displayW: 96,  displayH: 96,  wallArt: true },
+];
+
+// ── Bathroom layout ────────────────────────────────────────────────────────
+// FLAG: tubwater (96×32 strip) reads as a flat puddle, not a room object — included but may cut.
+const BATHROOM_OBJECTS: RoomObject[] = [
+  { key: 'obj-bathroom-showercurtain', fx: 0.500, fy: 0.050, displayW: 128, displayH: 192 },
+  { key: 'obj-bathroom-rubberduck',    fx: 0.700, fy: 0.300, displayW: 64,  displayH: 64  },
+  { key: 'obj-bathroom-bathproducts',  fx: 0.150, fy: 0.400, displayW: 64,  displayH: 64  },
+  { key: 'obj-bathroom-tubwater',      fx: 0.500, fy: 0.250, displayW: 192, displayH: 64  },
+];
+
+// ── Play area layout ───────────────────────────────────────────────────────
+const PLAYAREA_OBJECTS: RoomObject[] = [
+  { key: 'obj-nursery-toychest',    fx: 0.100, fy: 0.150, displayW: 94,  displayH: 70  },
+  { key: 'vtech-cube',              fx: 0.800, fy: 0.300, displayW: 96,  displayH: 96  },
+  { key: 'obj-portable-snackcup',   fx: 0.650, fy: 0.700, displayW: 64,  displayH: 96  },
+  { key: 'obj-plush-francois',      fx: 0.300, fy: 0.400, displayW: 50,  displayH: 50  },
+  { key: 'obj-plush-foxamillion',   fx: 0.450, fy: 0.250, displayW: 50,  displayH: 50  },
+  { key: 'obj-plush-deeno',         fx: 0.600, fy: 0.500, displayW: 50,  displayH: 50  },
+  { key: 'obj-plush-persephone',    fx: 0.200, fy: 0.650, displayW: 50,  displayH: 50  },
+  { key: 'obj-plush-moomoo',        fx: 0.750, fy: 0.600, displayW: 50,  displayH: 50  },
+  { key: 'obj-plush-ribbie',        fx: 0.400, fy: 0.750, displayW: 50,  displayH: 50  },
+];
+
 // ── Misc constants ────────────────────────────────────────────────────────────
 const ROOM_PADDING   = 32;
 const DOOR_WIDTH     = 72;
@@ -197,6 +238,23 @@ export class HouseScene extends Phaser.Scene {
       'obj-master-dresser',
       'obj-master-changingtable',
       'obj-master-floormattress',
+      // Garage object sprites
+      'obj-garage-smeg',
+      'obj-garage-cabinets',
+      'obj-garage-workbench',
+      'obj-garage-bike',
+      // Kitchen object sprites
+      'obj-kitchen-fridge',
+      'obj-kitchen-range',
+      'obj-kitchen-barstool',
+      'obj-kitchen-chandelier',
+      // Bathroom object sprites
+      'obj-bathroom-showercurtain',
+      'obj-bathroom-bathproducts',
+      'obj-bathroom-rubberduck',
+      'obj-bathroom-tubwater',
+      // Play-area object sprites
+      'obj-portable-snackcup',
       // Nursery object sprites (reference room)
       'obj-nursery-crib',
       'obj-nursery-dresser',
@@ -353,7 +411,10 @@ export class HouseScene extends Phaser.Scene {
     const wallX  = Math.round(BG_WALL_PX * scaleX);
     const wallY  = Math.round(BG_WALL_PX * scaleY);
 
-    const wiredRooms: RoomId[] = ['nursery', 'living-room', 'dining', 'master-bedroom'];
+    const wiredRooms: RoomId[] = [
+      'nursery', 'living-room', 'dining', 'master-bedroom',
+      'garage', 'kitchen', 'bathroom', 'play-area',
+    ];
     if (wiredRooms.includes(def.id)) {
       return { x: b.x + wallX, y: b.y + wallY, w: b.width - wallX * 2, h: b.height - wallY * 2 };
     }
@@ -541,6 +602,10 @@ export class HouseScene extends Phaser.Scene {
       case 'living-room': return { objects: LIVINGROOM_OBJECTS, label: 'LIVINGROOM_OBJECTS' };
       case 'dining':          return { objects: DINING_OBJECTS,     label: 'DINING_OBJECTS' };
       case 'master-bedroom': return { objects: MASTER_OBJECTS,    label: 'MASTER_OBJECTS' };
+      case 'garage':         return { objects: GARAGE_OBJECTS,    label: 'GARAGE_OBJECTS' };
+      case 'kitchen':        return { objects: KITCHEN_OBJECTS,   label: 'KITCHEN_OBJECTS' };
+      case 'bathroom':       return { objects: BATHROOM_OBJECTS,  label: 'BATHROOM_OBJECTS' };
+      case 'play-area':      return { objects: PLAYAREA_OBJECTS,  label: 'PLAYAREA_OBJECTS' };
       default:               return null;
     }
   }
@@ -666,6 +731,16 @@ export class HouseScene extends Phaser.Scene {
         .setOrigin(0.5);
       this.bgLayer.add(gap);
       this.bgLayer.add(arrow);
+
+      if (isLocked) {
+        const lockGlyph = this.add
+          .text(pos.x, pos.y - 14, '\u{1F512}', {
+            fontFamily: 'system-ui, sans-serif',
+            fontSize: '12px',
+          })
+          .setOrigin(0.5);
+        this.bgLayer.add(lockGlyph);
+      }
     }
   }
 
