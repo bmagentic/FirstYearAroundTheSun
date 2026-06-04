@@ -49,6 +49,9 @@ type RoomObject = {
   footprintW?: number;
   /** Override collision footprint height (defaults to displayH × 0.30). */
   footprintH?: number;
+  /** Multiple footprint rects for complex shapes (e.g. L-shaped sectional).
+   *  Each rect is { dx, dy, w, h } relative to the sprite's foot anchor. */
+  footprintRects?: Array<{ dx: number; dy: number; w: number; h: number }>;
 };
 
 // Positions are tuned for the nursery's top-down floor plan.
@@ -71,7 +74,11 @@ const NURSERY_OBJECTS: RoomObject[] = [
 
 // ── Living room layout ──────────────────────────────────────────────────────
 const LIVINGROOM_OBJECTS: RoomObject[] = [
-  { key: 'obj-livingroom-sectional-west', fx: 0.500, fy: 0.600, displayW: 288, displayH: 173 },
+  { key: 'obj-livingroom-sectional-west', fx: 0.500, fy: 0.600, displayW: 288, displayH: 173,
+    footprintRects: [
+      { dx: -144, dy: -173, w: 80, h: 173 },
+      { dx: -144, dy: -52,  w: 288, h: 52 },
+    ] },
   { key: 'obj-livingroom-sidetable',      fx: 0.880, fy: 0.550, displayW: 106, displayH: 106 },
   { key: 'obj-livingroom-tv',             fx: 0.500, fy: 0.020, displayW: 128, displayH: 64,  wallArt: true },
   { key: 'obj-livingroom-coffeehutch',    fx: 0.100, fy: 0.150, displayW: 153, displayH: 229 },
@@ -524,10 +531,17 @@ export class HouseScene extends Phaser.Scene {
       this.roomSprites.push(sprite);
 
       if (!obj.wallArt) {
-        const fpW = obj.footprintW ?? obj.displayW;
-        const fpH = obj.footprintH ?? Math.round(obj.displayH * 0.30);
-        this.footprints.push({ x: footX - fpW / 2, y: footY - fpH, w: fpW, h: fpH });
-        this.footprintKeys.push(obj.key);
+        if (obj.footprintRects) {
+          for (const fr of obj.footprintRects) {
+            this.footprints.push({ x: footX + fr.dx, y: footY + fr.dy, w: fr.w, h: fr.h });
+            this.footprintKeys.push(obj.key);
+          }
+        } else {
+          const fpW = obj.footprintW ?? obj.displayW;
+          const fpH = obj.footprintH ?? Math.round(obj.displayH * 0.30);
+          this.footprints.push({ x: footX - fpW / 2, y: footY - fpH, w: fpW, h: fpH });
+          this.footprintKeys.push(obj.key);
+        }
       }
 
       if (devMode) {

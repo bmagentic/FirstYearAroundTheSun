@@ -160,7 +160,7 @@ export const ROOMS: Record<RoomId, RoomDef> = {
     markers: [
       { chapter: 6,  x: 0.28, y: 0.35 },
       { chapter: 9,  x: 0.72, y: 0.35 },
-      { chapter: 11, x: 0.50, y: 0.65 },
+      { chapter: 11, x: 0.80, y: 0.55 },
     ],
     doorways: [
       { side: 'top',  position: 0.5, to: 'hallway-lower' },
