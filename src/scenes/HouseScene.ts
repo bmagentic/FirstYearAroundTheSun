@@ -122,7 +122,6 @@ const KITCHEN_OBJECTS: RoomObject[] = [
   { key: 'obj-kitchen-range',      fx: 0.550, fy: 0.050, displayW: 96,  displayH: 192 },
   { key: 'obj-kitchen-barstool',   fx: 0.750, fy: 0.500, displayW: 64,  displayH: 128 },
   { key: 'obj-kitchen-barstool',   fx: 0.850, fy: 0.500, displayW: 64,  displayH: 128 },
-  { key: 'obj-kitchen-chandelier', fx: 0.450, fy: 0.000, displayW: 96,  displayH: 96,  wallArt: true },
 ];
 
 // ── Bathroom layout ────────────────────────────────────────────────────────
@@ -131,7 +130,6 @@ const BATHROOM_OBJECTS: RoomObject[] = [
   { key: 'obj-bathroom-showercurtain', fx: 0.500, fy: 0.050, displayW: 128, displayH: 192 },
   { key: 'obj-bathroom-rubberduck',    fx: 0.700, fy: 0.300, displayW: 64,  displayH: 64  },
   { key: 'obj-bathroom-bathproducts',  fx: 0.150, fy: 0.400, displayW: 64,  displayH: 64  },
-  { key: 'obj-bathroom-tubwater',      fx: 0.500, fy: 0.250, displayW: 192, displayH: 64  },
 ];
 
 // ── Play area layout ───────────────────────────────────────────────────────
