@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { EncounterBase } from './EncounterBase';
+import { SpriteBank } from '../../systems/SpriteBank';
 
 type Side = 'left' | 'right' | 'top' | 'bottom';
 const SIDES: Side[] = ['left', 'right', 'top', 'bottom'];
@@ -19,6 +20,10 @@ export class FaceWash extends EncounterBase {
     super('FaceWash', 'face-wash');
   }
 
+  preload(): void {
+    SpriteBank.preloadInto(this, ['caius']);
+  }
+
   create(): void {
     this.setupEncounter();
     this.cameras.main.setBackgroundColor('#2e3b54');
@@ -28,7 +33,7 @@ export class FaceWash extends EncounterBase {
     const H = this.scale.height;
 
     this.caius = this.add.container(W / 2, H / 2);
-    this.caius.add(this.add.circle(0, 0, 22, 0xf7c6a3).setStrokeStyle(2, 0x402c1d));
+    this.caius.add(this.add.image(0, 0, 'caius').setDisplaySize(44, 44));
 
     // 4 cardinal buttons around Caius
     const offset = 120;
