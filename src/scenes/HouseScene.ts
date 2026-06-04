@@ -799,6 +799,29 @@ export class HouseScene extends Phaser.Scene {
           .setOrigin(0.5);
         this.bgLayer.add(lockGlyph);
       }
+
+      // Door label for visited destinations
+      const visited = this.profile.visitedRooms ?? [];
+      if (visited.includes(door.to)) {
+        const destLabel = ROOMS[door.to].label;
+        let lx = pos.x;
+        let ly = pos.y;
+        switch (door.side) {
+          case 'top':    ly -= 18; break;
+          case 'bottom': ly += 18; break;
+          case 'left':   lx += 28; break;
+          case 'right':  lx -= 28; break;
+        }
+        const doorLabel = this.add
+          .text(lx, ly, destLabel, {
+            fontFamily: 'system-ui, sans-serif',
+            fontSize: '9px',
+            color: '#fde68a',
+          })
+          .setOrigin(0.5)
+          .setAlpha(0.45);
+        this.bgLayer.add(doorLabel);
+      }
     }
   }
 

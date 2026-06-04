@@ -35,6 +35,7 @@ function newProfile(name: string): SaveProfile {
     bonusChapterUnlocked: false,
     bonusChapterCompleted: false,
     currentRoom: 'nursery',
+    visitedRooms: ['nursery'],
     totalPlayTimeSeconds: 0,
   };
 }
@@ -137,6 +138,8 @@ class SaveManagerImpl {
   setCurrentRoom(room: RoomId): void {
     this.update((p) => {
       p.currentRoom = room;
+      if (!p.visitedRooms) p.visitedRooms = [];
+      if (!p.visitedRooms.includes(room)) p.visitedRooms.push(room);
     });
   }
 

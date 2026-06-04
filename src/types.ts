@@ -40,6 +40,7 @@ export type SaveProfile = {
   bonusChapterUnlocked: boolean;
   bonusChapterCompleted: boolean;
   currentRoom: RoomId;
+  visitedRooms: RoomId[];
   totalPlayTimeSeconds: number;
 };
 
