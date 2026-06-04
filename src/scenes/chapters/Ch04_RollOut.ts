@@ -12,7 +12,7 @@ export class Ch04_RollOut extends ChapterBase {
   private caius!: Phaser.GameObjects.Container;
   private vx = 0;
   private vy = 0;
-  private cube!: Phaser.GameObjects.GameObject & { x: number; y: number };
+  private cube!: Phaser.GameObjects.Image;
   private obstacles: Phaser.GameObjects.Rectangle[] = [];
   private playArea!: { x: number; y: number; w: number; h: number };
   private active = false;
@@ -42,21 +42,7 @@ export class Ch04_RollOut extends ChapterBase {
     // Cube goal
     const cubeX = x + w - CUBE_SIZE;
     const cubeY = y + CUBE_SIZE;
-    if (SpriteBank.has(this, 'vtech-cube')) {
-      this.cube = this.add.image(cubeX, cubeY, 'vtech-cube').setDisplaySize(CUBE_SIZE, CUBE_SIZE);
-    } else {
-      this.cube = this.add
-        .rectangle(cubeX, cubeY, CUBE_SIZE, CUBE_SIZE, 0xe24a4a)
-        .setStrokeStyle(2, 0xfde68a, 0.9);
-      this.add
-        .text(cubeX, cubeY, 'CUBE', {
-          fontFamily: 'system-ui, sans-serif',
-          fontSize: '9px',
-          color: '#fde68a',
-          fontStyle: 'bold',
-        })
-        .setOrigin(0.5);
-    }
+    this.cube = this.add.image(cubeX, cubeY, 'vtech-cube').setDisplaySize(CUBE_SIZE, CUBE_SIZE);
     this.tweens.add({
       targets: this.cube,
       scale: 1.1,
@@ -79,10 +65,7 @@ export class Ch04_RollOut extends ChapterBase {
 
     // Caius
     this.caius = this.add.container(x + 50, y + h - 60);
-    const body = SpriteBank.has(this, 'caius-roll')
-      ? this.add.image(0, 0, 'caius-roll').setDisplaySize(26, 26)
-      : (this.add.circle(0, 0, CAIUS_RADIUS, 0xf7c6a3).setStrokeStyle(2, 0x402c1d) as unknown as Phaser.GameObjects.Image);
-    this.caius.add(body);
+    this.caius.add(this.add.image(0, 0, 'caius-roll').setDisplaySize(26, 26));
 
     // Swipe handlers on the play area
     this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {

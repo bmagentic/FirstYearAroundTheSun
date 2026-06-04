@@ -22,8 +22,8 @@ export class Ch05_HoliDadInn extends ChapterBase {
   private bedW = 360;
   private bedH = 220;
   private caius!: Phaser.GameObjects.Container;
-  private bedRect!: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle;
-  private chelsea!: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle;
+  private bedRect!: Phaser.GameObjects.Image;
+  private chelsea!: Phaser.GameObjects.Image;
   private timerText!: Phaser.GameObjects.Text;
   private phase1StartMs = 0;
   private nextTiltAt = 0;
@@ -33,7 +33,7 @@ export class Ch05_HoliDadInn extends ChapterBase {
   private p2Active = false;
   private p2Progress = 0; // 0..1
   private lastHand: 'L' | 'R' | null = null;
-  private dad!: Phaser.GameObjects.GameObject & { x: number; y: number };
+  private dad!: Phaser.GameObjects.Image;
   private progressBar!: Phaser.GameObjects.Rectangle;
   private leftBtn!: Phaser.GameObjects.Arc;
   private rightBtn!: Phaser.GameObjects.Arc;
@@ -58,29 +58,12 @@ export class Ch05_HoliDadInn extends ChapterBase {
     // Bed
     this.bedX = W / 2;
     this.bedY = H / 2 - 40;
-    if (SpriteBank.has(this, 'bed')) {
-      this.bedRect = this.add.image(this.bedX, this.bedY, 'bed').setDisplaySize(this.bedW, this.bedH);
-    } else {
-      this.bedRect = this.add.rectangle(this.bedX, this.bedY, this.bedW, this.bedH, 0x5b4e7d).setStrokeStyle(3, 0xc3b3e2);
-      this.add.rectangle(this.bedX, this.bedY - this.bedH / 2 + 18, this.bedW - 24, 22, 0xe9dcfb).setAlpha(0.85);
-    }
+    this.bedRect = this.add.image(this.bedX, this.bedY, 'bed').setDisplaySize(this.bedW, this.bedH);
 
     // Chelsea on her side of the bed (silent background presence)
+    // FLAG: chelsea-asleep maps to chelsea_rocking.png — no true sleeping pose on disk
     const chelX = this.bedX - this.bedW / 2 + 56;
-    if (SpriteBank.has(this, 'chelsea-asleep')) {
-      this.chelsea = this.add.image(chelX, this.bedY, 'chelsea-asleep').setDisplaySize(60, 100);
-    } else {
-      this.chelsea = this.add.rectangle(chelX, this.bedY, 60, 100, 0x7c5fb0).setStrokeStyle(1, 0xfde68a, 0.4);
-      this.add
-        .text(chelX, this.bedY, 'Mama\n(asleep)', {
-          fontFamily: 'system-ui, sans-serif',
-          fontSize: '10px',
-          color: '#fde68a',
-          align: 'center',
-        })
-        .setOrigin(0.5)
-        .setAlpha(0.55);
-    }
+    this.chelsea = this.add.image(chelX, this.bedY, 'chelsea-asleep').setDisplaySize(60, 100);
     // Gentle breathing
     this.tweens.add({
       targets: this.chelsea,
@@ -95,11 +78,7 @@ export class Ch05_HoliDadInn extends ChapterBase {
     this.caiusX = this.bedX + 40;
     this.caiusY = this.bedY + 10;
     this.caius = this.add.container(this.caiusX, this.caiusY);
-    if (SpriteBank.has(this, 'caius')) {
-      this.caius.add(this.add.image(0, 0, 'caius').setDisplaySize(28, 28));
-    } else {
-      this.caius.add(this.add.circle(0, 0, 14, 0xf7c6a3).setStrokeStyle(2, 0x402c1d));
-    }
+    this.caius.add(this.add.image(0, 0, 'caius').setDisplaySize(28, 28));
 
     this.timerText = this.add
       .text(W / 2, 60, '20', {
@@ -173,21 +152,7 @@ export class Ch05_HoliDadInn extends ChapterBase {
 
     // Dad on the right side
     const dadX = this.bedX + this.bedW / 2 - 60;
-    if (SpriteBank.has(this, 'dad-airplane')) {
-      this.dad = this.add.image(dadX, this.bedY, 'dad-airplane').setDisplaySize(60, 100);
-    } else {
-      this.dad = this.add
-        .rectangle(dadX, this.bedY, 60, 100, 0x4f6a3d)
-        .setStrokeStyle(2, 0xfde68a, 0.7);
-      this.add
-        .text(dadX, this.bedY, 'Dad', {
-          fontFamily: 'system-ui, sans-serif',
-          fontSize: '12px',
-          color: '#fde68a',
-          fontStyle: 'bold',
-        })
-        .setOrigin(0.5);
-    }
+    this.dad = this.add.image(dadX, this.bedY, 'dad-airplane').setDisplaySize(60, 100);
 
     // Move Caius back to start of crawl
     this.caiusX = this.bedX - this.bedW / 2 + 100;

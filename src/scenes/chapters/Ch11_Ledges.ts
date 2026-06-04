@@ -25,7 +25,7 @@ export class Ch11_Ledges extends ChapterBase {
   private gripLabel!: Phaser.GameObjects.Text;
   private gauge!: Phaser.GameObjects.Arc;
   private hint!: Phaser.GameObjects.Text;
-  private chelseaSprite!: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle;
+  private chelseaSprite!: Phaser.GameObjects.Image;
 
   private holding = false;
   private holdProgress = 0;
@@ -86,40 +86,11 @@ export class Ch11_Ledges extends ChapterBase {
     };
     for (const st of this.stations.slice(0, 4)) {
       const top = this.baseY - st.height / 2;
-      const sprKey = SPRITE_KEY[st.id];
-      if (sprKey && SpriteBank.has(this, sprKey)) {
-        this.add.image(st.x, top, sprKey).setDisplaySize(st.width, st.height);
-      } else {
-        this.add
-          .rectangle(st.x, top, st.width, st.height, st.color)
-          .setStrokeStyle(2, 0xfde68a, 0.55);
-        this.add
-          .text(st.x, top + 4, st.label, {
-            fontFamily: 'system-ui, sans-serif',
-            fontSize: '9px',
-            color: '#fde68a',
-            fontStyle: 'bold',
-          })
-          .setOrigin(0.5);
-      }
+      this.add.image(st.x, top, SPRITE_KEY[st.id]!).setDisplaySize(st.width, st.height);
     }
 
     // Chelsea on the floor at far right
-    if (SpriteBank.has(this, 'chelsea-idle')) {
-      this.chelseaSprite = this.add.image(W - 60, this.baseY + 16, 'chelsea-idle').setDisplaySize(40, 64);
-    } else {
-      this.chelseaSprite = this.add
-        .rectangle(W - 60, this.baseY + 16, 40, 64, 0x7c5fb0)
-        .setStrokeStyle(2, 0xfde68a, 0.85);
-      this.add
-        .text(W - 60, this.baseY + 16, 'Mama', {
-          fontFamily: 'system-ui, sans-serif',
-          fontSize: '11px',
-          color: '#fde68a',
-          fontStyle: 'bold',
-        })
-        .setOrigin(0.5);
-    }
+    this.chelseaSprite = this.add.image(W - 60, this.baseY + 16, 'chelsea-idle').setDisplaySize(40, 64);
     this.tweens.add({
       targets: this.chelseaSprite,
       y: this.chelseaSprite.y - 4,
@@ -132,11 +103,7 @@ export class Ch11_Ledges extends ChapterBase {
     // Caius on first station
     const first = this.stations[0]!;
     this.caius = this.add.container(first.x, this.baseY - first.height - 8);
-    if (SpriteBank.has(this, 'caius')) {
-      this.caius.add(this.add.image(0, 0, 'caius').setDisplaySize(24, 24));
-    } else {
-      this.caius.add(this.add.circle(0, 0, 12, 0xf7c6a3).setStrokeStyle(2, 0x402c1d));
-    }
+    this.caius.add(this.add.image(0, 0, 'caius').setDisplaySize(24, 24));
 
     // Grip button + gauge
     this.gauge = this.add.circle(W / 2, H - 130, 60, 0xfde68a, 0).setStrokeStyle(6, 0xfde68a, 0.3);
