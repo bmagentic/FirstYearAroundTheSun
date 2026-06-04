@@ -117,8 +117,8 @@ const GARAGE_OBJECTS: RoomObject[] = [
   { key: 'obj-garage-cabinets',  fx: 0.893, fy: -0.032, displayW: 115, displayH: 173 },
   { key: 'obj-garage-workbench', fx: 0.494, fy: 0.877,  displayW: 192, displayH: 96  },
   { key: 'obj-garage-bike',      fx: 0.922, fy: 0.804,  displayW: 91,  displayH: 122 },
-  { key: 'obj-garage-rocket-ready', fx: 0.467, fy: 0.353, displayW: 96, displayH: 128,
-    footprintW: 48, footprintH: 40,
+  { key: 'obj-garage-rocket-ready', fx: 0.467, fy: 0.353, displayW: 115, displayH: 154,
+    footprintW: 58, footprintH: 48,
     conditional: (p) => p.completedChapters.includes(11),
     chapterTrigger: 12 },
 ];
