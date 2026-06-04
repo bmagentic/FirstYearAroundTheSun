@@ -1,11 +1,13 @@
 import Phaser from 'phaser';
 import { ChapterBase } from './ChapterBase';
 import { TouchControls } from '../../ui/TouchControls';
+import { RetryPopup } from '../../ui/RetryPopup';
 
 const WALKER_RADIUS = 14;
 const SPEED = 130;
 const DRIFT = 0.88;
 const STAR_TIME_S = 90;
+const MAX_COLLISIONS = 5;
 
 type Obstacle = { x: number; y: number; w: number; h: number };
 
@@ -20,6 +22,9 @@ export class Ch09_MazeWalker extends ChapterBase {
   private startMs = 0;
   private timerText!: Phaser.GameObjects.Text;
   private playArea = { x: 24, y: 100, w: 0, h: 0 };
+  private collisions = 0;
+  private collisionCooldown = 0;
+  private retryPopup!: RetryPopup;
 
   constructor() {
     super('Ch09_MazeWalker', 9);
@@ -27,6 +32,7 @@ export class Ch09_MazeWalker extends ChapterBase {
 
   create(): void {
     this.setup();
+    this.retryPopup = new RetryPopup(this);
     this.cameras.main.setBackgroundColor('#3a2515');
 
     const W = this.scale.width;
@@ -97,6 +103,17 @@ export class Ch09_MazeWalker extends ChapterBase {
     });
   }
 
+  private resetRound(): void {
+    const oa = this.playArea;
+    this.walker.setPosition(oa.x + 40, oa.y + 40);
+    this.vx = 0;
+    this.vy = 0;
+    this.collisions = 0;
+    this.collisionCooldown = 0;
+    this.startMs = this.time.now;
+    this.active = true;
+  }
+
   override update(_t: number, delta: number): void {
     if (!this.active) return;
     const dt = delta / 1000;
@@ -120,6 +137,7 @@ export class Ch09_MazeWalker extends ChapterBase {
     if (ny > maxY) { ny = maxY; this.vy = 0; }
 
     // Obstacle collisions
+    if (this.collisionCooldown > 0) this.collisionCooldown -= delta;
     for (const o of this.obstacles) {
       const cx = Phaser.Math.Clamp(nx, o.x, o.x + o.w);
       const cy = Phaser.Math.Clamp(ny, o.y, o.y + o.h);
@@ -133,6 +151,17 @@ export class Ch09_MazeWalker extends ChapterBase {
         ny += (ddy / d) * push;
         if (Math.abs(ddx) > Math.abs(ddy)) this.vx = -this.vx * 0.3;
         else this.vy = -this.vy * 0.3;
+        if (this.collisionCooldown <= 0) {
+          this.collisions++;
+          this.collisionCooldown = 500;
+          this.softFail('obstacle-hit', `Bump! (${this.collisions}/${MAX_COLLISIONS})`);
+          if (this.collisions >= MAX_COLLISIONS) {
+            this.active = false;
+            this.walker.setPosition(nx, ny);
+            this.retryPopup.show(() => this.resetRound(), 'Too many bumps! Try again!');
+            return;
+          }
+        }
       }
     }
 
