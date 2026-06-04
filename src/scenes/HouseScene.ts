@@ -109,10 +109,10 @@ const MASTER_OBJECTS: RoomObject[] = [
 // ── Garage layout ──────────────────────────────────────────────────────────
 // SMEG is the reveal centerpiece. rocket_ready is M12 cutscene only (not placed here).
 const GARAGE_OBJECTS: RoomObject[] = [
-  { key: 'obj-garage-smeg',      fx: 0.900, fy: 0.350, displayW: 96,  displayH: 192 },
-  { key: 'obj-garage-cabinets',  fx: 0.100, fy: 0.150, displayW: 128, displayH: 192 },
+  { key: 'obj-garage-smeg',      fx: 0.900, fy: 0.350, displayW: 72,  displayH: 144 },
+  { key: 'obj-garage-cabinets',  fx: 0.100, fy: 0.150, displayW: 115, displayH: 173 },
   { key: 'obj-garage-workbench', fx: 0.500, fy: 0.050, displayW: 192, displayH: 96  },
-  { key: 'obj-garage-bike',      fx: 0.100, fy: 0.700, displayW: 96,  displayH: 128 },
+  { key: 'obj-garage-bike',      fx: 0.100, fy: 0.700, displayW: 91,  displayH: 122 },
 ];
 
 // ── Kitchen layout ─────────────────────────────────────────────────────────
