@@ -36,7 +36,7 @@ export class PostCreditsScene extends Phaser.Scene {
   }
 
   preload(): void {
-    SpriteBank.preloadInto(this, ['obj-garage-rocket-ready']);
+    SpriteBank.preloadInto(this, ['obj-garage-rocket-ready', 'chelsea-idle']);
     SoundBank.preload('rocket-launch');
     SoundBank.preload('lullaby');
     SoundBank.preload('caius-laugh');
@@ -184,11 +184,15 @@ export class PostCreditsScene extends Phaser.Scene {
       ease: 'Sine.easeInOut',
     });
 
-    // Chelsea standing alone
+    // Chelsea standing alone — FLAG: chelsea-doorway sprite doesn't exist yet, using chelsea-idle as stand-in
     const chelsea = this.add.container(W / 2 + 80, H * 0.45);
-    const torso = this.add.rectangle(0, 0, 28, 56, 0x7c5fb0).setStrokeStyle(2, 0xfde68a, 0.9);
-    const head = this.add.circle(0, -38, 14, 0xf5c7a3).setStrokeStyle(2, 0x6b4530);
-    chelsea.add([torso, head]);
+    if (SpriteBank.has(this, 'chelsea-idle')) {
+      chelsea.add(this.add.image(0, -10, 'chelsea-idle').setDisplaySize(28, 76));
+    } else {
+      const torso = this.add.rectangle(0, 0, 28, 56, 0x7c5fb0).setStrokeStyle(2, 0xfde68a, 0.9);
+      const head = this.add.circle(0, -38, 14, 0xf5c7a3).setStrokeStyle(2, 0x6b4530);
+      chelsea.add([torso, head]);
+    }
     chelsea.setAlpha(0);
     await this.tween({ targets: chelsea, alpha: 1, duration: 700 });
 
