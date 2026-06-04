@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { EncounterBase } from './EncounterBase';
 import { SpriteBank } from '../../systems/SpriteBank';
+import { RetryPopup } from '../../ui/RetryPopup';
 
 const SURVIVE_MS = 20_000;
 const TILT_INTERVAL_MS = 1_400;
@@ -19,6 +20,7 @@ export class ChangingTable extends EncounterBase {
   private active = false;
   private startMs = 0;
   private timerText!: Phaser.GameObjects.Text;
+  private retryPopup!: RetryPopup;
 
   constructor() {
     super('ChangingTable', 'changing-table');
@@ -30,6 +32,7 @@ export class ChangingTable extends EncounterBase {
 
   create(): void {
     this.setupEncounter();
+    this.retryPopup = new RetryPopup(this);
     this.cameras.main.setBackgroundColor('#2a1410');
     this.showLabel('Changing Table', 'Tap the higher side to keep him centered');
 
@@ -67,6 +70,16 @@ export class ChangingTable extends EncounterBase {
     this.active = true;
   }
 
+  private resetRound(): void {
+    this.caiusX = this.tableX;
+    this.caius.setPosition(this.caiusX, this.tableY - 12);
+    this.tilt = 0;
+    this.tweens.add({ targets: this.table, angle: 0, duration: 200 });
+    this.startMs = this.time.now;
+    this.nextTiltAt = this.time.now + 900;
+    this.active = true;
+  }
+
   override update(_t: number, delta: number): void {
     if (!this.active) return;
     if (this.time.now > this.nextTiltAt) {
@@ -82,7 +95,7 @@ export class ChangingTable extends EncounterBase {
     if (this.caiusX < minX || this.caiusX > maxX) {
       this.active = false;
       this.softFail('rolled-off', 'Whoa! Catch him quicker.');
-      this.time.delayedCall(900, () => this.scene.restart());
+      this.retryPopup.show(() => this.resetRound(), 'Whoa! Catch him quicker!');
       return;
     }
     this.caius.setPosition(this.caiusX, this.tableY - 12);
