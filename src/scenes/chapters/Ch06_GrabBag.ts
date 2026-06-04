@@ -1,11 +1,12 @@
 import Phaser from 'phaser';
 import { ChapterBase } from './ChapterBase';
+import { SpriteBank } from '../../systems/SpriteBank';
 
 type DogId = 'finn' | 'nugget' | 'eevee' | 'soka';
 
 type Dog = {
   id: DogId;
-  obj: Phaser.GameObjects.Rectangle;
+  obj: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle;
   vx: number;
   vy: number;
   nextActionAt: number;
@@ -24,6 +25,13 @@ const SPAWN_INTERVAL_MS = 1800;
 const WIN = 6;
 const STAR = 10;
 
+const DOG_SPRITE_KEYS: Record<DogId, string> = {
+  finn: 'finn-south',
+  nugget: 'nugget-south',
+  eevee: 'eevee-south',
+  soka: 'soka-south',
+};
+
 export class Ch06_GrabBag extends ChapterBase {
   private toys: Toy[] = [];
   private dogs: Dog[] = [];
@@ -37,6 +45,10 @@ export class Ch06_GrabBag extends ChapterBase {
 
   constructor() {
     super('Ch06_GrabBag', 6);
+  }
+
+  preload(): void {
+    SpriteBank.preloadInto(this, Object.values(DOG_SPRITE_KEYS));
   }
 
   create(): void {
@@ -76,20 +88,24 @@ export class Ch06_GrabBag extends ChapterBase {
       { id: 'soka', color: 0xe6e6e6, label: 'Soka' },
     ];
     for (const def of dogDefs) {
-      const r = this.add.rectangle(
-        Phaser.Math.Between(this.playArea.x + 30, this.playArea.x + this.playArea.w - 30),
-        Phaser.Math.Between(this.playArea.y + 30, this.playArea.y + this.playArea.h - 30),
-        22,
-        18,
-        def.color,
-      ).setStrokeStyle(1, 0xfde68a, 0.4);
-      this.add.text(r.x, r.y, def.label[0]!, {
-        fontFamily: 'system-ui, sans-serif',
-        fontSize: '9px',
-        color: '#fde68a',
-        fontStyle: 'bold',
-      }).setOrigin(0.5);
-      this.dogs.push({ id: def.id, obj: r, vx: 0, vy: 0, nextActionAt: 0, color: def.color, label: def.label });
+      const sx = Phaser.Math.Between(this.playArea.x + 30, this.playArea.x + this.playArea.w - 30);
+      const sy = Phaser.Math.Between(this.playArea.y + 30, this.playArea.y + this.playArea.h - 30);
+      const spriteKey = DOG_SPRITE_KEYS[def.id];
+      let obj: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle;
+
+      if (SpriteBank.has(this, spriteKey)) {
+        obj = this.add.image(sx, sy, spriteKey).setDisplaySize(22, 18);
+      } else {
+        obj = this.add.rectangle(sx, sy, 22, 18, def.color).setStrokeStyle(1, 0xfde68a, 0.4);
+        this.add.text(sx, sy, def.label[0]!, {
+          fontFamily: 'system-ui, sans-serif',
+          fontSize: '9px',
+          color: '#fde68a',
+          fontStyle: 'bold',
+        }).setOrigin(0.5);
+      }
+
+      this.dogs.push({ id: def.id, obj, vx: 0, vy: 0, nextActionAt: 0, color: def.color, label: def.label });
     }
 
     void this.intro('Grab Bag', 'Tap toys before a dog snags them.').then(() => {
