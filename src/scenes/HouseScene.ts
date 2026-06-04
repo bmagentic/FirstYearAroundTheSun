@@ -126,12 +126,11 @@ const GARAGE_OBJECTS: RoomObject[] = [
 ];
 
 // ── Kitchen layout ─────────────────────────────────────────────────────────
-// FLAG: chandelier is a ceiling fixture (same issue as dining pendant) — may be cut.
 const KITCHEN_OBJECTS: RoomObject[] = [
-  { key: 'obj-kitchen-fridge',     fx: 0.200, fy: 0.050, displayW: 128, displayH: 192 },
-  { key: 'obj-kitchen-range',      fx: 0.550, fy: 0.050, displayW: 96,  displayH: 192 },
-  { key: 'obj-kitchen-barstool',   fx: 0.750, fy: 0.500, displayW: 64,  displayH: 128 },
-  { key: 'obj-kitchen-barstool',   fx: 0.850, fy: 0.500, displayW: 64,  displayH: 128 },
+  { key: 'obj-kitchen-fridge',     fx: 0.095, fy: -0.112, displayW: 128, displayH: 192 },
+  { key: 'obj-kitchen-range',      fx: 0.827, fy: -0.155, displayW: 96,  displayH: 192 },
+  { key: 'obj-kitchen-barstool',   fx: 0.197, fy: 0.800,  displayW: 64,  displayH: 128 },
+  { key: 'obj-kitchen-barstool',   fx: 0.064, fy: 0.807,  displayW: 64,  displayH: 128 },
 ];
 
 // ── Bathroom layout ────────────────────────────────────────────────────────
