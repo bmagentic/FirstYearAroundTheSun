@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { EncounterBase } from './EncounterBase';
+import { SpriteBank } from '../../systems/SpriteBank';
 
 const DURATION_MS = 60_000;
 const ROOMBA_SPEED = 75;
@@ -33,6 +34,10 @@ export class Roomba extends EncounterBase {
 
   constructor() {
     super('Roomba', 'roomba');
+  }
+
+  preload(): void {
+    SpriteBank.preloadInto(this, ['caius', 'obj-portable-roomba']);
   }
 
   create(): void {
@@ -74,13 +79,12 @@ export class Roomba extends EncounterBase {
     this.targetX = this.caiusX;
     this.targetY = this.caiusY;
     this.caius = this.add.container(this.caiusX, this.caiusY);
-    this.caius.add(this.add.circle(0, 0, 12, 0xf7c6a3).setStrokeStyle(2, 0x402c1d));
+    this.caius.add(this.add.image(0, 0, 'caius').setDisplaySize(24, 24));
 
     // Roomba
     this.roomba = this.add.container(pa.x + 50, pa.y + pa.h - 50);
-    const disc = this.add.circle(0, 0, 22, 0x222222).setStrokeStyle(2, 0x666666);
-    const sensor = this.add.circle(0, -16, 4, 0xfde68a);
-    this.roomba.add([disc, sensor]);
+    const disc = this.add.image(0, 0, 'obj-portable-roomba').setDisplaySize(44, 44);
+    this.roomba.add(disc);
     this.tweens.add({ targets: disc, angle: 360, duration: 1200, repeat: -1 });
 
     this.timerText = this.add
