@@ -192,8 +192,8 @@ export class HouseScene extends Phaser.Scene {
   private lastRejectLog = 0;
   /** Doors disarmed until player exits all trigger zones after spawn. */
   private doorsArmed = true;
-  /** DevMode only: live fx/fy per object key, updated on every drop. */
-  private devDragPositions = new Map<string, { fx: number; fy: number }>();
+  /** DevMode only: live fx/fy per object index in the room array, updated on every drop. */
+  private devDragPositions = new Map<number, { fx: number; fy: number }>();
   /** Objects that launch a chapter when touched (replaces numbered markers). */
   private chapterTriggerObjects: Array<{ chapter: number; x: number; y: number; radius: number }> = [];
 
@@ -628,11 +628,12 @@ export class HouseScene extends Phaser.Scene {
 
     if (devMode) {
       this.devDragPositions = new Map(
-        cfg.objects.map(o => [o.key, { fx: o.fx, fy: o.fy }]),
+        cfg.objects.map((o, i) => [i, { fx: o.fx, fy: o.fy }]),
       );
     }
 
-    for (const obj of cfg.objects) {
+    for (let oi = 0; oi < cfg.objects.length; oi++) {
+      const obj = cfg.objects[oi]!;
       if (!SpriteBank.has(this, obj.key)) continue;
 
       // Conditional objects: skip if condition fails (always show in DevMode)
@@ -688,6 +689,7 @@ export class HouseScene extends Phaser.Scene {
       }
 
       if (devMode) {
+        const objIndex    = oi;
         const objKey      = obj.key;
         const objDisplayH = obj.displayH;
         const isWallArt   = !!obj.wallArt;
@@ -703,8 +705,8 @@ export class HouseScene extends Phaser.Scene {
         sprite.on('dragend', () => {
           const newFx = parseFloat(((sprite.x - fz.x) / fz.w).toFixed(3));
           const newFy = parseFloat(((sprite.y - objDisplayH - fz.y) / fz.h).toFixed(3));
-          this.devDragPositions.set(objKey, { fx: newFx, fy: newFy });
-          console.log(`[DevMode] dropped ${objKey}: fx=${newFx.toFixed(3)}, fy=${newFy.toFixed(3)}`);
+          this.devDragPositions.set(objIndex, { fx: newFx, fy: newFy });
+          console.log(`[DevMode] dropped ${objKey}[${objIndex}]: fx=${newFx.toFixed(3)}, fy=${newFy.toFixed(3)}`);
           this.printRoomArray(cfg);
         });
       }
@@ -714,8 +716,8 @@ export class HouseScene extends Phaser.Scene {
   // ── DevMode: room position tool ──────────────────────────────────────────────
 
   private printRoomArray(cfg: { objects: RoomObject[]; label: string }): void {
-    const lines = cfg.objects.map(o => {
-      const { fx, fy } = this.devDragPositions.get(o.key) ?? o;
+    const lines = cfg.objects.map((o, i) => {
+      const { fx, fy } = this.devDragPositions.get(i) ?? o;
       const wallArtStr = o.wallArt ? ', wallArt: true' : '';
       return `  { key: '${o.key}', fx: ${fx.toFixed(3)}, fy: ${fy.toFixed(3)}, displayW: ${o.displayW}, displayH: ${o.displayH}${wallArtStr} },`;
     });
