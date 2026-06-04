@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { InterludeBase } from './InterludeBase';
 import { SoundBank } from '../../systems/SoundBank';
+import { SpriteBank } from '../../systems/SpriteBank';
 
 type Pose = {
   bgColor: number;
@@ -55,6 +56,7 @@ export class Interlude01_FirstDays extends InterludeBase {
   }
 
   preload(): void {
+    SpriteBank.preloadInto(this, ['chelsea-idle', 'caius']);
     SoundBank.preload('lullaby');
   }
 
@@ -152,6 +154,22 @@ export class Interlude01_FirstDays extends InterludeBase {
 
   // ---- Pose composers ----
 
+  private makeChelsea(x: number, y: number, w: number, h: number): Phaser.GameObjects.GameObject[] {
+    if (SpriteBank.has(this, 'chelsea-idle')) {
+      return [this.add.image(x, y - h * 0.1, 'chelsea-idle').setDisplaySize(w, h)];
+    }
+    const torso = this.add.rectangle(x, y, w, h * 0.65, 0x7c5fb0).setStrokeStyle(2, 0xfde68a, 0.6);
+    const head = this.add.circle(x, y - h * 0.46, h * 0.15, 0xf5c7a3).setStrokeStyle(2, 0x6b4530);
+    return [torso, head];
+  }
+
+  private makeCaius(x: number, y: number, r: number): Phaser.GameObjects.GameObject[] {
+    if (SpriteBank.has(this, 'caius')) {
+      return [this.add.image(x, y, 'caius').setDisplaySize(r * 2, r * 2)];
+    }
+    return [this.add.circle(x, y, r, 0xf7c6a3).setStrokeStyle(2, 0x402c1d)];
+  }
+
   drawRockerPose(asleep: boolean): Phaser.GameObjects.Container {
     const W = this.scale.width;
     const H = this.scale.height;
@@ -176,22 +194,16 @@ export class Interlude01_FirstDays extends InterludeBase {
       });
     }
 
-    // Chelsea
-    const chel = this.add.rectangle(0, -10, 70, 80, 0x7c5fb0).setStrokeStyle(2, 0xfde68a, 0.6);
-    const head = this.add.circle(0, -56, 18, 0xf5c7a3).setStrokeStyle(2, 0x6b4530);
-    // Eyes (half-closed)
-    const eyeL = this.add.rectangle(-7, -56, 5, asleep ? 1 : 2, 0x2a1a0e);
-    const eyeR = this.add.rectangle(7, -56, 5, asleep ? 1 : 2, 0x2a1a0e);
-    c.add([chel, head, eyeL, eyeR]);
+    c.add(this.makeChelsea(0, -20, 70, 120));
 
     // Caius (small, on her chest if asleep, in arms otherwise)
-    const caius = this.add.circle(0, asleep ? -28 : 4, 11, 0xf7c6a3).setStrokeStyle(2, 0x402c1d);
-    c.add(caius);
+    const caiusParts = this.makeCaius(0, asleep ? -28 : 4, 11);
+    c.add(caiusParts);
 
     // Slow breathing
     this.tweens.add({
-      targets: caius,
-      y: caius.y - 1.5,
+      targets: caiusParts,
+      y: (asleep ? -28 : 4) - 1.5,
       duration: 1600,
       yoyo: true,
       repeat: -1,
@@ -216,13 +228,8 @@ export class Interlude01_FirstDays extends InterludeBase {
     c.add(sun);
     this.tweens.add({ targets: sun, scale: 1.1, duration: 2000, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
 
-    // Chelsea
-    const chel = this.add.rectangle(-50, 20, 60, 90, 0x7c5fb0).setStrokeStyle(2, 0xfde68a, 0.6);
-    const head = this.add.circle(-50, -36, 18, 0xf5c7a3).setStrokeStyle(2, 0x6b4530);
-    c.add([chel, head]);
-    // Caius
-    const caius = this.add.circle(-30, 0, 11, 0xf7c6a3).setStrokeStyle(2, 0x402c1d);
-    c.add(caius);
+    c.add(this.makeChelsea(-50, 0, 60, 110));
+    c.add(this.makeCaius(-30, 0, 11));
 
     return c;
   }
@@ -236,14 +243,8 @@ export class Interlude01_FirstDays extends InterludeBase {
     const back = this.add.rectangle(0, -10, 280, 40, 0x4a2f1c);
     c.add([couch, back]);
 
-    const chel = this.add.rectangle(-40, 0, 60, 80, 0x7c5fb0).setStrokeStyle(2, 0xfde68a, 0.6);
-    const head = this.add.circle(-40, -46, 18, 0xf5c7a3).setStrokeStyle(2, 0x6b4530);
-    // Slight smile via mouth arc
-    const smile = this.add.arc(-40, -38, 6, 0, 180, false, 0x6b4530).setStrokeStyle(2, 0x6b4530);
-    c.add([chel, head, smile]);
-
-    const caius = this.add.circle(-20, 10, 11, 0xf7c6a3).setStrokeStyle(2, 0x402c1d);
-    c.add(caius);
+    c.add(this.makeChelsea(-40, -14, 60, 110));
+    c.add(this.makeCaius(-20, 10, 11));
 
     return c;
   }
@@ -259,15 +260,12 @@ export class Interlude01_FirstDays extends InterludeBase {
     const legs2 = this.add.rectangle(90, 80, 10, 90, 0x6b4530);
     c.add([table, legs1, legs2]);
 
-    // Swaddled Caius (oval)
+    // Swaddled Caius (oval) — keep swaddle wrap even with sprite
     const swaddle = this.add.ellipse(0, 10, 100, 36, 0xfde9c0).setStrokeStyle(2, 0xfff3c7);
     const face = this.add.circle(-30, 10, 10, 0xf7c6a3).setStrokeStyle(1, 0x402c1d);
     c.add([swaddle, face]);
 
-    // Chelsea leaning over
-    const chel = this.add.rectangle(20, -40, 60, 80, 0x7c5fb0).setStrokeStyle(2, 0xfde68a, 0.6);
-    const head = this.add.circle(20, -82, 16, 0xf5c7a3).setStrokeStyle(2, 0x6b4530);
-    c.add([chel, head]);
+    c.add(this.makeChelsea(20, -50, 60, 110));
 
     return c;
   }
