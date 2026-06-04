@@ -108,8 +108,8 @@ export class HouseScene extends Phaser.Scene {
   private fromEncounter = false;
   /** Scene-level sprites placed for depth sorting; cleared on every room change. */
   private roomSprites: Phaser.GameObjects.Image[] = [];
-  /** Walkable extensions through wall insets toward each doorway. */
-  private doorNotches: Rect[] = [];
+  /** Walkable extensions through wall insets toward each doorway, paired with doorway index. */
+  private doorNotches: Array<{ rect: Rect; doorIdx: number }> = [];
   /** Collision footprints at the base of floor objects; blocks player movement. */
   private footprints: Rect[] = [];
   /** Footprint key names for debug logging. */
@@ -317,32 +317,33 @@ export class HouseScene extends Phaser.Scene {
 
   // ── Walkability ──────────────────────────────────────────────────────────────
 
-  private computeDoorNotches(def: RoomDef): Rect[] {
+  private computeDoorNotches(def: RoomDef): Array<{ rect: Rect; doorIdx: number }> {
     const fz = this.currentFloorZone;
-    const notches: Rect[] = [];
+    const notches: Array<{ rect: Rect; doorIdx: number }> = [];
     const overlap = 10;
-    for (const door of def.doorways) {
+    for (let i = 0; i < def.doorways.length; i++) {
+      const door = def.doorways[i]!;
       const c  = this.doorwayCenter(door);
       const hw = DOOR_WIDTH / 2;
       switch (door.side) {
         case 'bottom': {
           const top = fz.y + fz.h - overlap;
-          notches.push({ x: c.x - hw, y: top, w: DOOR_WIDTH, h: (c.y + 24) - top });
+          notches.push({ rect: { x: c.x - hw, y: top, w: DOOR_WIDTH, h: (c.y + PLAYER_RADIUS) - top }, doorIdx: i });
           break;
         }
         case 'top': {
           const bot = fz.y + overlap;
-          notches.push({ x: c.x - hw, y: c.y - 24, w: DOOR_WIDTH, h: bot - (c.y - 24) });
+          notches.push({ rect: { x: c.x - hw, y: c.y - PLAYER_RADIUS, w: DOOR_WIDTH, h: bot - (c.y - PLAYER_RADIUS) }, doorIdx: i });
           break;
         }
         case 'right': {
           const left = fz.x + fz.w - overlap;
-          notches.push({ x: left, y: c.y - hw, w: (c.x + 24) - left, h: DOOR_WIDTH });
+          notches.push({ rect: { x: left, y: c.y - hw, w: (c.x + PLAYER_RADIUS) - left, h: DOOR_WIDTH }, doorIdx: i });
           break;
         }
         case 'left': {
           const right = fz.x + overlap;
-          notches.push({ x: c.x - 24, y: c.y - hw, w: right - (c.x - 24), h: DOOR_WIDTH });
+          notches.push({ rect: { x: c.x - PLAYER_RADIUS, y: c.y - hw, w: right - (c.x - PLAYER_RADIUS), h: DOOR_WIDTH }, doorIdx: i });
           break;
         }
       }
@@ -356,15 +357,14 @@ export class HouseScene extends Phaser.Scene {
 
     const inFloor = px >= fz.x + r && px <= fz.x + fz.w - r &&
                     py >= fz.y + r && py <= fz.y + fz.h - r;
-    const inNotch = this.doorNotches.some(n =>
+    const inNotch = this.doorNotches.some(({ rect: n }) =>
       px >= n.x + r && px <= n.x + n.w - r &&
       py >= n.y + r && py <= n.y + n.h - r,
     );
     if (!inFloor && !inNotch) return false;
 
-    // Door approach zones (notch + margin into floor zone) are always passable
     const doorClear = PLAYER_RADIUS + 6;
-    const inDoorApproach = this.doorNotches.some(n =>
+    const inDoorApproach = this.doorNotches.some(({ rect: n }) =>
       px >= n.x - doorClear && px <= n.x + n.w + doorClear &&
       py >= n.y - doorClear && py <= n.y + n.h + doorClear,
     );
@@ -381,7 +381,7 @@ export class HouseScene extends Phaser.Scene {
 
   private clipFootprintsAroundDoors(): void {
     const m = PLAYER_RADIUS + 6;
-    const zones = this.doorNotches.map(n => ({
+    const zones = this.doorNotches.map(({ rect: n }) => ({
       x: n.x - m, y: n.y - m, w: n.w + m * 2, h: n.h + m * 2,
     }));
     const keep = this.footprints.map((fp, i) => ({
@@ -417,7 +417,7 @@ export class HouseScene extends Phaser.Scene {
     );
 
     // Door notches — blue
-    for (const n of this.doorNotches) {
+    for (const { rect: n } of this.doorNotches) {
       this.debugLayer.add(
         this.add.rectangle(n.x + n.w / 2, n.y + n.h / 2, n.w, n.h, 0x0088ff, 0.25)
           .setStrokeStyle(1, 0x0088ff, 0.8),
@@ -454,12 +454,12 @@ export class HouseScene extends Phaser.Scene {
     const fz = this.currentFloorZone;
     const inFloor = nx >= fz.x + r && nx <= fz.x + fz.w - r &&
                     ny >= fz.y + r && ny <= fz.y + fz.h - r;
-    const inNotch = this.doorNotches.some(n =>
+    const inNotch = this.doorNotches.some(({ rect: n }) =>
       nx >= n.x + r && nx <= n.x + n.w - r &&
       ny >= n.y + r && ny <= n.y + n.h - r,
     );
     const doorClear = PLAYER_RADIUS + 6;
-    const inDoorApproach = this.doorNotches.some(n =>
+    const inDoorApproach = this.doorNotches.some(({ rect: n }) =>
       nx >= n.x - doorClear && nx <= n.x + n.w + doorClear &&
       ny >= n.y - doorClear && ny <= n.y + n.h + doorClear,
     );
@@ -725,24 +725,57 @@ export class HouseScene extends Phaser.Scene {
   }
 
   private checkDoorways(): void {
-    for (const door of this.currentRoom.doorways) {
-      const center = this.doorwayCenter(door);
-      const dx     = Math.abs(this.player.x - center.x);
-      const dy     = Math.abs(this.player.y - center.y);
-      const isHorizontal = door.side === 'top' || door.side === 'bottom';
-      const halfW  = isHorizontal ? DOOR_WIDTH / 2 : 24;
-      const halfH  = isHorizontal ? 24 : DOOR_WIDTH / 2;
-      if (dx < halfW && dy < halfH) {
+    const px = this.player.x;
+    const py = this.player.y;
+    const fz = this.currentFloorZone;
+    const r  = PLAYER_RADIUS;
+
+    // Notch-based trigger: player inside a notch AND past the floor-zone edge
+    for (const { rect: n, doorIdx } of this.doorNotches) {
+      if (px >= n.x + r && px <= n.x + n.w - r &&
+          py >= n.y + r && py <= n.y + n.h - r) {
+        const door = this.currentRoom.doorways[doorIdx]!;
+        const pastEdge =
+          (door.side === 'bottom' && py > fz.y + fz.h) ||
+          (door.side === 'top'    && py < fz.y) ||
+          (door.side === 'right'  && px > fz.x + fz.w) ||
+          (door.side === 'left'   && px < fz.x);
+        if (!pastEdge) continue;
+
         if (door.locked?.(this.profile)) {
           this.showToast(door.lockMessage ?? 'Locked.');
-          if      (door.side === 'right')  this.player.x -= 24;
-          else if (door.side === 'left')   this.player.x += 24;
-          else if (door.side === 'bottom') this.player.y -= 24;
-          else                             this.player.y += 24;
+          if      (door.side === 'right')  this.player.x = fz.x + fz.w - r;
+          else if (door.side === 'left')   this.player.x = fz.x + r;
+          else if (door.side === 'bottom') this.player.y = fz.y + fz.h - r;
+          else                             this.player.y = fz.y + r;
           return;
         }
         this.transition(door);
         return;
+      }
+    }
+
+    // Fallback radial check for rooms without notches (non-wired rooms)
+    if (this.doorNotches.length === 0) {
+      for (const door of this.currentRoom.doorways) {
+        const center = this.doorwayCenter(door);
+        const dx     = Math.abs(px - center.x);
+        const dy     = Math.abs(py - center.y);
+        const isHorizontal = door.side === 'top' || door.side === 'bottom';
+        const halfW  = isHorizontal ? DOOR_WIDTH / 2 : 24;
+        const halfH  = isHorizontal ? 24 : DOOR_WIDTH / 2;
+        if (dx < halfW && dy < halfH) {
+          if (door.locked?.(this.profile)) {
+            this.showToast(door.lockMessage ?? 'Locked.');
+            if      (door.side === 'right')  this.player.x -= 24;
+            else if (door.side === 'left')   this.player.x += 24;
+            else if (door.side === 'bottom') this.player.y -= 24;
+            else                             this.player.y += 24;
+            return;
+          }
+          this.transition(door);
+          return;
+        }
       }
     }
   }
