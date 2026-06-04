@@ -2,11 +2,13 @@ import Phaser from 'phaser';
 import { ChapterBase } from './ChapterBase';
 import { SoundBank } from '../../systems/SoundBank';
 import { SpriteBank } from '../../systems/SpriteBank';
+import { RetryPopup } from '../../ui/RetryPopup';
 
 type StationId = 'sectional' | 'sidetable' | 'coffeetable' | 'barstool' | 'floor';
 
 const HOLD_SECONDS = 1.2;
 const FLOOR_STEPS = 6;
+const MAX_SLIPS = 3;
 
 type Station = {
   id: StationId;
@@ -34,6 +36,8 @@ export class Ch11_Ledges extends ChapterBase {
   private inFloorWalk = false;
 
   private baseY = 0;
+  private slips = 0;
+  private retryPopup!: RetryPopup;
 
   constructor() {
     super('Ch11_Ledges', 11);
@@ -52,6 +56,7 @@ export class Ch11_Ledges extends ChapterBase {
 
   create(): void {
     this.setup();
+    this.retryPopup = new RetryPopup(this);
     this.cameras.main.setBackgroundColor('#1f140e');
 
     const W = this.scale.width;
@@ -154,10 +159,14 @@ export class Ch11_Ledges extends ChapterBase {
     if (wasFull) {
       this.step();
     } else {
-      // Released too early
       this.holdProgress = 0;
       this.updateGauge();
-      this.softFail('released-too-early', 'Hold tight, almost there');
+      this.slips++;
+      this.softFail('released-too-early', `Slipped! (${this.slips}/${MAX_SLIPS})`);
+      if (this.slips >= MAX_SLIPS) {
+        this.active = false;
+        this.retryPopup.show(() => this.resetRound(), 'Too many slips! Try again!');
+      }
     }
   }
 
@@ -221,6 +230,19 @@ export class Ch11_Ledges extends ChapterBase {
       y: this.baseY + 16,
       duration: 280,
     });
+  }
+
+  private resetRound(): void {
+    this.slips = 0;
+    this.stationIndex = 0;
+    this.holdProgress = 0;
+    this.inFloorWalk = false;
+    this.floorWalkStep = 0;
+    this.updateGauge();
+    const first = this.stations[0]!;
+    this.caius.setPosition(first.x, this.baseY - first.height - 8);
+    this.hint.setText('Hold GRIP until the gauge fills, then release to step.');
+    this.active = true;
   }
 
   private finishToChelsea(): void {
