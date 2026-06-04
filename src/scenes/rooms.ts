@@ -63,7 +63,7 @@ export const ROOMS: Record<RoomId, RoomDef> = {
       { chapter: 2, x: 0.70, y: 0.30 },
       { chapter: 3, x: 0.30, y: 0.65 },
       { chapter: 4, x: 0.70, y: 0.65 },
-      { chapter: 8, x: 0.50, y: 0.45 },
+      { chapter: 8, x: 0.70, y: 0.45 },
     ],
     doorways: [{ side: 'bottom', position: 0.5, to: 'hallway-upper' }],
     encounterChance: 0,
