@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { ChapterBase } from './ChapterBase';
 import { SpriteBank } from '../../systems/SpriteBank';
+import { RetryPopup } from '../../ui/RetryPopup';
 
 type FoodKind = 'good' | 'bad';
 type Food = {
@@ -34,6 +35,7 @@ export class Ch07_FirstBites extends ChapterBase {
   private currentFood: Food | null = null;
   private accepting = false;
   private swipeStart: { x: number; y: number } | null = null;
+  private retryPopup!: RetryPopup;
 
   constructor() {
     super('Ch07_FirstBites', 7);
@@ -45,6 +47,7 @@ export class Ch07_FirstBites extends ChapterBase {
 
   create(): void {
     this.setup();
+    this.retryPopup = new RetryPopup(this);
     this.cameras.main.setBackgroundColor('#3a2515');
 
     const W = this.scale.width;
@@ -185,7 +188,11 @@ export class Ch07_FirstBites extends ChapterBase {
     } else {
       this.chelseaReact.setText('"Oh no, that one!"');
       this.softFail('ate-bad', 'Ick — try to swipe that away');
-      this.time.delayedCall(500, () => this.nextSpoon());
+      if (this.cannotWin()) {
+        this.retryPopup.show(() => this.scene.restart(), 'Too many wrong bites! Try again!');
+      } else {
+        this.time.delayedCall(500, () => this.nextSpoon());
+      }
     }
   }
 
@@ -206,16 +213,25 @@ export class Ch07_FirstBites extends ChapterBase {
     } else {
       this.chelseaReact.setText('"Wait, that was a good one"');
       this.softFail('rejected-good', 'That was a good one!');
-      this.time.delayedCall(500, () => this.nextSpoon());
+      if (this.cannotWin()) {
+        this.retryPopup.show(() => this.scene.restart(), 'Too many wrong bites! Try again!');
+      } else {
+        this.time.delayedCall(500, () => this.nextSpoon());
+      }
     }
+  }
+
+  private cannotWin(): boolean {
+    const remaining = TOTAL_SPOONS - this.spoonIndex;
+    return this.correct + remaining < WIN;
   }
 
   private evaluate(): void {
     if (this.correct >= WIN) {
       this.completeChapter();
     } else {
-      this.softFail('not-enough', `Got ${this.correct} of ${TOTAL_SPOONS}. Need ${WIN}+. Try again.`);
-      this.time.delayedCall(1400, () => this.scene.restart());
+      this.softFail('not-enough', `Got ${this.correct}. Need ${WIN}+.`);
+      this.retryPopup.show(() => this.scene.restart(), `Only ${this.correct} right! Need ${WIN}. Try again!`);
     }
   }
 }
