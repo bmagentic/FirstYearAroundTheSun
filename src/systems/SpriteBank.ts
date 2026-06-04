@@ -28,6 +28,28 @@ const MANIFEST: Record<string, string> = {
   'obj-master-floormattress': '/assets/sprites/rooms/master/obj_master_floormattress.png',
   'dad-airplane':       '/assets/sprites/brandon/brandon_airplane.png',
 
+  // ── Garage object sprites ─────────────────────────────────────────────────
+  'obj-garage-smeg':          '/assets/sprites/signature/obj_signature_smegfridge.png',
+  'obj-garage-cabinets':      '/assets/sprites/rooms/garage/obj_garage_cabinets.png',
+  'obj-garage-workbench':     '/assets/sprites/rooms/garage/obj_garage_workbench.png',
+  'obj-garage-bike':          '/assets/sprites/rooms/garage/obj_garage_bike.png',
+  'obj-garage-rocket-ready':  '/assets/sprites/rooms/garage/obj_garage_rocket_ready.png',
+
+  // ── Kitchen object sprites ────────────────────────────────────────────────
+  'obj-kitchen-fridge':       '/assets/sprites/rooms/living_kitchen/obj_kitchen_fridge.png',
+  'obj-kitchen-range':        '/assets/sprites/rooms/living_kitchen/obj_kitchen_range.png',
+  'obj-kitchen-barstool':     '/assets/sprites/rooms/living_kitchen/obj_kitchen_barstool.png',
+  'obj-kitchen-chandelier':   '/assets/sprites/rooms/living_kitchen/obj_kitchen_chandelier.png',
+
+  // ── Bathroom object sprites ───────────────────────────────────────────────
+  'obj-bathroom-showercurtain': '/assets/sprites/rooms/bathroom/obj_bathroom_showercurtain.png',
+  'obj-bathroom-bathproducts':  '/assets/sprites/rooms/bathroom/obj_bathroom_bathproducts.png',
+  'obj-bathroom-rubberduck':    '/assets/sprites/rooms/bathroom/obj_bathroom_rubberduck.png',
+  'obj-bathroom-tubwater':      '/assets/sprites/rooms/bathroom/obj_bathroom_tubwater.png',
+
+  // ── Play-area portables ───────────────────────────────────────────────────
+  'obj-portable-snackcup':    '/assets/sprites/portable/obj_portable_snackcup.png',
+
   // ── Ch11 furniture (reconciled to available sprites) ────────────────────────
   'furniture-sectional':   '/assets/sprites/rooms/living_kitchen/obj_livingroom_sectional.png',
   'furniture-coffeetable': '/assets/sprites/rooms/living_kitchen/obj_livingroom_coffeetable.png',

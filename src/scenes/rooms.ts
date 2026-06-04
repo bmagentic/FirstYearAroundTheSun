@@ -170,7 +170,7 @@ export const ROOMS: Record<RoomId, RoomDef> = {
         position: 0.5,
         to: 'garage',
         locked: (p) => !DevMode.isEnabled() && !p.completedChapters.includes(11),
-        lockMessage: 'The garage door is closed.',
+        lockMessage: 'Locked tight.',
       },
     ],
     encounterChance: 0,
