@@ -76,7 +76,7 @@ export class Ch04_RollOut extends ChapterBase {
     // Caius
     this.caius = this.add.container(x + 50, y + h - 60);
     const body = SpriteBank.has(this, 'caius-roll')
-      ? this.add.image(0, 0, 'caius-roll').setDisplaySize(28, 28)
+      ? this.add.image(0, 0, 'caius-roll').setDisplaySize(26, 26)
       : (this.add.circle(0, 0, CAIUS_RADIUS, 0xf7c6a3).setStrokeStyle(2, 0x402c1d) as unknown as Phaser.GameObjects.Image);
     this.caius.add(body);
 

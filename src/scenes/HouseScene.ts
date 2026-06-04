@@ -183,7 +183,7 @@ export class HouseScene extends Phaser.Scene {
 
     this.player = this.add.container(0, 0);
     if (SpriteBank.has(this, 'caius')) {
-      const sprite = this.add.image(0, 0, 'caius').setDisplaySize(PLAYER_RADIUS * 2.5, PLAYER_RADIUS * 3.5);
+      const sprite = this.add.image(0, 0, 'caius').setDisplaySize(64, 64);
       this.player.add(sprite);
     } else {
       this.playerBody = this.add.circle(0, 0, PLAYER_RADIUS, 0xf7c6a3).setStrokeStyle(2, 0x402c1d);
