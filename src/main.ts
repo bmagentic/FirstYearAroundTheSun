@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import './styles.css';
 import { BootScene } from './scenes/BootScene';
+import { SoundNoticeScene } from './scenes/SoundNoticeScene';
 import { MenuScene } from './scenes/MenuScene';
 import { HouseScene } from './scenes/HouseScene';
 import { Ch01_Arrival } from './scenes/chapters/Ch01_Arrival';
@@ -48,6 +49,7 @@ const config: Phaser.Types.Core.GameConfig = {
   },
   scene: [
     BootScene,
+    SoundNoticeScene,
     MenuScene,
     HouseScene,
     Ch01_Arrival,
@@ -104,27 +106,57 @@ if (!hudRoot || !pauseMenuEl) {
   throw new Error('HUD or pause-menu element missing from index.html');
 }
 
+// A paused scene drops out of getScenes(true), so remember which scene we paused
+// to drive Resume / Restart / Exit / Home reliably.
+let pausedSceneKey: string | null = null;
+
 new HUD(hudRoot, pauseMenuEl, {
   getActiveSceneKey: activeSceneKey,
   onPauseRequested: () => {
     const key = activeSceneKey();
-    if (key) game.scene.pause(key);
+    if (key) {
+      pausedSceneKey = key;
+      game.scene.pause(key);
+    }
   },
   onResumeRequested: () => {
-    const key = activeSceneKey();
-    if (key) game.scene.resume(key);
+    if (pausedSceneKey) game.scene.resume(pausedSceneKey);
+    pausedSceneKey = null;
   },
   onRestartRequested: () => {
-    const key = activeSceneKey();
+    const key = pausedSceneKey;
+    pausedSceneKey = null;
     if (!key) return;
     game.scene.resume(key);
     game.scene.start(key);
   },
   onExitRequested: () => {
-    const key = activeSceneKey();
+    const key = pausedSceneKey;
+    pausedSceneKey = null;
     if (!key) return;
     game.scene.resume(key);
     if (key !== 'HouseScene') game.scene.start('HouseScene');
+  },
+  onHomeRequested: () => {
+    const key = pausedSceneKey ?? activeSceneKey();
+    pausedSceneKey = null;
+    // Autosave: profile progress (completed chapters, current room, …) is already
+    // persisted on every change; flush the session play-time too. A mid-chapter Home
+    // never marks the chapter complete — it simply abandons the chapter, and the
+    // overworld state (current room) is what loads next time.
+    SaveManager.flushSessionTime();
+    // Kill anything that could leak into the menu.
+    game.sound.stopAll();
+    SoundBank.stopAll();
+    if (key) {
+      const scene = game.scene.getScene(key);
+      if (scene) {
+        scene.time.removeAllEvents();
+        scene.tweens.killAll();
+      }
+      game.scene.stop(key);
+    }
+    game.scene.start('MenuScene');
   },
   onMuteChange: (muted) => {
     game.sound.mute = muted;

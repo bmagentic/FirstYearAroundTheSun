@@ -62,7 +62,9 @@ export class FaceWash extends EncounterBase {
     this.cloth = this.add.rectangle(0, 0, 36, 36, 0xe6e6f5).setStrokeStyle(2, 0x6b8eb6);
     this.cloth.setVisible(false);
 
-    this.time.delayedCall(700, () => this.nextSwipe());
+    void this.intro('Face & Hands Wash', 'Tap the opposite direction to dodge the cloth!').then(() => {
+      this.time.delayedCall(700, () => this.nextSwipe());
+    });
   }
 
   private nextSwipe(): void {

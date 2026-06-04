@@ -20,6 +20,7 @@ class SoundBankImpl {
   private entries = new Map<string, Entry>();
   private ctx: AudioContext | null = null;
   private unlocked = false;
+  private activeClones = new Set<HTMLAudioElement>();
 
   /** Reuse an already-unlocked AudioContext (e.g. Phaser's) so iOS audio works without re-priming. */
   useContext(ctx: AudioContext): void {
@@ -80,12 +81,28 @@ class SoundBankImpl {
     if (entry?.status === 'ready' && entry.audio) {
       const clone = entry.audio.cloneNode(true) as HTMLAudioElement;
       clone.volume = 0.75;
+      this.activeClones.add(clone);
+      clone.addEventListener('ended', () => this.activeClones.delete(clone), { once: true });
       clone.play().catch(() => {
+        this.activeClones.delete(clone);
         this.playSynth(id);
       });
       return;
     }
     this.playSynth(id);
+  }
+
+  /** Stop any in-flight sampled clips (e.g. lullaby) so audio never leaks across a scene exit. */
+  stopAll(): void {
+    for (const clone of this.activeClones) {
+      try {
+        clone.pause();
+        clone.currentTime = 0;
+      } catch {
+        /* ignore */
+      }
+    }
+    this.activeClones.clear();
   }
 
   private getContext(): AudioContext {

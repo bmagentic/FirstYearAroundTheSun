@@ -65,9 +65,11 @@ export class ChangingTable extends EncounterBase {
       this.caiusX += left ? RECOVERY_PUSH : -RECOVERY_PUSH;
     });
 
-    this.startMs = this.time.now;
-    this.nextTiltAt = this.time.now + 900;
-    this.active = true;
+    void this.intro('Changing Table', 'Tap the higher side to keep him from rolling off!').then(() => {
+      this.startMs = this.time.now;
+      this.nextTiltAt = this.time.now + 900;
+      this.active = true;
+    });
   }
 
   private resetRound(): void {

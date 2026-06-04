@@ -1,14 +1,14 @@
 import Phaser from 'phaser';
 import { SaveManager } from '../../systems/SaveManager';
 import { track } from '../../systems/Analytics';
-import { ChapterCard } from '../../ui/ChapterCard';
+import { IntroPanel } from '../../ui/IntroPanel';
 import { SoundBank } from '../../systems/SoundBank';
 import type { SaveProfile } from '../../types';
 
 export abstract class ChapterBase extends Phaser.Scene {
   protected profile!: SaveProfile;
   protected chapterId: number;
-  protected card!: ChapterCard;
+  protected introPanel!: IntroPanel;
   protected startedAt = 0;
   protected attempts = 0;
 
@@ -26,7 +26,7 @@ export abstract class ChapterBase extends Phaser.Scene {
   }
 
   protected setup(): void {
-    this.card = new ChapterCard(this);
+    this.introPanel = new IntroPanel(this);
     this.cameras.main.fadeIn(220, 0, 0, 0);
     track('chapter_started', {
       chapter_id: this.chapterId,
@@ -34,8 +34,14 @@ export abstract class ChapterBase extends Phaser.Scene {
     });
   }
 
+  /**
+   * Pre-play gate: the scene is built but held frozen behind a title + instruction
+   * panel with a Start button. Resolves once the player taps Start.
+   */
   protected intro(heading: string, subhead?: string): Promise<void> {
-    return this.card.show(heading, subhead);
+    return new Promise((resolve) => {
+      this.introPanel.show(heading, subhead ?? '', () => resolve());
+    });
   }
 
   protected completeChapter(opts: { nextScene?: string } = {}): void {

@@ -6,13 +6,16 @@ export type HUDCallbacks = {
   onResumeRequested: () => void;
   onRestartRequested: () => void;
   onExitRequested: () => void;
+  onHomeRequested: () => void;
   onMuteChange: (muted: boolean) => void;
 };
 
 const MUTED_GLYPH = '\u{1F507}'; // 🔇
 const UNMUTED_GLYPH = '\u{1F50A}'; // 🔊
 
-const PAUSABLE_SCENES = new Set(['HouseScene']);
+// Pause is available everywhere except the boot/title, sound notice, and profile
+// screens — so the player can quit Home from mid-chapter as well as the overworld.
+const NON_PAUSABLE_SCENES = new Set(['BootScene', 'SoundNoticeScene', 'MenuScene']);
 
 export class HUD {
   private muteBtn: HTMLButtonElement;
@@ -61,7 +64,7 @@ export class HUD {
   private requestPause(): void {
     if (this.menuOpen) return;
     const sceneKey = this.callbacks.getActiveSceneKey();
-    if (!sceneKey || !PAUSABLE_SCENES.has(sceneKey)) return;
+    if (!sceneKey || NON_PAUSABLE_SCENES.has(sceneKey)) return;
 
     this.menuOpen = true;
     this.callbacks.onPauseRequested();
@@ -105,6 +108,13 @@ export class HUD {
       });
       shell.appendChild(exit);
     }
+
+    const home = this.menuButton('Home (save & quit)');
+    home.addEventListener('click', () => {
+      this.closeMenu();
+      this.callbacks.onHomeRequested();
+    });
+    shell.appendChild(home);
 
     this.pauseMenu.appendChild(shell);
   }

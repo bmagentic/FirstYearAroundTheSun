@@ -120,8 +120,10 @@ export class Roomba extends EncounterBase {
       }
     });
 
-    this.startMs = this.time.now;
-    this.active = true;
+    void this.intro('Roomba!', 'Tap to scoot Caius to a safe spot — reach all three!').then(() => {
+      this.startMs = this.time.now;
+      this.active = true;
+    });
   }
 
   private resetRound(): void {

@@ -79,8 +79,10 @@ export class BottleWait extends EncounterBase {
     ring.setInteractive({ useHandCursor: true });
     ring.on('pointerdown', () => this.suck());
 
-    this.active = true;
-    this.startMs = this.time.now;
+    void this.intro('Bottle Wait', 'Tap the pacifier to stay calm while the bottle fills!').then(() => {
+      this.active = true;
+      this.startMs = this.time.now;
+    });
   }
 
   private resetRound(): void {

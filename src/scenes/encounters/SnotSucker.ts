@@ -23,7 +23,6 @@ export class SnotSucker extends EncounterBase {
   private swipeStart: { x: number; y: number } | null = null;
   private swoopTween: Phaser.Tweens.Tween | null = null;
   private retryPopup!: RetryPopup;
-  private instructionShown = false;
 
   constructor() {
     super('SnotSucker', 'snot-sucker');
@@ -72,59 +71,9 @@ export class SnotSucker extends EncounterBase {
       this.handleSwipe(dir);
     });
 
-    this.showInstruction();
-  }
-
-  private showInstruction(): void {
-    const W = this.scale.width;
-    const H = this.scale.height;
-    const overlay = this.add.container(0, 0).setDepth(400);
-    const bg = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.6);
-    const txt = this.add
-      .text(W / 2, H / 2 - 20, 'Swipe AWAY from the snot sucker to dodge!', {
-        fontFamily: 'system-ui, sans-serif',
-        fontSize: '15px',
-        color: '#fde68a',
-        fontStyle: 'bold',
-        align: 'center',
-        wordWrap: { width: W - 60 },
-      })
-      .setOrigin(0.5);
-    const arrow = this.add
-      .text(W / 2, H / 2 + 30, '← →', {
-        fontFamily: 'system-ui, sans-serif',
-        fontSize: '28px',
-        color: '#fef3c7',
-      })
-      .setOrigin(0.5);
-    this.tweens.add({
-      targets: arrow,
-      x: W / 2 + 20,
-      duration: 400,
-      yoyo: true,
-      repeat: 2,
-      ease: 'Sine.easeInOut',
+    void this.intro('Snot Sucker!', 'Swipe away from the snot sucker to dodge!').then(() => {
+      this.time.delayedCall(400, () => this.nextSwoop());
     });
-    overlay.add([bg, txt, arrow]);
-
-    const dismiss = () => {
-      if (this.instructionShown) return;
-      this.instructionShown = true;
-      this.tweens.add({
-        targets: overlay,
-        alpha: 0,
-        duration: 200,
-        onComplete: () => {
-          overlay.destroy();
-          this.time.delayedCall(400, () => this.nextSwoop());
-        },
-      });
-    };
-
-    bg.setInteractive();
-    bg.on('pointerdown', () => dismiss());
-    this.input.once('pointerup', () => { if (!this.instructionShown) dismiss(); });
-    this.time.delayedCall(2500, () => dismiss());
   }
 
   private nextSwoop(): void {

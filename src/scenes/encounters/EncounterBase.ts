@@ -2,11 +2,13 @@ import Phaser from 'phaser';
 import { SaveManager } from '../../systems/SaveManager';
 import { track } from '../../systems/Analytics';
 import { SoundBank } from '../../systems/SoundBank';
+import { IntroPanel } from '../../ui/IntroPanel';
 import type { EncounterId, SaveProfile } from '../../types';
 
 export abstract class EncounterBase extends Phaser.Scene {
   protected profile!: SaveProfile;
   protected encounterId: EncounterId;
+  protected introPanel!: IntroPanel;
   protected startedAt = 0;
   protected attempts = 0;
 
@@ -24,10 +26,21 @@ export abstract class EncounterBase extends Phaser.Scene {
   }
 
   protected setupEncounter(): void {
+    this.introPanel = new IntroPanel(this);
     this.cameras.main.fadeIn(220, 0, 0, 0);
     track('encounter_triggered', {
       encounter_id: this.encounterId,
       profile_name: this.profile.name,
+    });
+  }
+
+  /**
+   * Pre-play gate: the encounter is built but held frozen behind a title +
+   * instruction panel with a Start button. Resolves once the player taps Start.
+   */
+  protected intro(title: string, instruction: string): Promise<void> {
+    return new Promise((resolve) => {
+      this.introPanel.show(title, instruction, () => resolve());
     });
   }
 
