@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { ChapterBase } from './ChapterBase';
 import { SoundBank } from '../../systems/SoundBank';
+import { SpriteBank } from '../../systems/SpriteBank';
 
 type Direction = 'left' | 'top' | 'right';
 type SoundId = 'chelsea-heartbeat' | 'dad-voice' | 'dog-bark';
@@ -33,7 +34,7 @@ export class Ch01_Arrival extends ChapterBase {
   }
 
   preload(): void {
-    // Try to load real audio if dropped into /public/assets/audio/.
+    SpriteBank.preloadInto(this, ['caius']);
     SoundBank.preload('chelsea-heartbeat');
     SoundBank.preload('dad-voice');
     SoundBank.preload('dog-bark');
@@ -62,11 +63,18 @@ export class Ch01_Arrival extends ChapterBase {
     this.add.rectangle(cx, cy, 110, 88).setStrokeStyle(2, 0x4a3a26, 0.65);
 
     // Caius in crib
-    const body = this.add.circle(cx, cy + 4, 12, 0xf7c6a3).setStrokeStyle(2, 0x402c1d);
-    const cheekL = this.add.circle(cx - 4, cy + 6, 2, 0xe89a8a);
-    const cheekR = this.add.circle(cx + 4, cy + 6, 2, 0xe89a8a);
+    let caiusTargets: Phaser.GameObjects.GameObject[];
+    if (SpriteBank.has(this, 'caius')) {
+      const sprite = this.add.image(cx, cy + 4, 'caius').setDisplaySize(24, 24);
+      caiusTargets = [sprite];
+    } else {
+      const body = this.add.circle(cx, cy + 4, 12, 0xf7c6a3).setStrokeStyle(2, 0x402c1d);
+      const cheekL = this.add.circle(cx - 4, cy + 6, 2, 0xe89a8a);
+      const cheekR = this.add.circle(cx + 4, cy + 6, 2, 0xe89a8a);
+      caiusTargets = [body, cheekL, cheekR];
+    }
     this.tweens.add({
-      targets: [body, cheekL, cheekR],
+      targets: caiusTargets,
       y: '+=1.5',
       duration: 1800,
       yoyo: true,
