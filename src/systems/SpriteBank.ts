@@ -34,6 +34,8 @@ const MANIFEST: Record<string, string> = {
   // ── Dining room object sprites ─────────────────────────────────────────────
   'obj-dining-table':          '/assets/sprites/rooms/dining/obj_dining_table.png',
   'obj-dining-chair':          '/assets/sprites/rooms/dining/obj_dining_chair.png',
+  'obj-dining-chair-east':     '/assets/sprites/rooms/dining/obj_dining_chair_east.png',
+  'obj-dining-chair-west':     '/assets/sprites/rooms/dining/obj_dining_chair_west.png',
   'obj-dining-highchair':      '/assets/sprites/rooms/dining/obj_dining_highchair.png',
   'obj-dining-hutch':          '/assets/sprites/rooms/dining/obj_dining_hutch.png',
   'obj-dining-basketstand':    '/assets/sprites/rooms/dining/obj_dining_basketstand.png',

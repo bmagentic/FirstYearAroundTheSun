@@ -87,14 +87,13 @@ const LIVINGROOM_OBJECTS: RoomObject[] = [
 // ── Dining room layout ─────────────────────────────────────────────────────
 const DINING_OBJECTS: RoomObject[] = [
   { key: 'obj-dining-table',          fx: 0.450, fy: 0.400, displayW: 256, displayH: 128 },
-  { key: 'obj-dining-chair',          fx: 0.250, fy: 0.350, displayW: 64,  displayH: 128 },
-  { key: 'obj-dining-chair',          fx: 0.650, fy: 0.350, displayW: 64,  displayH: 128 },
+  { key: 'obj-dining-chair-east',     fx: 0.250, fy: 0.350, displayW: 64,  displayH: 128 },
+  { key: 'obj-dining-chair-west',     fx: 0.650, fy: 0.350, displayW: 64,  displayH: 128 },
   { key: 'obj-dining-highchair',      fx: 0.450, fy: 0.600, displayW: 64,  displayH: 128 },
-  { key: 'obj-dining-hutch',          fx: 0.100, fy: 0.100, displayW: 128, displayH: 192 },
+  { key: 'obj-dining-hutch',          fx: 0.100, fy: 0.100, displayW: 77,  displayH: 115 },
   { key: 'obj-dining-basketstand',    fx: 0.900, fy: 0.150, displayW: 64,  displayH: 192 },
-  { key: 'obj-dining-familylamp',     fx: 0.450, fy: 0.000, displayW: 256, displayH: 64,  wallArt: true },
   { key: 'obj-dining-familypicture',  fx: 0.150, fy: 0.000, displayW: 128, displayH: 96,  wallArt: true },
-  { key: 'obj-dining-planterwall',    fx: 0.800, fy: 0.000, displayW: 144, displayH: 144, wallArt: true },
+  { key: 'obj-dining-planterwall',    fx: 0.800, fy: 0.000, displayW: 115, displayH: 115, wallArt: true },
   { key: 'obj-dining-wineglassrack',  fx: 0.900, fy: 0.000, displayW: 67,  displayH: 45,  wallArt: true },
   { key: 'obj-dining-floorplant',     fx: 0.050, fy: 0.800, displayW: 64,  displayH: 128 },
 ];
@@ -174,7 +173,8 @@ export class HouseScene extends Phaser.Scene {
       'obj-livingroom-coffeehutch',
       // Dining room object sprites
       'obj-dining-table',
-      'obj-dining-chair',
+      'obj-dining-chair-east',
+      'obj-dining-chair-west',
       'obj-dining-highchair',
       'obj-dining-hutch',
       'obj-dining-basketstand',
