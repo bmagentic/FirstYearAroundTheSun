@@ -76,3 +76,5 @@ Produces the 63-sec post-credits cinematic (Midjourney + Kling) + title/end card
 | Dedication | "For Chelsea, who made all of this possible." — non-negotiable |
 
 **Room status:** nursery DONE · living-room DONE · dining DONE · master-bedroom DONE · garage wired/unplaced · kitchen wired/unplaced · bathroom wired/unplaced · play-area wired/unplaced · hallway-upper not started · hallway-lower not started.
+
+webhook verification after duplicate project deletion
