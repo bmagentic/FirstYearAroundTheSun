@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { ChapterBase } from './ChapterBase';
 import { SoundBank } from '../../systems/SoundBank';
+import { SpriteBank } from '../../systems/SpriteBank';
 
 type SubsystemKind = 'tap-rhythm' | 'tap-targets' | 'swipe' | 'tap-alt' | 'hold' | 'drag-target';
 
@@ -36,6 +37,10 @@ export class Ch12_Liftoff extends ChapterBase {
 
   constructor() {
     super('Ch12_Liftoff', 12);
+  }
+
+  preload(): void {
+    SpriteBank.preloadInto(this, ['obj-garage-rocket-ready']);
   }
 
   create(): void {
@@ -90,17 +95,7 @@ export class Ch12_Liftoff extends ChapterBase {
   }
 
   private drawRocket(x: number, y: number): void {
-    // Body
-    this.add.rectangle(x, y, 42, 160, 0xd4d4d4).setStrokeStyle(2, 0x999999);
-    // Nose
-    this.add.triangle(x, y - 100, -21, 28, 21, 28, 0, -20, 0xfde68a).setStrokeStyle(2, 0xd4d4d4);
-    // Window
-    this.add.circle(x, y - 30, 10, 0x6ab0e0).setStrokeStyle(2, 0xffffff, 0.8);
-    // Fins
-    this.add.triangle(x - 28, y + 60, 0, 0, 14, -28, 14, 28, 0xb91c1c);
-    this.add.triangle(x + 28, y + 60, 0, 0, -14, -28, -14, 28, 0xb91c1c);
-    // Flame placeholder
-    const flame = this.add.triangle(x, y + 110, -12, 0, 12, 0, 0, 30, 0xfb923c);
+    const flame = this.add.triangle(x, y + 90, -14, 0, 14, 0, 0, 34, 0xfb923c);
     flame.setAlpha(0.4);
     this.tweens.add({
       targets: flame,
@@ -111,6 +106,12 @@ export class Ch12_Liftoff extends ChapterBase {
       repeat: -1,
       ease: 'Sine.easeInOut',
     });
+
+    if (SpriteBank.has(this, 'obj-garage-rocket-ready')) {
+      this.add.image(x, y, 'obj-garage-rocket-ready').setDisplaySize(115, 154);
+    } else {
+      this.add.rectangle(x, y, 42, 160, 0xd4d4d4).setStrokeStyle(2, 0x999999);
+    }
   }
 
   private buildNode(sub: Subsystem, idx: number, x: number, y: number): Phaser.GameObjects.Container {
@@ -368,7 +369,7 @@ export class Ch12_Liftoff extends ChapterBase {
 
     // Ignition: shake camera, rocket lifts up
     this.cameras.main.shake(900, 0.01);
-    const flame = this.add.triangle(0.22 * this.scale.width, this.rocketY + 110, -16, 0, 16, 0, 0, 60, 0xfb923c);
+    const flame = this.add.triangle(0.22 * this.scale.width, this.rocketY + 90, -16, 0, 16, 0, 0, 60, 0xfb923c);
     this.tweens.add({
       targets: flame,
       scaleY: 3,

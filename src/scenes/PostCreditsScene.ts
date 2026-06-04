@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { SaveManager } from '../systems/SaveManager';
 import { SoundBank } from '../systems/SoundBank';
+import { SpriteBank } from '../systems/SpriteBank';
 import { track } from '../systems/Analytics';
 import type { SaveProfile } from '../types';
 
@@ -35,6 +36,7 @@ export class PostCreditsScene extends Phaser.Scene {
   }
 
   preload(): void {
+    SpriteBank.preloadInto(this, ['obj-garage-rocket-ready']);
     SoundBank.preload('rocket-launch');
     SoundBank.preload('lullaby');
     SoundBank.preload('caius-laugh');
@@ -385,14 +387,16 @@ export class PostCreditsScene extends Phaser.Scene {
 
   private drawRocket(x: number, y: number): Phaser.GameObjects.Container {
     const c = this.add.container(x, y);
-    const body = this.add.rectangle(0, 0, 28, 100, 0xd4d4d4).setStrokeStyle(1, 0x999999);
-    const nose = this.add.triangle(0, -64, -14, 18, 14, 18, 0, -14, 0xfde68a);
-    const window = this.add.circle(0, -18, 6, 0x6ab0e0).setStrokeStyle(1, 0xffffff, 0.8);
-    const finL = this.add.triangle(-18, 38, 0, 0, 10, -20, 10, 20, 0xb91c1c);
-    const finR = this.add.triangle(18, 38, 0, 0, -10, -20, -10, 20, 0xb91c1c);
-    const flame = this.add.triangle(0, 70, -8, 0, 8, 0, 0, 24, 0xfb923c).setAlpha(0.7);
+    const flame = this.add.triangle(0, 76, -10, 0, 10, 0, 0, 28, 0xfb923c).setAlpha(0.7);
     this.tweens.add({ targets: flame, scaleY: 1.5, alpha: 0.4, duration: 220, yoyo: true, repeat: -1 });
-    c.add([body, nose, window, finL, finR, flame]);
+
+    if (SpriteBank.has(this, 'obj-garage-rocket-ready')) {
+      const img = this.add.image(0, 0, 'obj-garage-rocket-ready').setDisplaySize(96, 128);
+      c.add([flame, img]);
+    } else {
+      const body = this.add.rectangle(0, 0, 28, 100, 0xd4d4d4).setStrokeStyle(1, 0x999999);
+      c.add([flame, body]);
+    }
     return c;
   }
 
