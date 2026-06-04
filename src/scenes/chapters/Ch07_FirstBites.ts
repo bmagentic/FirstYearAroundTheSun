@@ -54,32 +54,12 @@ export class Ch07_FirstBites extends ChapterBase {
     this.add.rectangle(W / 2, H / 2 - 60, W - 40, 200, 0x6b4530).setStrokeStyle(2, 0xb88c5a, 0.4);
 
     // Caius in high chair
-    if (SpriteBank.has(this, 'obj-dining-highchair')) {
-      this.add.image(W / 2, H / 2 + 60, 'obj-dining-highchair').setDisplaySize(160, 200);
-    } else {
-      this.add.rectangle(W / 2, H / 2 + 60, 160, 200, 0x4f6a3d).setStrokeStyle(2, 0xfde68a, 0.4);
-    }
+    this.add.image(W / 2, H / 2 + 60, 'obj-dining-highchair').setDisplaySize(160, 200);
     const tray = this.add.rectangle(W / 2, H / 2 + 10, 180, 16, 0x8a6540);
-    if (SpriteBank.has(this, 'caius')) {
-      this.add.image(W / 2, H / 2 - 20, 'caius').setDisplaySize(48, 48);
-    } else {
-      this.add.circle(W / 2, H / 2 - 20, 24, 0xf7c6a3).setStrokeStyle(2, 0x402c1d);
-    }
+    this.add.image(W / 2, H / 2 - 20, 'caius').setDisplaySize(48, 48);
 
     // Chelsea on left side (the spoon holder)
-    if (SpriteBank.has(this, 'chelsea-idle')) {
-      this.add.image(60, H / 2, 'chelsea-idle').setDisplaySize(50, 120);
-    } else {
-      const chelsea = this.add.rectangle(60, H / 2, 50, 90, 0x7c5fb0).setStrokeStyle(2, 0xfde68a, 0.7);
-      this.add
-        .text(chelsea.x, chelsea.y - 50, 'Mama', {
-          fontFamily: 'system-ui, sans-serif',
-          fontSize: '10px',
-          color: '#fde68a',
-          fontStyle: 'bold',
-        })
-        .setOrigin(0.5);
-    }
+    this.add.image(60, H / 2, 'chelsea-idle').setDisplaySize(50, 120);
 
     this.chelseaReact = this.add
       .text(60, H / 2 + 60, '', {
