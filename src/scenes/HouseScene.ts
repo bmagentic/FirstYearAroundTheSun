@@ -143,7 +143,7 @@ const BATHROOM_OBJECTS: RoomObject[] = [
 // ── Play area layout ───────────────────────────────────────────────────────
 const PLAYAREA_OBJECTS: RoomObject[] = [
   { key: 'obj-nursery-toychest',    fx: 0.100, fy: 0.150, displayW: 94,  displayH: 70, bonusTrigger: true },
-  { key: 'vtech-cube',              fx: 0.800, fy: 0.300, displayW: 96,  displayH: 96  },
+  { key: 'vtech-cube',              fx: 0.800, fy: 0.300, displayW: 74,  displayH: 74  },
   { key: 'obj-portable-roomba',     fx: 0.500, fy: 0.850, displayW: 64,  displayH: 64  },
   { key: 'obj-plush-francois',      fx: 0.300, fy: 0.400, displayW: 60,  displayH: 60  },
   { key: 'obj-plush-foxamillion',   fx: 0.450, fy: 0.250, displayW: 60,  displayH: 60  },
