@@ -910,11 +910,16 @@ export class HouseScene extends Phaser.Scene {
     if (!bt) return;
 
     const fz = this.currentFloorZone;
-    const px = this.player.x;
-    const landX = px < bt.x
-      ? Math.min(bt.x + 100, fz.x + fz.w - PLAYER_RADIUS)
-      : Math.max(bt.x - 100, fz.x + PLAYER_RADIUS);
-    const landY = Phaser.Math.Clamp(bt.y + 40, fz.y + PLAYER_RADIUS, fz.y + fz.h - PLAYER_RADIUS);
+    const centerX = fz.x + fz.w * 0.35;
+    const centerY = fz.y + fz.h * 0.55;
+    let landX = centerX;
+    let landY = centerY;
+    const dToPlayer = Phaser.Math.Distance.Between(this.player.x, this.player.y, landX, landY);
+    if (dToPlayer < 40) {
+      landX = this.player.x < centerX ? centerX + 50 : centerX - 50;
+    }
+    landX = Phaser.Math.Clamp(landX, fz.x + PLAYER_RADIUS + 10, fz.x + fz.w - PLAYER_RADIUS - 10);
+    landY = Phaser.Math.Clamp(landY, fz.y + PLAYER_RADIUS + 10, fz.y + fz.h - PLAYER_RADIUS - 10);
 
     // FLAG: cape visual is programmatic — swap for sprite when available
     const cape = this.add.rectangle(bt.x, bt.y - 10, 22, 28, 0xdc2626)
@@ -971,11 +976,8 @@ export class HouseScene extends Phaser.Scene {
 
       bt.x = landX;
       bt.y = landY;
+      bt.radius = 26;
       this.bonusLaunchArmed = false;
-      const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, landX, landY);
-      if (d >= bt.radius) {
-        this.bonusLaunchArmed = true;
-      }
     });
   }
 
