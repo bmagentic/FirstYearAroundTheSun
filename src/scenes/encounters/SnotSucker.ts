@@ -1,21 +1,29 @@
 import Phaser from 'phaser';
 import { EncounterBase } from './EncounterBase';
 import { SpriteBank } from '../../systems/SpriteBank';
+import { RetryPopup } from '../../ui/RetryPopup';
 
 type Side = 'left' | 'right' | 'top' | 'bottom';
 
 const SIDES: Side[] = ['left', 'right', 'top', 'bottom'];
 const OPPOSITE: Record<Side, Side> = { left: 'right', right: 'left', top: 'bottom', bottom: 'top' };
-const SWOOPS_NEEDED = 3;
+const SWOOPS_TOTAL = 3;
+const DODGES_NEEDED = 2;
+const SWOOP_DURATION_MS = 1800;
+const TELEGRAPH_MS = 500;
 
 export class SnotSucker extends EncounterBase {
   private caius!: Phaser.GameObjects.Container;
   private sucker!: Phaser.GameObjects.Container;
   private swoopSide: Side = 'left';
-  private swoopsLanded = 0;
+  private swoopIndex = 0;
+  private dodged = 0;
+  private hits = 0;
   private accepting = false;
   private swipeStart: { x: number; y: number } | null = null;
   private swoopTween: Phaser.Tweens.Tween | null = null;
+  private retryPopup!: RetryPopup;
+  private instructionShown = false;
 
   constructor() {
     super('SnotSucker', 'snot-sucker');
@@ -27,8 +35,9 @@ export class SnotSucker extends EncounterBase {
 
   create(): void {
     this.setupEncounter();
+    this.retryPopup = new RetryPopup(this);
     this.cameras.main.setBackgroundColor('#3a2515');
-    this.showLabel('Snot Sucker!', 'Swipe AWAY from the swoop');
+    this.showLabel('Snot Sucker!', 'Dodge the snot sucker');
 
     const W = this.scale.width;
     const H = this.scale.height;
@@ -54,7 +63,7 @@ export class SnotSucker extends EncounterBase {
       }
       const dx = p.x - this.swipeStart.x;
       const dy = p.y - this.swipeStart.y;
-      if (Math.abs(dx) < 25 && Math.abs(dy) < 25) {
+      if (Math.abs(dx) < 15 && Math.abs(dy) < 15) {
         this.swipeStart = null;
         return;
       }
@@ -63,37 +72,112 @@ export class SnotSucker extends EncounterBase {
       this.handleSwipe(dir);
     });
 
-    this.time.delayedCall(700, () => this.nextSwoop());
+    this.showInstruction();
+  }
+
+  private showInstruction(): void {
+    const W = this.scale.width;
+    const H = this.scale.height;
+    const overlay = this.add.container(0, 0).setDepth(400);
+    const bg = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.6);
+    const txt = this.add
+      .text(W / 2, H / 2 - 20, 'Swipe AWAY from the snot sucker to dodge!', {
+        fontFamily: 'system-ui, sans-serif',
+        fontSize: '15px',
+        color: '#fde68a',
+        fontStyle: 'bold',
+        align: 'center',
+        wordWrap: { width: W - 60 },
+      })
+      .setOrigin(0.5);
+    const arrow = this.add
+      .text(W / 2, H / 2 + 30, '← →', {
+        fontFamily: 'system-ui, sans-serif',
+        fontSize: '28px',
+        color: '#fef3c7',
+      })
+      .setOrigin(0.5);
+    this.tweens.add({
+      targets: arrow,
+      x: W / 2 + 20,
+      duration: 400,
+      yoyo: true,
+      repeat: 2,
+      ease: 'Sine.easeInOut',
+    });
+    overlay.add([bg, txt, arrow]);
+
+    const dismiss = () => {
+      if (this.instructionShown) return;
+      this.instructionShown = true;
+      this.tweens.add({
+        targets: overlay,
+        alpha: 0,
+        duration: 200,
+        onComplete: () => {
+          overlay.destroy();
+          this.time.delayedCall(400, () => this.nextSwoop());
+        },
+      });
+    };
+
+    bg.setInteractive();
+    bg.on('pointerdown', () => dismiss());
+    this.input.once('pointerup', () => { if (!this.instructionShown) dismiss(); });
+    this.time.delayedCall(2500, () => dismiss());
   }
 
   private nextSwoop(): void {
-    if (this.swoopsLanded >= SWOOPS_NEEDED) {
-      this.completeEncounter();
+    if (this.swoopIndex >= SWOOPS_TOTAL) {
+      if (this.dodged >= DODGES_NEEDED) {
+        this.completeEncounter();
+      } else {
+        this.retryPopup.show(() => this.resetRound(), 'That snot sucker got you! Try again!');
+      }
       return;
     }
     this.swoopSide = Phaser.Utils.Array.GetRandom(SIDES) as Side;
-    const W = this.scale.width;
-    const H = this.scale.height;
     const startPos = this.sidePosition(this.swoopSide, true);
-    const endPos = { x: W / 2, y: H / 2 };
     this.sucker.setVisible(true);
     this.sucker.setPosition(startPos.x, startPos.y);
     this.accepting = true;
 
-    this.swoopTween?.stop();
-    this.swoopTween = this.tweens.add({
+    // Telegraph: wiggle at origin for 500ms
+    this.tweens.add({
       targets: this.sucker,
-      x: endPos.x,
-      y: endPos.y,
-      duration: 1300,
-      ease: 'Sine.easeIn',
-      onComplete: () => {
-        if (!this.accepting) return;
-        this.accepting = false;
-        this.softFail('caught', 'Caught! Try again.');
-        this.sucker.setVisible(false);
-        this.time.delayedCall(700, () => this.nextSwoop());
-      },
+      x: startPos.x + (this.swoopSide === 'left' ? 12 : this.swoopSide === 'right' ? -12 : 0),
+      y: startPos.y + (this.swoopSide === 'top' ? 12 : this.swoopSide === 'bottom' ? -12 : 0),
+      duration: 120,
+      yoyo: true,
+      repeat: 1,
+    });
+
+    // After telegraph, swoop toward Caius
+    this.time.delayedCall(TELEGRAPH_MS, () => {
+      if (!this.accepting) return;
+      const W = this.scale.width;
+      const H = this.scale.height;
+      this.swoopTween?.stop();
+      this.swoopTween = this.tweens.add({
+        targets: this.sucker,
+        x: W / 2,
+        y: H / 2,
+        duration: SWOOP_DURATION_MS,
+        ease: 'Sine.easeIn',
+        onComplete: () => {
+          if (!this.accepting) return;
+          this.accepting = false;
+          this.swoopIndex++;
+          this.hits++;
+          this.softFail('caught', 'Caught!');
+          this.sucker.setVisible(false);
+          if (this.hits >= SWOOPS_TOTAL - DODGES_NEEDED + 1) {
+            this.retryPopup.show(() => this.resetRound(), 'That snot sucker got you! Try again!');
+          } else {
+            this.time.delayedCall(700, () => this.nextSwoop());
+          }
+        },
+      });
     });
   }
 
@@ -101,8 +185,9 @@ export class SnotSucker extends EncounterBase {
     if (!this.accepting) return;
     this.accepting = false;
     this.swoopTween?.stop();
+    this.swoopIndex++;
     if (dir === OPPOSITE[this.swoopSide]) {
-      this.swoopsLanded++;
+      this.dodged++;
       const escape = this.sidePosition(OPPOSITE[this.swoopSide], true);
       this.tweens.add({
         targets: this.sucker,
@@ -117,10 +202,25 @@ export class SnotSucker extends EncounterBase {
         },
       });
     } else {
+      this.hits++;
       this.softFail('wrong-direction', 'That was the wrong way!');
       this.sucker.setVisible(false);
-      this.time.delayedCall(700, () => this.nextSwoop());
+      if (this.hits >= SWOOPS_TOTAL - DODGES_NEEDED + 1) {
+        this.retryPopup.show(() => this.resetRound(), 'That snot sucker got you! Try again!');
+      } else {
+        this.time.delayedCall(700, () => this.nextSwoop());
+      }
     }
+  }
+
+  private resetRound(): void {
+    this.swoopIndex = 0;
+    this.dodged = 0;
+    this.hits = 0;
+    this.accepting = false;
+    this.sucker.setVisible(false);
+    this.sucker.setAlpha(1);
+    this.time.delayedCall(400, () => this.nextSwoop());
   }
 
   private sidePosition(side: Side, outside: boolean): { x: number; y: number } {
