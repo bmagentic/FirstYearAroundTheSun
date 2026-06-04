@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { EncounterBase } from './EncounterBase';
+import { SpriteBank } from '../../systems/SpriteBank';
 
 type Side = 'left' | 'right' | 'top' | 'bottom';
 
@@ -20,6 +21,10 @@ export class SnotSucker extends EncounterBase {
     super('SnotSucker', 'snot-sucker');
   }
 
+  preload(): void {
+    SpriteBank.preloadInto(this, ['caius']);
+  }
+
   create(): void {
     this.setupEncounter();
     this.cameras.main.setBackgroundColor('#3a2515');
@@ -28,7 +33,7 @@ export class SnotSucker extends EncounterBase {
     const W = this.scale.width;
     const H = this.scale.height;
     this.caius = this.add.container(W / 2, H / 2);
-    this.caius.add(this.add.circle(0, 0, 18, 0xf7c6a3).setStrokeStyle(2, 0x402c1d));
+    this.caius.add(this.add.image(0, 0, 'caius').setDisplaySize(36, 36));
 
     this.sucker = this.add.container(0, 0);
     const body = this.add.rectangle(0, 0, 40, 24, 0x6b3a1a).setStrokeStyle(2, 0xfde68a);
