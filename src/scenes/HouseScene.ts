@@ -52,6 +52,10 @@ type RoomObject = {
   /** Multiple footprint rects for complex shapes (e.g. L-shaped sectional).
    *  Each rect is { dx, dy, w, h } relative to the sprite's foot anchor. */
   footprintRects?: Array<{ dx: number; dy: number; w: number; h: number }>;
+  /** Only render when this returns true. Always visible in DevMode. */
+  conditional?: (profile: SaveProfile) => boolean;
+  /** Touching this object launches the given chapter (replaces a marker). */
+  chapterTrigger?: number;
 };
 
 // Positions are tuned for the nursery's top-down floor plan.
@@ -107,12 +111,16 @@ const MASTER_OBJECTS: RoomObject[] = [
 ];
 
 // ── Garage layout ──────────────────────────────────────────────────────────
-// SMEG is the reveal centerpiece. rocket_ready is M12 cutscene only (not placed here).
+// SMEG is the reveal centerpiece. Rocket appears only after garage unlocks (Ch11 complete).
 const GARAGE_OBJECTS: RoomObject[] = [
   { key: 'obj-garage-smeg',      fx: 0.900, fy: 0.350, displayW: 72,  displayH: 144 },
   { key: 'obj-garage-cabinets',  fx: 0.100, fy: 0.150, displayW: 115, displayH: 173 },
   { key: 'obj-garage-workbench', fx: 0.500, fy: 0.050, displayW: 192, displayH: 96  },
   { key: 'obj-garage-bike',      fx: 0.100, fy: 0.700, displayW: 91,  displayH: 122 },
+  { key: 'obj-garage-rocket-ready', fx: 0.600, fy: 0.450, displayW: 96, displayH: 128,
+    footprintW: 48, footprintH: 40,
+    conditional: (p) => p.completedChapters.includes(11),
+    chapterTrigger: 12 },
 ];
 
 // ── Kitchen layout ─────────────────────────────────────────────────────────
@@ -186,6 +194,8 @@ export class HouseScene extends Phaser.Scene {
   private doorsArmed = true;
   /** DevMode only: live fx/fy per object key, updated on every drop. */
   private devDragPositions = new Map<string, { fx: number; fy: number }>();
+  /** Objects that launch a chapter when touched (replaces numbered markers). */
+  private chapterTriggerObjects: Array<{ chapter: number; x: number; y: number; radius: number }> = [];
 
   constructor() {
     super({ key: 'HouseScene' });
@@ -240,6 +250,7 @@ export class HouseScene extends Phaser.Scene {
       'obj-garage-cabinets',
       'obj-garage-workbench',
       'obj-garage-bike',
+      'obj-garage-rocket-ready',
       // Kitchen object sprites
       'obj-kitchen-fridge',
       'obj-kitchen-range',
@@ -357,6 +368,7 @@ export class HouseScene extends Phaser.Scene {
     for (const s of this.roomSprites) s.destroy();
     this.roomSprites  = [];
     this.markers      = [];
+    this.chapterTriggerObjects = [];
     this.capeMarker   = null;
     this.doorNotches  = [];
     this.footprints   = [];
@@ -623,6 +635,9 @@ export class HouseScene extends Phaser.Scene {
     for (const obj of cfg.objects) {
       if (!SpriteBank.has(this, obj.key)) continue;
 
+      // Conditional objects: skip if condition fails (always show in DevMode)
+      if (obj.conditional && !obj.conditional(this.profile) && !devMode) continue;
+
       const footX = fz.x + fz.w * obj.fx;
       const footY = fz.y + fz.h * obj.fy + obj.displayH;
 
@@ -630,6 +645,11 @@ export class HouseScene extends Phaser.Scene {
         .image(footX, footY, obj.key)
         .setDisplaySize(obj.displayW, obj.displayH)
         .setOrigin(0.5, 1.0);
+
+      // In DevMode, show conditional-hidden objects as ghosts
+      if (obj.conditional && !obj.conditional(this.profile) && devMode) {
+        sprite.setAlpha(0.35);
+      }
 
       sprite.setDepth(obj.wallArt ? 2 : footDepth(footY));
       this.roomSprites.push(sprite);
@@ -646,6 +666,25 @@ export class HouseScene extends Phaser.Scene {
           this.footprints.push({ x: footX - fpW / 2, y: footY - fpH, w: fpW, h: fpH });
           this.footprintKeys.push(obj.key);
         }
+      }
+
+      // Chapter trigger objects: register trigger zone + pulse tween
+      if (obj.chapterTrigger != null && (obj.conditional ? obj.conditional(this.profile) : true)) {
+        const triggerRadius = Math.max(obj.displayW, obj.displayH) * 0.6;
+        this.chapterTriggerObjects.push({
+          chapter: obj.chapterTrigger,
+          x: footX,
+          y: footY - obj.displayH / 2,
+          radius: triggerRadius,
+        });
+        this.tweens.add({
+          targets: sprite,
+          scale: 1.08,
+          duration: 1200,
+          yoyo: true,
+          repeat: -1,
+          ease: 'Sine.easeInOut',
+        });
       }
 
       if (devMode) {
@@ -808,6 +847,13 @@ export class HouseScene extends Phaser.Scene {
       const dist = Phaser.Math.Distance.Between(this.player.x, this.player.y, marker.x, marker.y);
       if (dist < 26) {
         this.attemptLaunchChapter(marker.chapter);
+        return;
+      }
+    }
+    for (const trigger of this.chapterTriggerObjects) {
+      const dist = Phaser.Math.Distance.Between(this.player.x, this.player.y, trigger.x, trigger.y);
+      if (dist < trigger.radius) {
+        this.attemptLaunchChapter(trigger.chapter);
         return;
       }
     }
