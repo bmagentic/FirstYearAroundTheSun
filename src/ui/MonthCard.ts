@@ -12,8 +12,9 @@ export type MonthCardMode =
  * First-ever play of a chapter: a mandatory `holdMs` showing with no skip, then it
  * auto-advances. Replays: appears as tap-to-continue with no timer.
  *
- * All timing runs on tweens (not the scene clock) so the card still animates while
- * the scene is frozen behind it (time.paused + tweens.pauseAll from the intro flow).
+ * All timing runs on tweens (not the scene clock) so the card animates and auto-advances
+ * even though the intro flow has frozen the scene clock (time.paused) behind it. The
+ * tween manager is deliberately NOT globally paused — pauseAll() would halt these tweens.
  */
 export class MonthCard {
   private scene: Phaser.Scene;

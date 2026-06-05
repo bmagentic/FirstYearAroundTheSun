@@ -34,14 +34,19 @@ export class TouchControls {
     this.addPad('right', baseX + offset, baseY, r);
 
     if (scene.input.keyboard) {
-      this.keyW = scene.input.keyboard.addKey('W');
-      this.keyA = scene.input.keyboard.addKey('A');
-      this.keyS = scene.input.keyboard.addKey('S');
-      this.keyD = scene.input.keyboard.addKey('D');
-      this.cursorUp = scene.input.keyboard.addKey('UP');
-      this.cursorDown = scene.input.keyboard.addKey('DOWN');
-      this.cursorLeft = scene.input.keyboard.addKey('LEFT');
-      this.cursorRight = scene.input.keyboard.addKey('RIGHT');
+      // enableCapture=false: do NOT preventDefault these keys globally. Phaser's
+      // keyboard manager listens on window, so capturing W/A/S/D would swallow them
+      // from focused DOM inputs (e.g. the profile-name field). isDown is still tracked,
+      // so in-game movement is unaffected.
+      const kb = scene.input.keyboard;
+      this.keyW = kb.addKey('W', false);
+      this.keyA = kb.addKey('A', false);
+      this.keyS = kb.addKey('S', false);
+      this.keyD = kb.addKey('D', false);
+      this.cursorUp = kb.addKey('UP', false);
+      this.cursorDown = kb.addKey('DOWN', false);
+      this.cursorLeft = kb.addKey('LEFT', false);
+      this.cursorRight = kb.addKey('RIGHT', false);
     }
   }
 

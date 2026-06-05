@@ -53,10 +53,11 @@ export abstract class ChapterBase extends Phaser.Scene {
       this.skipIntroOnce = false;
       return Promise.resolve();
     }
-    // Freeze up front so nothing runs behind the card or panel — including bespoke
-    // flows (e.g. Ch12) that build gameplay around intro() rather than inside .then().
-    // The card/panel animate on their own tweens, which pauseAll() leaves alone.
-    this.tweens.pauseAll();
+    // Freeze the scene CLOCK during the card so any gameplay timer stays put (covers
+    // bespoke flows like Ch12 that build around intro()). We must NOT pause the tween
+    // manager — the MonthCard animates and times itself on tweens, which a global
+    // pauseAll() would halt. IntroPanel then owns the full freeze for the panel phase
+    // and unpauses the clock when the player taps Start.
     this.time.paused = true;
     return this.showMonthCard().then(
       () =>

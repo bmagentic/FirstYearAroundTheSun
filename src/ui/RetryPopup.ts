@@ -1,9 +1,11 @@
 import Phaser from 'phaser';
+import { freezeScene } from './sceneFreeze';
 
 export class RetryPopup {
   private scene: Phaser.Scene;
   private container: Phaser.GameObjects.Container | null = null;
   private showing = false;
+  private thaw: (() => void) | null = null;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -17,8 +19,7 @@ export class RetryPopup {
     if (this.showing) return;
     this.showing = true;
 
-    this.scene.tweens.pauseAll();
-    this.scene.time.paused = true;
+    this.thaw = freezeScene(this.scene);
 
     const W = this.scene.scale.width;
     const H = this.scene.scale.height;
@@ -51,9 +52,6 @@ export class RetryPopup {
       .setAlpha(0.5);
     container.add(hint);
 
-    // Pulse the hint (manually, since tweens are paused)
-    // We resume tweens briefly for the popup's own animations
-    this.scene.tweens.resumeAll();
     this.scene.tweens.add({
       targets: hint,
       alpha: 0.15,
@@ -88,7 +86,8 @@ export class RetryPopup {
         c.destroy();
         this.container = null;
         this.showing = false;
-        this.scene.time.paused = false;
+        this.thaw?.();
+        this.thaw = null;
         onRetry();
       },
     });

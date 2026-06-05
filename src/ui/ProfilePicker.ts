@@ -22,6 +22,9 @@ function timeAgo(ts: number): string {
 export class ProfilePicker {
   private root: HTMLElement;
   private opts: ProfilePickerOptions;
+  /** Swallows the first list selection after a delete dialog closes, until a fresh
+   *  pointerdown — defeats the ghost-click that would otherwise launch a profile. */
+  private suppressSelect = false;
 
   constructor(root: HTMLElement, opts: ProfilePickerOptions) {
     this.root = root;
@@ -124,6 +127,8 @@ export class ProfilePicker {
     };
 
     row.addEventListener('pointerdown', () => {
+      // A genuine, fresh press clears the post-delete guard so this tap can select.
+      this.suppressSelect = false;
       longPressed = false;
       pressTimer = window.setTimeout(() => {
         longPressed = true;
@@ -136,6 +141,11 @@ export class ProfilePicker {
 
     row.addEventListener('click', () => {
       if (longPressed) return;
+      // Swallow the ghost-click that fires right after a delete dialog closes.
+      if (this.suppressSelect) {
+        this.suppressSelect = false;
+        return;
+      }
       const selected = SaveManager.selectProfile(profile.id);
       if (selected) {
         this.hide();
@@ -219,10 +229,57 @@ export class ProfilePicker {
   }
 
   private confirmDelete(profile: SaveProfile): void {
-    const ok = window.confirm(`Delete player "${profile.name}"? This cannot be undone.`);
-    if (ok) {
-      SaveManager.deleteProfile(profile.id);
-      this.render();
+    // Custom modal (not window.confirm): a full-screen backdrop that consumes every
+    // pointer event, so a tap on a button never reaches the profile list beneath it.
+    const overlay = document.createElement('div');
+    overlay.className =
+      'fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-6 backdrop-blur-sm';
+    // Swallow the whole pointer gesture on the backdrop (and anything that bubbles up).
+    for (const ev of ['pointerdown', 'pointerup', 'click'] as const) {
+      overlay.addEventListener(ev, (e) => e.stopPropagation());
     }
+
+    const box = document.createElement('div');
+    box.className =
+      'flex w-full max-w-xs flex-col gap-4 rounded-2xl border border-amber-300/30 bg-amber-950/95 p-6 text-center text-white';
+
+    const msg = document.createElement('p');
+    msg.className = 'text-base text-amber-100';
+    msg.textContent = `Delete player "${profile.name}"? This cannot be undone.`;
+    box.appendChild(msg);
+
+    const del = document.createElement('button');
+    del.type = 'button';
+    del.className =
+      'w-full rounded-xl bg-red-500 px-5 py-3 text-base font-bold text-white transition active:scale-[0.98]';
+    del.textContent = 'Delete';
+
+    const cancel = document.createElement('button');
+    cancel.type = 'button';
+    cancel.className =
+      'w-full rounded-xl border border-amber-300/30 px-5 py-3 text-base text-amber-100 transition active:scale-[0.98]';
+    cancel.textContent = 'Cancel';
+
+    // Closing arms the guard so the gesture that dismissed us can't select a profile.
+    const close = () => {
+      overlay.remove();
+      this.suppressSelect = true;
+    };
+
+    del.addEventListener('click', (e) => {
+      e.stopPropagation();
+      SaveManager.deleteProfile(profile.id);
+      close();
+      this.render();
+    });
+    cancel.addEventListener('click', (e) => {
+      e.stopPropagation();
+      close();
+    });
+
+    box.appendChild(del);
+    box.appendChild(cancel);
+    overlay.appendChild(box);
+    this.root.appendChild(overlay);
   }
 }

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { freezeScene } from './sceneFreeze';
 
 /**
  * Pre-play gate shown when a chapter or encounter launches. Renders a full-bleed
@@ -12,6 +13,7 @@ export class IntroPanel {
   private scene: Phaser.Scene;
   private container: Phaser.GameObjects.Container | null = null;
   private showing = false;
+  private thaw: (() => void) | null = null;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -26,10 +28,9 @@ export class IntroPanel {
     if (this.showing) return;
     this.showing = true;
 
-    // Freeze the scene. pauseAll() only affects tweens that already exist, so the
-    // panel's own tweens (added below) still animate.
-    this.scene.tweens.pauseAll();
-    this.scene.time.paused = true;
+    // Freeze gameplay (individual tweens + clock) so the panel's own tweens, added
+    // below, still animate. A global pauseAll() would freeze this panel invisible.
+    this.thaw = freezeScene(this.scene);
 
     const W = this.scene.scale.width;
     const H = this.scene.scale.height;
@@ -126,8 +127,8 @@ export class IntroPanel {
         c.destroy();
         this.showing = false;
         // Un-freeze the scene, then hand control to gameplay.
-        this.scene.time.paused = false;
-        this.scene.tweens.resumeAll();
+        this.thaw?.();
+        this.thaw = null;
         onStart();
       },
     });
