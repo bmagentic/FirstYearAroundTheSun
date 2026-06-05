@@ -18,6 +18,7 @@ const UNMUTED_GLYPH = '\u{1F50A}'; // 🔊
 const NON_PAUSABLE_SCENES = new Set(['BootScene', 'SoundNoticeScene', 'MenuScene']);
 
 export class HUD {
+  private root: HTMLElement;
   private muteBtn: HTMLButtonElement;
   private pauseBtn: HTMLButtonElement;
   private pauseMenu: HTMLElement;
@@ -26,6 +27,7 @@ export class HUD {
 
   constructor(root: HTMLElement, pauseMenu: HTMLElement, callbacks: HUDCallbacks) {
     this.callbacks = callbacks;
+    this.root = root;
     this.pauseMenu = pauseMenu;
 
     root.innerHTML = '';
@@ -39,6 +41,16 @@ export class HUD {
 
     root.appendChild(this.muteBtn);
     root.appendChild(this.pauseBtn);
+
+    // The gameplay HUD is hidden until a gameplay scene is active (see main.ts sync).
+    this.root.style.display = 'none';
+  }
+
+  /** Show the gameplay HUD only while a gameplay scene is active; hide it (and close
+   *  any open pause menu) on boot/title, sound-notice, and profile screens. */
+  setVisible(visible: boolean): void {
+    this.root.style.display = visible ? 'flex' : 'none';
+    if (!visible && this.menuOpen) this.closeMenu();
   }
 
   private makeIconButton(label: string): HTMLButtonElement {

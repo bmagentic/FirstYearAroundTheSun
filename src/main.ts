@@ -110,7 +110,40 @@ if (!hudRoot || !pauseMenuEl) {
 // to drive Resume / Restart / Exit / Home reliably.
 let pausedSceneKey: string | null = null;
 
-new HUD(hudRoot, pauseMenuEl, {
+// Boot/title, sound-notice, and profile screens are NOT gameplay. The gameplay HUD,
+// pause, and keyboard movement must exist only while a gameplay scene is on screen.
+const MENU_SCENES = new Set(['BootScene', 'SoundNoticeScene', 'MenuScene']);
+
+/** True while any gameplay scene is actually running or paused (i.e. on screen).
+ *  NB: isVisible() is NOT used — Phaser scenes default to visible:true even before
+ *  they start, so it would report never-started chapters as present. */
+function gameplayScenePresent(): boolean {
+  for (const s of game.scene.getScenes(false)) {
+    const key = s.scene.key;
+    if (MENU_SCENES.has(key)) continue;
+    if (game.scene.isActive(key) || game.scene.isPaused(key)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/** Fully tear down every gameplay scene so nothing survives a return to a menu. */
+function stopAllGameplayScenes(): void {
+  for (const s of game.scene.getScenes(false)) {
+    const key = s.scene.key;
+    if (MENU_SCENES.has(key)) continue;
+    if (game.scene.isActive(key) || game.scene.isPaused(key) || game.scene.isSleeping(key)) {
+      // Resume a paused scene first so it shuts down cleanly, then kill timers/tweens.
+      if (game.scene.isPaused(key)) game.scene.resume(key);
+      s.time.removeAllEvents();
+      s.tweens.killAll();
+      game.scene.stop(key);
+    }
+  }
+}
+
+const hud = new HUD(hudRoot, pauseMenuEl, {
   getActiveSceneKey: activeSceneKey,
   onPauseRequested: () => {
     const key = activeSceneKey();
@@ -138,7 +171,6 @@ new HUD(hudRoot, pauseMenuEl, {
     if (key !== 'HouseScene') game.scene.start('HouseScene');
   },
   onHomeRequested: () => {
-    const key = pausedSceneKey ?? activeSceneKey();
     pausedSceneKey = null;
     // Autosave: profile progress (completed chapters, current room, …) is already
     // persisted on every change; flush the session play-time too. A mid-chapter Home
@@ -148,14 +180,10 @@ new HUD(hudRoot, pauseMenuEl, {
     // Kill anything that could leak into the menu.
     game.sound.stopAll();
     SoundBank.stopAll();
-    if (key) {
-      const scene = game.scene.getScene(key);
-      if (scene) {
-        scene.time.removeAllEvents();
-        scene.tweens.killAll();
-      }
-      game.scene.stop(key);
-    }
+    // Fully stop EVERY gameplay scene (overworld and any chapter), not just the paused
+    // one, so the profile screen replaces gameplay rather than layering over it.
+    stopAllGameplayScenes();
+    hud.setVisible(false);
     game.scene.start('MenuScene');
   },
   onMuteChange: (muted) => {
@@ -165,6 +193,17 @@ new HUD(hudRoot, pauseMenuEl, {
 
 // Apply initial mute state to Phaser sound manager
 game.sound.mute = SettingsManager.get().muted;
+
+// Drive HUD visibility from scene state: the gameplay HUD exists ONLY while a gameplay
+// scene is on screen, and is hidden on boot/title, sound-notice, and profile screens.
+let lastHudVisible: boolean | null = null;
+game.events.on(Phaser.Core.Events.POST_STEP, () => {
+  const visible = gameplayScenePresent();
+  if (visible !== lastHudVisible) {
+    lastHudVisible = visible;
+    hud.setVisible(visible);
+  }
+});
 
 // Persist play time when tab closes
 window.addEventListener('beforeunload', () => {
