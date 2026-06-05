@@ -10,6 +10,8 @@ type Beat = {
   warm: boolean;
   /** Baked, already-manifested room texture dimmed behind the spotlight. */
   room: string;
+  /** Use the chelsea_bath sprite (Chelsea + tub baked in) instead of the rocking pose. */
+  bath?: boolean;
 };
 
 // Every beat is grounded in a dimmed baked room (no lone-sprite-on-flat-fill beats).
@@ -17,7 +19,7 @@ const BEATS: Beat[] = [
   { setting: '3 AM', caption: 'Welcome home.', warm: false, room: 'room-nursery-bg' },
   { setting: 'Sunrise', caption: "I've got you.", warm: true, room: 'room-master-bedroom-bg' },
   { setting: 'Noon', caption: 'We figured out the swaddle.', warm: true, room: 'room-living-room-bg' },
-  { setting: 'Sunset', caption: 'First bath, we both cried.', warm: true, room: 'room-bathroom-bg' },
+  { setting: 'Sunset', caption: 'First bath, we both cried.', warm: true, room: 'room-bathroom-bg', bath: true },
   { setting: 'Late night', caption: 'She got him through the first weeks.', warm: false, room: 'room-nursery-bg' },
 ];
 
@@ -35,6 +37,7 @@ export class Interlude01_FirstDays extends InterludeBase {
   preload(): void {
     SpriteBank.preloadInto(this, [
       'chelsea-asleep', // chelsea_rocking.png — Chelsea rocking with the baby baked in
+      'chelsea-bath', // chelsea_bath.png — Chelsea + tub baked in (bath beat)
       'room-nursery-bg',
       'room-master-bedroom-bg',
       'room-living-room-bg',
@@ -96,9 +99,30 @@ export class Interlude01_FirstDays extends InterludeBase {
       layer.add(this.backdrop(beat.warm));
     }
     layer.add(this.addSpotlight(cx, cy, 560, beat.warm ? 0xffe6b0 : 0xb8c4e8));
-    layer.add(this.drawRockingMother(cx, cy));
+    layer.add(beat.bath ? this.drawBathScene(cx, cy) : this.drawRockingMother(cx, cy));
 
     return layer;
+  }
+
+  /** Bath beat: the chelsea_bath sprite (Chelsea + tub baked in) over the dimmed bathroom. */
+  private drawBathScene(cx: number, cy: number): Phaser.GameObjects.GameObject[] {
+    let scene: Phaser.GameObjects.GameObject;
+    if (SpriteBank.has(this, 'chelsea-bath')) {
+      // Square aspect (64x64) preserved — no crop/stretch.
+      scene = this.add.image(cx, cy, 'chelsea-bath').setDisplaySize(230, 230).setOrigin(0.5);
+    } else {
+      scene = this.add.circle(cx, cy, 70, 0x7c5fb0).setStrokeStyle(2, 0xfde68a, 0.6);
+    }
+    // Gentle bob (no rotation — a tilting tub looks wrong).
+    this.tweens.add({
+      targets: scene,
+      y: cy - 4,
+      duration: 2000,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+    });
+    return [scene];
   }
 
   /**

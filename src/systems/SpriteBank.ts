@@ -17,6 +17,7 @@ const MANIFEST: Record<string, string> = {
   'caius':              '/assets/sprites/caius-blue/south.png',
   'chelsea-idle':       '/assets/sprites/chelsea/south.png',
   'chelsea-asleep':     '/assets/sprites/chelsea_scrubs/chelsea_rocking.png',
+  'chelsea-bath':       '/assets/sprites/chelsea_scrubs/chelsea_bath.png',
   'chelsea-doorway':    '/assets/sprites/chelsea/chelsea-doorway.png',
 
   // ── Portables ───────────────────────────────────────────────────────────────

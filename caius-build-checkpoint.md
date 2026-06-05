@@ -141,6 +141,51 @@ re-litigated.
 
 ---
 
+## MANIFEST AUDIT (6/5) — orphaned sprites on disk, not in SpriteBank
+
+692 of 768 PNGs under `public/assets/sprites/` are not referenced by the manifest.
+The vast majority are **directional / walk-cycle frame sets** (the manifest only
+references a single representative `south.png` per character/dog), so those are
+collapsed to one line per set below. Reconnaissance only — nothing wired beyond the
+chelsea_bath swap. Notable standalone (non-animation) orphans Brandon can slot into
+scenes:
+
+**chelsea_scrubs/** (single-pose Chelsea, scrubs outfit, 64×64 — prime scene candidates)
+- `chelsea_bath.png` — Chelsea + tub. **NOW WIRED** (`chelsea-bath`, Interlude01 bath beat).
+- `chelsea_encouraging.png` — Chelsea cheering/encouraging pose. (NB: task asked for a
+  `chelsea_encouraging_standing.png` that is NOT on disk — only this one exists.)
+- `chelsea_feeding.png` — Chelsea feeding the baby.
+- `chelsea_holding.png` — Chelsea holding the baby (alt to chelsea_rocking).
+- plus the full scrubs 8-dir + walk set (orphaned; overworld uses `chelsea/south.png`).
+
+**brandon/** (Dad — ENTIRELY UNUSED, 72 files: `brandon_bath.png` + 8-dir + walk set).
+`brandon_bath.png` flagged unused (do NOT composite with chelsea_bath — both bake a tub).
+
+**caius emotional variants** (unused): `caius-happy/`, `caius-sad/`, `caius-blue-happy/`,
+`caius-blue-sad/` — happy/sad Caius with bounce + rock animations (8-dir each).
+Singles: `caius-crawl-l.png`, `caius-crawl-r.png`, `caius-roll.png` (+ `_tan_backup/` copies).
+
+**emotes/** (7, unused): `emote-heart`, `-sparkle`, `-exclamation`, `-question`, `-music`,
+`-tear`, `-zzz`. Could replace the text ♥/✨ used in First Focus / encounters.
+
+**dogs** (unused, full 8-dir + walk/sit/lay sets, 97 files each): `eevee/`, `finn/`,
+`nugget/`, `soka/` — the family dogs (minigames reference `<dog>/south.png` only).
+
+**poe/** (8, unused): `poe_base_*` 8-direction base poses — Poe companion.
+
+**portable/** (2, unused): `obj_portable_bottle_empty.png`, `obj_portable_roomba_dock.png`.
+
+**rooms/** (39, unused): backup/alternate room renders — `_original/` and `_sideon/`
+variant sets; loose alt bgs (`room_backyard_bg`, `room_front_bg_dawn/day`,
+`room_garage_bg_closed/open`, `room_livingkitchen_bg`, `room_master_bg`); plus
+`backyard/` objects (gate, grill, outdoorchair) and `front/` objects (oaktree,
+rocket_landed) — for cut/unbuilt backyard + front-yard rooms.
+
+**transitions/** (4, unused): `transition_archway`, `_babygate`, `_frontdoor`,
+`_stairs_bottom` — doorway/transition sprites.
+
+---
+
 ## KEY DECISIONS — locked, do not re-litigate
 | Topic | Decision |
 |---|---|
