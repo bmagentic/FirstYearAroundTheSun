@@ -82,6 +82,31 @@ Fresh profiles are `stationary` (speed 0) until rolling unlocks at Ch4, so early
 
 ---
 
+## WALKTHROUGH FIXES (6/5)
+
+First real fresh-profile, DevMode-off playthrough surfaced a cluster of bugs of one
+class — **game-layer UI/input alive outside gameplay** — plus the newborn sequence's
+first live blocker. All fixed and on main.
+
+| # | Bug | Fix | Commit |
+|---|-----|-----|--------|
+| 1 | Profile **delete click-through** (confirm also launched the profile beneath) | Custom DOM modal whose backdrop `stopPropagation()`s every pointer event + a `suppressSelect` guard cleared on next pointerdown | `d4ebfb7` |
+| 2 | **WASD swallowed** while typing a profile name | TouchControls added keys with Phaser's default global capture (preventDefault on window). Now `addKey(code, false)` — capture off; in-game `isDown`/movement unaffected | `d4ebfb7` |
+| 3 | **Ch1 stuck / no MonthCard / no audio** (newborn sequence's first run) | Root cause: Phaser 3.60+ `tweens.pauseAll()` sets a manager-level paused flag whose `update()` guard halts **all** tweens, including ones added afterward → MonthCard's fade→counter→dismiss chain never ran, intro promise never resolved, panel never shown, sounds never reached. Fixed with **`freezeScene()`** helper (pause individual existing tweens + the clock, not the whole manager) wired into IntroPanel, RetryPopup, and ChapterBase.intro(). "No audio" was a secondary symptom of the stuck state | `d4ebfb7` |
+| 4 | **Pause icon on title/profile screens** | HUD was created once at boot and never hidden. Now a POST_STEP sync drives HUD visibility from scene state (`gameplayScenePresent` = active or paused gameplay scene); hidden on Boot/SoundNotice/Menu. HUD starts hidden | `2464728` |
+| 5 | **Home overlaid the profile screen over a live HouseScene** | `onHomeRequested` now `stopAllGameplayScenes()` (resume-then-stop every active/paused/sleeping non-menu scene, not just the paused one) + hides the HUD before starting MenuScene; profile-picker backdrop made fully opaque | `2464728` |
+
+Bugs 3 and 4/5 were **runtime-verified headless** against the real Phaser TweenManager
+and SceneManager respectively (browser/Chromium download is blocked by the env network
+allowlist, so full on-device play wasn't possible). The headless SceneManager test caught
+a real mistake pre-merge: `isVisible()` reports never-started scenes as present (scenes
+default visible:true), so HUD visibility keys off `isActive || isPaused` instead.
+
+**Class takeaway:** gameplay HUD, keyboard movement, and pause exist ONLY while a gameplay
+scene is on screen; any exit to a menu fully stops the gameplay scene(s) and their UI.
+
+---
+
 ## FLAGGED — open items
 - [ ] `chelsea-asleep` maps to `chelsea_rocking.png` — no true sleeping pose on disk. Ch05 uses it as-is (stand-in).
 - [ ] Ch06 dog walk-frames — dogs use south-facing sprites only; could use directional frames.
@@ -95,6 +120,8 @@ Fresh profiles are `stationary` (speed 0) until rolling unlocks at Ch4, so early
 ## KEY DECISIONS — locked, do not re-litigate
 | Topic | Decision |
 |---|---|
+| Modal freezes | **PROJECT RULE:** never use `tweens.pauseAll()` to freeze a scene behind a modal — Phaser 3.60+ halts the whole tween manager, freezing the modal's own animations too. Use `freezeScene()` (src/ui/sceneFreeze.ts) which pauses individual existing tweens + the clock. |
+| Gameplay UI scope | Gameplay HUD/pause/keyboard exist ONLY while a gameplay scene is active; menus (Boot/SoundNotice/Menu) show none of it, and exiting to a menu fully stops the gameplay scene(s). |
 | Rooms | 10-room canonical list above; foyer split into two hallways; living/kitchen split; backyard cut (Super Baby → living room) |
 | Tilemaps | Programmatic rooms only; top-down bgs via topdown_gen.py + texture_pass.py (originals in rooms/_original/) |
 | Upstairs carpet | Warm heathered beige, nursery + master must match |
