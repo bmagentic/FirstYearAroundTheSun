@@ -36,10 +36,6 @@ export function speedFor(state: MobilityState): number {
   }
 }
 
-export function canTraverse(state: MobilityState): boolean {
-  return state !== 'stationary' && state !== 'eyes-only';
-}
-
 export function garageUnlocked(profile: SaveProfile): boolean {
   if (DevMode.isEnabled()) return true;
   return profile.completedChapters.includes(11);

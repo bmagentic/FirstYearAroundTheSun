@@ -39,6 +39,10 @@ export type SaveProfile = {
   brutusActive: boolean;
   bonusChapterUnlocked: boolean;
   bonusChapterCompleted: boolean;
+  /** Chapters whose Month title card has had its first-play (mandatory 2s) showing. */
+  seenChapterCards: number[];
+  /** True once the one-time "you can move now" hint has been shown. */
+  movementHintShown: boolean;
   currentRoom: RoomId;
   visitedRooms: RoomId[];
   totalPlayTimeSeconds: number;

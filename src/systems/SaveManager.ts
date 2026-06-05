@@ -34,6 +34,8 @@ function newProfile(name: string): SaveProfile {
     brutusActive: false,
     bonusChapterUnlocked: false,
     bonusChapterCompleted: false,
+    seenChapterCards: [],
+    movementHintShown: false,
     currentRoom: 'nursery',
     visitedRooms: ['nursery'],
     totalPlayTimeSeconds: 0,
@@ -124,6 +126,21 @@ class SaveManagerImpl {
         p.completedChapters.push(chapterId);
         p.completedChapters.sort((a, b) => a - b);
       }
+    });
+  }
+
+  /** Records that a chapter's Month card has had its first-play showing. Returns the updated profile. */
+  markChapterCardSeen(chapterId: number): SaveProfile | null {
+    return this.update((p) => {
+      if (!p.seenChapterCards) p.seenChapterCards = [];
+      if (!p.seenChapterCards.includes(chapterId)) p.seenChapterCards.push(chapterId);
+    });
+  }
+
+  /** Records that the one-time movement hint has been shown. Returns the updated profile. */
+  markMovementHintShown(): SaveProfile | null {
+    return this.update((p) => {
+      p.movementHintShown = true;
     });
   }
 

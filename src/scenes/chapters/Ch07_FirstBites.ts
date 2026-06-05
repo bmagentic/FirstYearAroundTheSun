@@ -189,7 +189,7 @@ export class Ch07_FirstBites extends ChapterBase {
       this.chelseaReact.setText('"Oh no, that one!"');
       this.softFail('ate-bad', 'Ick — try to swipe that away');
       if (this.cannotWin()) {
-        this.retryPopup.show(() => this.scene.restart(), 'Too many wrong bites! Try again!');
+        this.retryPopup.show(() => this.retry(), 'Too many wrong bites! Try again!');
       } else {
         this.time.delayedCall(500, () => this.nextSpoon());
       }
@@ -214,7 +214,7 @@ export class Ch07_FirstBites extends ChapterBase {
       this.chelseaReact.setText('"Wait, that was a good one"');
       this.softFail('rejected-good', 'That was a good one!');
       if (this.cannotWin()) {
-        this.retryPopup.show(() => this.scene.restart(), 'Too many wrong bites! Try again!');
+        this.retryPopup.show(() => this.retry(), 'Too many wrong bites! Try again!');
       } else {
         this.time.delayedCall(500, () => this.nextSpoon());
       }
@@ -231,7 +231,7 @@ export class Ch07_FirstBites extends ChapterBase {
       this.completeChapter();
     } else {
       this.softFail('not-enough', `Got ${this.correct}. Need ${WIN}+.`);
-      this.retryPopup.show(() => this.scene.restart(), `Only ${this.correct} right! Need ${WIN}. Try again!`);
+      this.retryPopup.show(() => this.retry(), `Only ${this.correct} right! Need ${WIN}. Try again!`);
     }
   }
 }

@@ -266,7 +266,7 @@ export class Ch06_GrabBag extends ChapterBase {
       this.completeChapter();
     } else {
       this.softFail('not-enough', `${this.grabbed} grabbed. Need ${WIN}+.`);
-      this.retryPopup.show(() => this.scene.restart(), `Only ${this.grabbed} toys! Need ${WIN}. Try again!`);
+      this.retryPopup.show(() => this.retry(), `Only ${this.grabbed} toys! Need ${WIN}. Try again!`);
     }
   }
 }

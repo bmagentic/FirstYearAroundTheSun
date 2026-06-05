@@ -159,6 +159,9 @@ const DOOR_WIDTH     = 72;
 const PLAYER_RADIUS  = 12;
 const TRANSITION_MS  = 220;
 const TOAST_MS       = 1600;
+// Newborn sequence: establishing hold, then the attention pull toward the marker.
+const NEWBORN_BEAT_MS = 1500;
+const NEWBORN_PULL_MS = 550;
 
 export class HouseScene extends Phaser.Scene {
   private profile!: SaveProfile;
@@ -195,6 +198,8 @@ export class HouseScene extends Phaser.Scene {
   private doorArmed: boolean[] = [];
   /** Markers disarmed until player exits all marker/trigger radii after spawn. */
   private markersArmed = true;
+  /** True during the newborn-sequence establishing beat; freezes update() until launch. */
+  private newbornBeat = false;
   /** DevMode only: live fx/fy per object index in the room array, updated on every drop. */
   private devDragPositions = new Map<number, { fx: number; fy: number }>();
   /** Objects that launch a chapter when touched (replaces numbered markers). */
@@ -294,6 +299,8 @@ export class HouseScene extends Phaser.Scene {
 
   create(): void {
     this.cameras.main.setBackgroundColor('#0a0a1f');
+    // Reset any zoom/scroll left over from a prior newborn-sequence attention pull.
+    this.cameras.main.setZoom(1).setScroll(0, 0);
     this.cameras.main.fadeIn(180, 0, 0, 0);
 
     this.bgLayer    = this.add.container(0, 0).setDepth(0);
@@ -336,7 +343,7 @@ export class HouseScene extends Phaser.Scene {
   }
 
   override update(_time: number, delta: number): void {
-    if (this.transitioning) return;
+    if (this.transitioning || this.newbornBeat) return;
 
     const mobility = deriveMobility(this.profile);
     const speed    = speedFor(mobility);
@@ -425,6 +432,56 @@ export class HouseScene extends Phaser.Scene {
     this.encounters.onEnterRoom(def.encounterChance, performance.now());
     if (!opts.firstLoad) this.cameras.main.fadeIn(TRANSITION_MS, 0, 0, 0);
     this.transitioning = false;
+
+    this.maybeRunNewbornSequence();
+  }
+
+  // ── Newborn sequence (immobile auto-launch) ──────────────────────────────────
+  //
+  // Until rolling unlocks (Ch4 complete → speed > 0) the player can't move, so the
+  // pre-mobility chapters can't be walked to. Instead, on each entry to a room with
+  // an incomplete chapter marker we hold a short establishing beat, pull attention to
+  // the marker, and auto-launch it. The IntroPanel still gates each one (tap Start),
+  // which is the player's agency during the immobile stretch. DevMode (always walking)
+  // is exempt.
+
+  private maybeRunNewbornSequence(): void {
+    if (DevMode.isEnabled()) return;
+    const speed = speedFor(deriveMobility(this.profile));
+
+    if (speed > 0) {
+      // Mobility just unlocked (rolling from Ch4). Show the one-time movement hint.
+      if (this.profile.completedChapters.includes(4) && !this.profile.movementHintShown) {
+        this.showToast('You can move now! Roll to a glowing circle to play.');
+        const updated = SaveManager.markMovementHintShown();
+        if (updated) this.profile = updated;
+      }
+      return;
+    }
+
+    // Immobile: auto-launch the lowest incomplete launchable chapter marked here.
+    const next = this.markers
+      .filter((m) => CHAPTER_SCENES[m.chapter] && !this.profile.completedChapters.includes(m.chapter))
+      .sort((a, b) => a.chapter - b.chapter)[0];
+    if (!next) return;
+
+    this.beatThenAutoLaunch(next);
+  }
+
+  private beatThenAutoLaunch(marker: { chapter: number; x: number; y: number }): void {
+    // Freeze room logic (encounters/markers/doors) during the beat; the player is
+    // immobile anyway. newbornBeat is checked in update().
+    this.newbornBeat = true;
+    this.time.delayedCall(NEWBORN_BEAT_MS, () => {
+      // Attention pull: zoom + pan toward the marker so it still reads as a "place".
+      // Zooming in crops, so no out-of-bounds edges are revealed.
+      this.cameras.main.pan(marker.x, marker.y, NEWBORN_PULL_MS, 'Sine.easeInOut');
+      this.cameras.main.zoomTo(1.5, NEWBORN_PULL_MS, 'Sine.easeInOut');
+      this.time.delayedCall(NEWBORN_PULL_MS + 120, () => {
+        this.newbornBeat = false; // release; attemptLaunchChapter gates on transitioning
+        this.attemptLaunchChapter(marker.chapter);
+      });
+    });
   }
 
   // ── Floor zone ───────────────────────────────────────────────────────────────

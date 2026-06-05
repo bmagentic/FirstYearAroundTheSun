@@ -6,7 +6,7 @@ import Phaser from 'phaser';
  * Start button. While it's up the scene's tweens and clock are paused, so nothing
  * moves and no timers run until the button is tapped.
  *
- * Sibling to RetryPopup / ChapterCard; styling mirrors them (amber palette).
+ * Sibling to RetryPopup / MonthCard; styling mirrors them (amber palette).
  */
 export class IntroPanel {
   private scene: Phaser.Scene;
