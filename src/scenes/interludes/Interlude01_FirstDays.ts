@@ -22,9 +22,6 @@ const BEATS: Beat[] = [
 ];
 
 const CLOSING_ROOM = 'room-nursery-bg';
-// One shared offset so the baby is always cradled at chest height (in front of her torso,
-// below her face) on every beat — never composited onto her head.
-const BABY_CHEST_DY = 30;
 
 export class Interlude01_FirstDays extends InterludeBase {
   private beatIndex = -1;
@@ -37,8 +34,7 @@ export class Interlude01_FirstDays extends InterludeBase {
 
   preload(): void {
     SpriteBank.preloadInto(this, [
-      'chelsea-idle',
-      'caius',
+      'chelsea-asleep', // chelsea_rocking.png — Chelsea rocking with the baby baked in
       'room-nursery-bg',
       'room-master-bedroom-bg',
       'room-living-room-bg',
@@ -100,34 +96,34 @@ export class Interlude01_FirstDays extends InterludeBase {
       layer.add(this.backdrop(beat.warm));
     }
     layer.add(this.addSpotlight(cx, cy, 560, beat.warm ? 0xffe6b0 : 0xb8c4e8));
-    layer.add(this.drawMotherAndChild(cx, cy));
+    layer.add(this.drawRockingMother(cx, cy));
 
     return layer;
   }
 
-  private drawMotherAndChild(cx: number, cy: number): Phaser.GameObjects.GameObject[] {
+  /**
+   * Chelsea rocking with Caius already cradled in her arms — the baby is baked into the
+   * chelsea_rocking sprite, so there is no separate composited Caius (no more baby-on-face,
+   * no double-baby). The file is a single 64x64 frame, so we add a gentle sway tween rather
+   * than playing animation frames.
+   */
+  private drawRockingMother(cx: number, cy: number): Phaser.GameObjects.GameObject[] {
     const parts: Phaser.GameObjects.GameObject[] = [];
 
-    if (SpriteBank.has(this, 'chelsea-idle')) {
-      parts.push(this.add.image(cx, cy, 'chelsea-idle').setDisplaySize(150, 250).setOrigin(0.5));
+    let mom: Phaser.GameObjects.GameObject;
+    if (SpriteBank.has(this, 'chelsea-asleep')) {
+      // Keep the sprite's square aspect (64x64) — do not crop or stretch.
+      mom = this.add.image(cx, cy, 'chelsea-asleep').setDisplaySize(230, 230).setOrigin(0.5);
     } else {
-      parts.push(this.add.circle(cx, cy, 60, 0x7c5fb0).setStrokeStyle(2, 0xfde68a, 0.6));
+      mom = this.add.circle(cx, cy, 70, 0x7c5fb0).setStrokeStyle(2, 0xfde68a, 0.6);
     }
+    parts.push(mom);
 
-    // Caius cradled at chest height, added AFTER her so he's in front of the torso.
-    const babyY = cy + BABY_CHEST_DY;
-    let baby: Phaser.GameObjects.GameObject;
-    if (SpriteBank.has(this, 'caius')) {
-      baby = this.add.image(cx - 4, babyY, 'caius').setDisplaySize(56, 56);
-    } else {
-      baby = this.add.circle(cx - 4, babyY, 26, 0xf7c6a3).setStrokeStyle(2, 0x402c1d);
-    }
-    parts.push(baby);
-
+    // Gentle rocking sway.
     this.tweens.add({
-      targets: baby,
-      y: babyY - 2,
-      duration: 1600,
+      targets: mom,
+      angle: { from: -2.5, to: 2.5 },
+      duration: 1900,
       yoyo: true,
       repeat: -1,
       ease: 'Sine.easeInOut',
