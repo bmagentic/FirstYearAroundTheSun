@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { InterludeBase } from './InterludeBase';
 import { SoundBank } from '../../systems/SoundBank';
 import { SpriteBank } from '../../systems/SpriteBank';
+import { makePill } from '../../ui/CaptionBand';
 
 type Task = { label: string; icon: string };
 
@@ -27,13 +28,12 @@ export class Interlude02_Mama extends InterludeBase {
   private chelseaState: 'task' | 'walking-to' | 'holding' | 'walking-back' = 'task';
   private callBtn!: Phaser.GameObjects.Container;
   private callRing!: Phaser.GameObjects.Arc;
-  private taskLabel!: Phaser.GameObjects.Text;
+  private taskPill: Phaser.GameObjects.Container | null = null;
   private patience = 1;
   private patienceBar!: Phaser.GameObjects.Rectangle;
   private patienceBarMaxW = 180;
   private callPending = true;
   private acceptingTap = false;
-  private statusText!: Phaser.GameObjects.Text;
   private caius!: Phaser.GameObjects.Container;
 
   constructor() {
@@ -52,30 +52,9 @@ export class Interlude02_Mama extends InterludeBase {
     const W = this.scale.width;
     const H = this.scale.height;
 
-    // Top half: Chelsea's area (adjacent rooms)
-    this.add.rectangle(W / 2, H * 0.28, W - 30, H * 0.42, 0x3a2a40).setStrokeStyle(1, 0xfde68a, 0.25);
-    this.add
-      .text(W / 2, 80, 'in another room', {
-        fontFamily: 'system-ui, sans-serif',
-        fontSize: '10px',
-        color: '#fde68a',
-        letterSpacing: 2,
-      } as Phaser.Types.GameObjects.Text.TextStyle)
-      .setOrigin(0.5)
-      .setAlpha(0.5);
-
-    this.taskLabel = this.add
-      .text(W / 2, 110, '', {
-        fontFamily: 'system-ui, sans-serif',
-        fontSize: '13px',
-        color: '#fde68a',
-        fontStyle: 'italic',
-      })
-      .setOrigin(0.5);
-
-    // Bottom half: play mat
+    // Caius on the floor below; Mama works in the space above (conveyed by position,
+    // not a code-drawn room block). The task she's doing shows in a pill (nextRound).
     const matY = H * 0.72;
-    this.add.ellipse(W / 2, matY, 220, 90, 0x6b8e5a).setStrokeStyle(2, 0xfde68a, 0.3);
     this.caius = this.add.container(W / 2, matY - 8);
     if (SpriteBank.has(this, 'caius')) {
       this.caius.add(this.add.image(0, 0, 'caius').setDisplaySize(28, 28));
@@ -120,15 +99,6 @@ export class Interlude02_Mama extends InterludeBase {
       .rectangle(W / 2 - this.patienceBarMaxW / 2, H - 60, this.patienceBarMaxW, 6, 0x9ec3e6)
       .setOrigin(0, 0.5);
 
-    this.statusText = this.add
-      .text(W / 2, 50, `Round 1 of ${TOTAL_ROUNDS}`, {
-        fontFamily: 'system-ui, sans-serif',
-        fontSize: '12px',
-        color: '#fde68a',
-        fontStyle: 'bold',
-      })
-      .setOrigin(0.5);
-
     this.nextRound();
   }
 
@@ -139,8 +109,9 @@ export class Interlude02_Mama extends InterludeBase {
       return;
     }
     const task = TASKS[this.round - 1]!;
-    this.taskLabel.setText(`${task.icon}  ${task.label}`);
-    this.statusText.setText(`Round ${this.round} of ${TOTAL_ROUNDS}`);
+    this.captionBand.setSetting(`Round ${this.round} of ${TOTAL_ROUNDS}`);
+    this.taskPill?.destroy();
+    this.taskPill = makePill(this, this.scale.width / 2, 110, `${task.icon}  ${task.label}`, 14);
     this.chelseaState = 'task';
     this.patience = 1;
     this.callPending = true;
@@ -229,6 +200,9 @@ export class Interlude02_Mama extends InterludeBase {
   }
 
   private finish(): void {
+    this.taskPill?.destroy();
+    this.taskPill = null;
+    this.captionBand.setSetting('');
     this.cameras.main.fadeOut(900, 30, 25, 40);
     this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
       this.cameras.main.setBackgroundColor('#050409');
@@ -237,12 +211,13 @@ export class Interlude02_Mama extends InterludeBase {
         .text(this.scale.width / 2, this.scale.height / 2, 'She always comes.', {
           fontFamily: 'system-ui, sans-serif',
           fontSize: '22px',
-          color: '#fde68a',
+          color: '#F5EFE0',
           fontStyle: 'bold',
           align: 'center',
         })
         .setOrigin(0.5)
         .setAlpha(0);
+      card.setShadow(1, 2, 'rgba(0,0,0,0.85)', 4, false, true);
       this.tweens.add({
         targets: card,
         alpha: 1,

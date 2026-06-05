@@ -1,12 +1,16 @@
 import Phaser from 'phaser';
 import { SaveManager } from '../../systems/SaveManager';
 import { track } from '../../systems/Analytics';
+import { CaptionBand } from '../../ui/CaptionBand';
 import type { InterludeId, SaveProfile } from '../../types';
+
+const SPOTLIGHT_KEY = 'interlude-spotlight';
 
 export abstract class InterludeBase extends Phaser.Scene {
   protected profile!: SaveProfile;
   protected interludeId: InterludeId;
   protected startedAt = 0;
+  protected captionBand!: CaptionBand;
 
   constructor(key: string, interludeId: InterludeId) {
     super({ key });
@@ -22,6 +26,7 @@ export abstract class InterludeBase extends Phaser.Scene {
 
   protected setupInterlude(): void {
     this.cameras.main.fadeIn(450, 0, 0, 0);
+    this.captionBand = new CaptionBand(this);
     track('interlude_started', {
       interlude_id: this.interludeId,
       profile_name: this.profile.name,
@@ -43,41 +48,60 @@ export abstract class InterludeBase extends Phaser.Scene {
     });
   }
 
-  /** Show a centered caption that fades after a delay. Returns when fade-out completes. */
+  /** Transient centered caption via the shared band. Resolves when it fades out. */
   protected showCaption(text: string, holdMs = 1800): Promise<void> {
-    return new Promise((resolve) => {
-      const t = this.add
-        .text(this.scale.width / 2, this.scale.height - 90, text, {
-          fontFamily: 'system-ui, sans-serif',
-          fontSize: '16px',
-          color: '#fef3c7',
-          align: 'center',
-          wordWrap: { width: this.scale.width - 60 },
-          fontStyle: 'italic',
-        })
-        .setOrigin(0.5)
-        .setAlpha(0)
-        .setDepth(50);
-      this.tweens.add({
-        targets: t,
-        alpha: 1,
-        duration: 380,
-        ease: 'Sine.easeOut',
-        onComplete: () => {
-          this.time.delayedCall(holdMs, () => {
-            this.tweens.add({
-              targets: t,
-              alpha: 0,
-              duration: 380,
-              ease: 'Sine.easeIn',
-              onComplete: () => {
-                t.destroy();
-                resolve();
-              },
-            });
-          });
-        },
-      });
-    });
+    return this.captionBand.flashCaption(text, holdMs);
+  }
+
+  // ── Vignette spotlight framing ──────────────────────────────────────────────
+
+  /** Lazily build a soft (non-banded) white radial-gradient spotlight texture. */
+  private ensureSpotlightTexture(): void {
+    if (this.textures.exists(SPOTLIGHT_KEY)) return;
+    const size = 512;
+    const tex = this.textures.createCanvas(SPOTLIGHT_KEY, size, size);
+    if (!tex) return;
+    const ctx = tex.getContext();
+    const g = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+    g.addColorStop(0, 'rgba(255,255,255,0.60)');
+    g.addColorStop(0.55, 'rgba(255,255,255,0.16)');
+    g.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, size, size);
+    tex.refresh();
+  }
+
+  /** A soft spotlight glow centered at (cx, cy), tinted warm or cool. */
+  protected addSpotlight(cx: number, cy: number, diameter: number, tint: number): Phaser.GameObjects.Image {
+    this.ensureSpotlightTexture();
+    return this.add
+      .image(cx, cy, SPOTLIGHT_KEY)
+      .setDisplaySize(diameter, diameter)
+      .setTint(tint)
+      .setBlendMode(Phaser.BlendModes.SCREEN);
+  }
+
+  /** Full-screen near-black backdrop rectangle (cool by default, warm for day beats). */
+  protected backdrop(warm: boolean): Phaser.GameObjects.Rectangle {
+    return this.add.rectangle(
+      this.scale.width / 2,
+      this.scale.height / 2,
+      this.scale.width,
+      this.scale.height,
+      warm ? 0x1a1208 : 0x0c0e1a,
+    );
+  }
+
+  /**
+   * A baked room background scaled to cover the viewport and dimmed (~40% brightness),
+   * for located beats. Reuses an already-loaded room texture key.
+   */
+  protected dimmedRoomBackdrop(textureKey: string): Phaser.GameObjects.GameObject[] {
+    const W = this.scale.width;
+    const H = this.scale.height;
+    const img = this.add.image(W / 2, H / 2, textureKey);
+    const cover = Math.max(W / img.width, H / img.height);
+    img.setScale(cover).setTint(0x5a5a5a); // ~35-40% brightness
+    return [img];
   }
 }

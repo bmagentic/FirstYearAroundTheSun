@@ -121,6 +121,7 @@ scene is on screen; any exit to a menu fully stops the gameplay scene(s) and the
 | Topic | Decision |
 |---|---|
 | Modal freezes | **PROJECT RULE:** never use `tweens.pauseAll()` to freeze a scene behind a modal — Phaser 3.60+ halts the whole tween manager, freezing the modal's own animations too. Use `freezeScene()` (src/ui/sceneFreeze.ts) which pauses individual existing tweens + the clock. |
+| Cutscene visuals | **PROJECT RULE:** interlude/cutscene beats use the shared **`CaptionBand`** (src/ui/CaptionBand.ts) for all caption/label/prompt text — a dark lower-third band (caption + in-band "Tap to continue") + a top-center setting pill, warm off-white `#F5EFE0`. No bare text on the background. **No code-drawn prop rectangles** (crib/table/window blocks) in cutscenes — use the vignette spotlight framing (`InterludeBase.addSpotlight` + `backdrop`) with sprites ~2x and centered, or a dimmed baked room background for located beats (`dimmedRoomBackdrop`). |
 | Gameplay UI scope | Gameplay HUD/pause/keyboard exist ONLY while a gameplay scene is active; menus (Boot/SoundNotice/Menu) show none of it, and exiting to a menu fully stops the gameplay scene(s). |
 | Rooms | 10-room canonical list above; foyer split into two hallways; living/kitchen split; backyard cut (Super Baby → living room) |
 | Tilemaps | Programmatic rooms only; top-down bgs via topdown_gen.py + texture_pass.py (originals in rooms/_original/) |
