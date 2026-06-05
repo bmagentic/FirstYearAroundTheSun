@@ -140,6 +140,12 @@ export class CaptionBand {
     });
   }
 
+  /** Fade the band + pill out (clear the current caption before a new screen). */
+  hide(): void {
+    this.setPrompt(false);
+    this.scene.tweens.add({ targets: [this.band, this.pill], alpha: 0, duration: 300 });
+  }
+
   destroy(): void {
     this.promptTween?.stop();
     this.band.destroy();

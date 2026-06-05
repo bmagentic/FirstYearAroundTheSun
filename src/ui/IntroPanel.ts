@@ -68,8 +68,8 @@ export class IntroPanel {
     }
 
     // Large Start button (rounded amber, matching the pause-menu primary button).
-    const btnW = 240;
-    const btnH = 60;
+    const btnW = 260;
+    const btnH = 64;
     const btn = this.scene.add.container(W / 2, H * 0.62);
     const g = this.scene.add.graphics();
     g.fillStyle(0xfbbf24, 1);
@@ -82,14 +82,14 @@ export class IntroPanel {
         fontStyle: 'bold',
       })
       .setOrigin(0.5);
-    btn.add([g, btnLabel]);
-    btn.setSize(btnW, btnH);
-    btn.setInteractive({
-      hitArea: new Phaser.Geom.Rectangle(-btnW / 2, -btnH / 2, btnW, btnH),
-      hitAreaCallback: Phaser.Geom.Rectangle.Contains,
-      useHandCursor: true,
-    });
-    btn.on('pointerdown', () => this.dismiss(onStart));
+    // Interactive target: a transparent Rectangle the exact size of the button, centered
+    // origin. Phaser sizes a standard GameObject's hit area to its (origin-aware) bounds,
+    // so taps register across the WHOLE button — not just an offset strip.
+    const hit = this.scene.add
+      .rectangle(0, 0, btnW, btnH, 0xffffff, 0)
+      .setInteractive({ useHandCursor: true });
+    hit.on('pointerdown', () => this.dismiss(onStart));
+    btn.add([g, btnLabel, hit]);
     container.add(btn);
 
     // Gentle breathing pulse on the button.

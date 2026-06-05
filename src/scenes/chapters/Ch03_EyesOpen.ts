@@ -24,6 +24,7 @@ export class Ch03_EyesOpen extends ChapterBase {
   private successes = 0;
   private bookFrame!: Phaser.GameObjects.Rectangle;
   private pageVisual: Phaser.GameObjects.GameObject | null = null;
+  private pageHit: Phaser.GameObjects.Rectangle | null = null;
   private label!: Phaser.GameObjects.Text;
   private statusText!: Phaser.GameObjects.Text;
   private timerBar!: Phaser.GameObjects.Rectangle;
@@ -97,22 +98,23 @@ export class Ch03_EyesOpen extends ChapterBase {
     const cy = this.scale.height / 2 + 40;
 
     if (this.pageVisual) this.pageVisual.destroy();
+    if (this.pageHit) this.pageHit.destroy();
     if (page.shape === 'circle') {
-      const s = this.add.circle(cx, cy, 50, page.color).setStrokeStyle(2, 0x6b4530);
-      s.setInteractive({ useHandCursor: true });
-      s.on('pointerdown', () => this.handleTap());
-      this.pageVisual = s;
+      this.pageVisual = this.add.circle(cx, cy, 50, page.color).setStrokeStyle(2, 0x6b4530);
     } else if (page.shape === 'square') {
-      const s = this.add.rectangle(cx, cy, 90, 90, page.color).setStrokeStyle(2, 0x6b4530);
-      s.setInteractive({ useHandCursor: true });
-      s.on('pointerdown', () => this.handleTap());
-      this.pageVisual = s;
+      this.pageVisual = this.add.rectangle(cx, cy, 90, 90, page.color).setStrokeStyle(2, 0x6b4530);
     } else {
-      const s = this.add.triangle(cx, cy, 0, 50, 50, -45, -50, -45, page.color).setStrokeStyle(2, 0x6b4530);
-      s.setInteractive({ useHandCursor: true });
-      s.on('pointerdown', () => this.handleTap());
-      this.pageVisual = s;
+      // Triangle (silky leaf / crinkly star): its irregular silhouette gives a poor
+      // default hit area, so we don't make the shape itself interactive.
+      this.pageVisual = this.add.triangle(cx, cy, 0, 50, 50, -45, -50, -45, page.color).setStrokeStyle(2, 0x6b4530);
     }
+
+    // One generous, consistent hit target centered on the shape for ALL pages, so the
+    // star/triangle registers across its whole body just like the circle and square.
+    this.pageHit = this.add
+      .rectangle(cx, cy, 130, 130, 0xffffff, 0)
+      .setInteractive({ useHandCursor: true });
+    this.pageHit.on('pointerdown', () => this.handleTap());
 
     this.flipAt = this.time.now + FLIP_MS;
     this.accepting = true;

@@ -6,21 +6,25 @@ import { SpriteBank } from '../../systems/SpriteBank';
 type Beat = {
   setting: string;
   caption: string;
-  /** Day beats use a warm dark backdrop; night beats stay cool. */
+  /** Day beats get a warm spotlight; night beats a cool one. */
   warm: boolean;
-  /** Caius nestled asleep on her chest vs. cradled in arms. */
-  asleep: boolean;
-  /** Located beat: dim a baked room background behind the spotlight instead of a vignette. */
-  room?: string;
+  /** Baked, already-manifested room texture dimmed behind the spotlight. */
+  room: string;
 };
 
+// Every beat is grounded in a dimmed baked room (no lone-sprite-on-flat-fill beats).
 const BEATS: Beat[] = [
-  { setting: '3 AM', caption: 'Welcome home.', warm: false, asleep: false },
-  { setting: 'Sunrise', caption: "I've got you.", warm: true, asleep: false },
-  { setting: 'Noon', caption: 'We figured out the swaddle.', warm: true, asleep: true },
-  { setting: 'Sunset', caption: 'First bath, we both cried.', warm: true, asleep: false, room: 'room-bathroom-bg' },
-  { setting: 'Late night', caption: 'She got him through the first weeks.', warm: false, asleep: true },
+  { setting: '3 AM', caption: 'Welcome home.', warm: false, room: 'room-nursery-bg' },
+  { setting: 'Sunrise', caption: "I've got you.", warm: true, room: 'room-master-bedroom-bg' },
+  { setting: 'Noon', caption: 'We figured out the swaddle.', warm: true, room: 'room-living-room-bg' },
+  { setting: 'Sunset', caption: 'First bath, we both cried.', warm: true, room: 'room-bathroom-bg' },
+  { setting: 'Late night', caption: 'She got him through the first weeks.', warm: false, room: 'room-nursery-bg' },
 ];
+
+const CLOSING_ROOM = 'room-nursery-bg';
+// One shared offset so the baby is always cradled at chest height (in front of her torso,
+// below her face) on every beat — never composited onto her head.
+const BABY_CHEST_DY = 30;
 
 export class Interlude01_FirstDays extends InterludeBase {
   private beatIndex = -1;
@@ -32,7 +36,14 @@ export class Interlude01_FirstDays extends InterludeBase {
   }
 
   preload(): void {
-    SpriteBank.preloadInto(this, ['chelsea-idle', 'caius', 'room-bathroom-bg']);
+    SpriteBank.preloadInto(this, [
+      'chelsea-idle',
+      'caius',
+      'room-nursery-bg',
+      'room-master-bedroom-bg',
+      'room-living-room-bg',
+      'room-bathroom-bg',
+    ]);
     SoundBank.preload('lullaby');
   }
 
@@ -82,23 +93,19 @@ export class Interlude01_FirstDays extends InterludeBase {
     const cy = H * 0.44;
     const layer = this.add.container(0, 0);
 
-    // Backdrop: located room (dimmed) or a flat near-black vignette base.
-    if (beat.room && this.textures.exists(beat.room)) {
+    // Dimmed baked room behind, spotlight on top, then the figures.
+    if (this.textures.exists(beat.room)) {
       layer.add(this.dimmedRoomBackdrop(beat.room));
     } else {
       layer.add(this.backdrop(beat.warm));
     }
-
-    // Soft spotlight on the figures.
     layer.add(this.addSpotlight(cx, cy, 560, beat.warm ? 0xffe6b0 : 0xb8c4e8));
-
-    // Mother + child, centered in the spotlight, ~2x previous interlude scale.
-    layer.add(this.drawMotherAndChild(cx, cy, beat.asleep));
+    layer.add(this.drawMotherAndChild(cx, cy));
 
     return layer;
   }
 
-  private drawMotherAndChild(cx: number, cy: number, asleep: boolean): Phaser.GameObjects.GameObject[] {
+  private drawMotherAndChild(cx: number, cy: number): Phaser.GameObjects.GameObject[] {
     const parts: Phaser.GameObjects.GameObject[] = [];
 
     if (SpriteBank.has(this, 'chelsea-idle')) {
@@ -107,17 +114,16 @@ export class Interlude01_FirstDays extends InterludeBase {
       parts.push(this.add.circle(cx, cy, 60, 0x7c5fb0).setStrokeStyle(2, 0xfde68a, 0.6));
     }
 
-    const babyY = asleep ? cy - 44 : cy + 30;
-    const babyX = asleep ? cx : cx - 8;
+    // Caius cradled at chest height, added AFTER her so he's in front of the torso.
+    const babyY = cy + BABY_CHEST_DY;
     let baby: Phaser.GameObjects.GameObject;
     if (SpriteBank.has(this, 'caius')) {
-      baby = this.add.image(babyX, babyY, 'caius').setDisplaySize(56, 56);
+      baby = this.add.image(cx - 4, babyY, 'caius').setDisplaySize(56, 56);
     } else {
-      baby = this.add.circle(babyX, babyY, 26, 0xf7c6a3).setStrokeStyle(2, 0x402c1d);
+      baby = this.add.circle(cx - 4, babyY, 26, 0xf7c6a3).setStrokeStyle(2, 0x402c1d);
     }
     parts.push(baby);
 
-    // Gentle breathing.
     this.tweens.add({
       targets: baby,
       y: babyY - 2,
@@ -131,12 +137,22 @@ export class Interlude01_FirstDays extends InterludeBase {
   }
 
   private finish(): void {
-    this.captionBand.setPrompt(false);
-    this.captionBand.setSetting('');
+    // Clear the lingering beat caption so it doesn't render under the closing line.
+    this.captionBand.hide();
     this.cameras.main.fadeOut(700, 0, 0, 0);
     this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
       this.beatLayer?.destroy();
-      this.cameras.main.setBackgroundColor('#050409');
+
+      // Text-only closing beat is still grounded in a dimmed room (never bare black).
+      const layer = this.add.container(0, 0);
+      if (this.textures.exists(CLOSING_ROOM)) {
+        layer.add(this.dimmedRoomBackdrop(CLOSING_ROOM));
+      } else {
+        layer.add(this.backdrop(false));
+      }
+      this.beatLayer = layer;
+
+      this.cameras.main.setBackgroundColor('#0c0e1a');
       this.cameras.main.fadeIn(800, 0, 0, 0);
       const final = this.add
         .text(this.scale.width / 2, this.scale.height / 2, 'She did the first shift.\nAll of them.', {
@@ -148,8 +164,9 @@ export class Interlude01_FirstDays extends InterludeBase {
           wordWrap: { width: this.scale.width - 80 },
         })
         .setOrigin(0.5)
-        .setAlpha(0);
-      final.setShadow(1, 2, 'rgba(0,0,0,0.85)', 4, false, true);
+        .setAlpha(0)
+        .setDepth(10);
+      final.setShadow(1, 2, 'rgba(0,0,0,0.9)', 5, false, true);
       this.tweens.add({
         targets: final,
         alpha: 1,
