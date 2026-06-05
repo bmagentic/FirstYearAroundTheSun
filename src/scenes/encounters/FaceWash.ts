@@ -6,6 +6,21 @@ import { RetryPopup } from '../../ui/RetryPopup';
 type Side = 'left' | 'right' | 'top' | 'bottom';
 const SIDES: Side[] = ['left', 'right', 'top', 'bottom'];
 const OPPOSITE: Record<Side, Side> = { left: 'right', right: 'left', top: 'bottom', bottom: 'top' };
+// Dodge perpendicular to the wipe's axis: a horizontal wipe (from left/right) is dodged
+// up or down; a vertical wipe (from top/bottom) is dodged left or right.
+const PERPENDICULAR: Record<Side, Side[]> = {
+  left: ['top', 'bottom'],
+  right: ['top', 'bottom'],
+  top: ['left', 'right'],
+  bottom: ['left', 'right'],
+};
+const DODGE_STEP = 72; // one "space" Caius steps aside before auto-returning
+const DODGE_OFFSET: Record<Side, { dx: number; dy: number }> = {
+  left: { dx: -DODGE_STEP, dy: 0 },
+  right: { dx: DODGE_STEP, dy: 0 },
+  top: { dx: 0, dy: -DODGE_STEP },
+  bottom: { dx: 0, dy: DODGE_STEP },
+};
 const AVOIDS_NEEDED = 4;
 const MAX_MISSES = 2;
 
@@ -32,7 +47,7 @@ export class FaceWash extends EncounterBase {
     this.setupEncounter();
     this.retryPopup = new RetryPopup(this);
     this.cameras.main.setBackgroundColor('#2e3b54');
-    this.showLabel('Face & Hands Wash', 'Tap the OPPOSITE direction to dodge');
+    this.showLabel('Face & Hands Wash', 'Step across the wipe to dodge!');
 
     const W = this.scale.width;
     const H = this.scale.height;
@@ -62,7 +77,7 @@ export class FaceWash extends EncounterBase {
     this.cloth = this.add.rectangle(0, 0, 36, 36, 0xe6e6f5).setStrokeStyle(2, 0x6b8eb6);
     this.cloth.setVisible(false);
 
-    void this.intro('Face & Hands Wash', 'Tap the opposite direction to dodge the cloth!').then(() => {
+    void this.intro('Face & Hands Wash', 'A wipe comes in — step ACROSS it (up/down for a side wipe, left/right for a top/bottom wipe) to dodge!').then(() => {
       this.time.delayedCall(700, () => this.nextSwipe());
     });
   }
@@ -104,24 +119,39 @@ export class FaceWash extends EncounterBase {
     if (!this.accepting) return;
     this.accepting = false;
     this.clothTween?.stop();
-    if (s === OPPOSITE[this.direction]) {
+
+    const cx = this.scale.width / 2;
+    const cy = this.scale.height / 2;
+
+    if (PERPENDICULAR[this.direction].includes(s)) {
+      // Dodge: Caius steps one space aside (perpendicular), the wipe sweeps on through the
+      // now-empty center and exits the far side, then Caius auto-returns to center.
       this.avoided++;
-      const out = this.sidePosition(OPPOSITE[this.direction]);
+      const off = DODGE_OFFSET[s];
+      this.tweens.add({ targets: this.caius, x: cx + off.dx, y: cy + off.dy, duration: 150, ease: 'Back.easeOut' });
+      const exit = this.sidePosition(OPPOSITE[this.direction]);
       this.tweens.add({
         targets: this.cloth,
-        x: out.x,
-        y: out.y,
-        alpha: 0,
-        duration: 320,
+        x: exit.x,
+        y: exit.y,
+        duration: 420,
+        ease: 'Sine.easeIn',
         onComplete: () => {
           this.cloth.setVisible(false);
-          this.cloth.setAlpha(1);
-          this.time.delayedCall(450, () => this.nextSwipe());
+          this.tweens.add({
+            targets: this.caius,
+            x: cx,
+            y: cy,
+            duration: 200,
+            ease: 'Sine.easeOut',
+            onComplete: () => this.time.delayedCall(350, () => this.nextSwipe()),
+          });
         },
       });
     } else {
+      // Stepped along the wipe's axis (into/with it) → it gets him.
       this.misses++;
-      this.softFail('wrong-tap', 'Wrong side!');
+      this.softFail('wrong-dir', 'Dodge across the wipe!');
       this.cloth.setVisible(false);
       if (this.misses >= MAX_MISSES) {
         this.retryPopup.show(() => this.resetRound(), 'That washcloth is fast! Try again!');
@@ -137,6 +167,7 @@ export class FaceWash extends EncounterBase {
     this.accepting = false;
     this.cloth.setVisible(false);
     this.cloth.setAlpha(1);
+    this.caius.setPosition(this.scale.width / 2, this.scale.height / 2);
     this.time.delayedCall(400, () => this.nextSwipe());
   }
 

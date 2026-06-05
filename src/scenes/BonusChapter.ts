@@ -36,7 +36,7 @@ export class BonusChapter extends ChapterBase {
   }
 
   preload(): void {
-    SpriteBank.preloadInto(this, ['caius', 'obj-cape-red', 'dad-airplane']);
+    SpriteBank.preloadInto(this, ['caius', 'obj-cape-red', 'brandon-idle']);
   }
 
   create(): void {
@@ -55,10 +55,11 @@ export class BonusChapter extends ChapterBase {
     }
     this.add.rectangle(W / 2, H - 30, W, 40, 0x6b8e5a);
 
-    // Dad airplane-lifting the caped Super Baby (real sprite below/behind, baby on top).
+    // Dad (brandon-idle, NO baby — dad-airplane has a baby baked in and would double the
+    // caped Super Baby) standing below the lifted caped Caius.
     this.caius = this.add.container(W / 2, H - 150);
-    const dad = SpriteBank.has(this, 'dad-airplane')
-      ? this.add.image(0, 34, 'dad-airplane').setDisplaySize(64, 64)
+    const dad = SpriteBank.has(this, 'brandon-idle')
+      ? this.add.image(0, 38, 'brandon-idle').setDisplaySize(60, 60)
       : this.add.ellipse(0, 24, 90, 16, 0xe6c4a0);
     const cape = SpriteBank.has(this, 'obj-cape-red')
       ? this.add.image(0, 6, 'obj-cape-red').setDisplaySize(38, 42)

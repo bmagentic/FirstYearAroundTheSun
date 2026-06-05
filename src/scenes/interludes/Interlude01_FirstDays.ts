@@ -178,7 +178,7 @@ export class Interlude01_FirstDays extends InterludeBase {
       this.cameras.main.setBackgroundColor('#0c0e1a');
       this.cameras.main.fadeIn(800, 0, 0, 0);
       const final = this.add
-        .text(this.scale.width / 2, this.scale.height / 2, 'She did the first shift.\nAll of them.', {
+        .text(this.scale.width / 2, this.scale.height / 2, 'She was the rock that held this household together.', {
           fontFamily: 'system-ui, sans-serif',
           fontSize: '20px',
           color: '#F5EFE0',

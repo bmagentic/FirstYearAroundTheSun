@@ -2,10 +2,14 @@ import Phaser from 'phaser';
 import { EncounterBase } from './EncounterBase';
 import { SpriteBank } from '../../systems/SpriteBank';
 import { RetryPopup } from '../../ui/RetryPopup';
+import { TouchControls } from '../../ui/TouchControls';
 
 const DURATION_MS = 60_000;
-const ROOMBA_SPEED = 75;
-const CAIUS_SPEED = 110;
+const ROOMBA_SPEED = 75; // base roomba speed
+// Difficulty: the roomba accelerates over the round (1x → RAMP_MAX). Starts easy, gets
+// tense — but stays winnable on a first casual try. Tune here.
+const ROOMBA_SPEED_RAMP_MAX = 1.9;
+const CAIUS_SPEED = 130;
 
 type SafeZone = {
   x: number;
@@ -20,8 +24,7 @@ export class Roomba extends EncounterBase {
   private caius!: Phaser.GameObjects.Container;
   private caiusX = 0;
   private caiusY = 0;
-  private targetX = 0;
-  private targetY = 0;
+  private controls!: TouchControls;
   private roomba!: Phaser.GameObjects.Container;
   private rvx = ROOMBA_SPEED;
   private rvy = 0;
@@ -46,7 +49,8 @@ export class Roomba extends EncounterBase {
     this.setupEncounter();
     this.retryPopup = new RetryPopup(this);
     this.cameras.main.setBackgroundColor('#5b4530');
-    this.showLabel('Roomba!', 'Tap to move. Reach 3 safe spots.');
+    // (No showLabel: its title/subtitle at y=60/86 collided with the timer/status texts.
+    // The intro() pre-play gate already shows the title + instruction.)
 
     const W = this.scale.width;
     const H = this.scale.height;
@@ -79,8 +83,6 @@ export class Roomba extends EncounterBase {
     // Caius
     this.caiusX = pa.x + pa.w / 2;
     this.caiusY = pa.y + pa.h / 2;
-    this.targetX = this.caiusX;
-    this.targetY = this.caiusY;
     this.caius = this.add.container(this.caiusX, this.caiusY);
     this.caius.add(this.add.image(0, 0, 'caius').setDisplaySize(24, 24));
 
@@ -106,21 +108,10 @@ export class Roomba extends EncounterBase {
       })
       .setOrigin(0.5);
 
-    this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
-      if (!this.active) return;
-      // Only respond to taps inside play area
-      if (
-        p.x >= pa.x &&
-        p.x <= pa.x + pa.w &&
-        p.y >= pa.y &&
-        p.y <= pa.y + pa.h
-      ) {
-        this.targetX = p.x;
-        this.targetY = p.y;
-      }
-    });
+    // D-pad movement (reactive — dodge the roomba while reaching the safe spots).
+    this.controls = new TouchControls(this);
 
-    void this.intro('Roomba!', 'Tap to scoot Caius to a safe spot — reach all three!').then(() => {
+    void this.intro('Roomba!', 'Use the D-pad to scoot Caius to a safe spot — reach all three, dodge the roomba!').then(() => {
       this.startMs = this.time.now;
       this.active = true;
     });
@@ -130,8 +121,6 @@ export class Roomba extends EncounterBase {
     const pa = this.playArea;
     this.caiusX = pa.x + pa.w / 2;
     this.caiusY = pa.y + pa.h / 2;
-    this.targetX = this.caiusX;
-    this.targetY = this.caiusY;
     this.caius.setPosition(this.caiusX, this.caiusY);
     this.roomba.setPosition(pa.x + 50, pa.y + pa.h - 50);
     this.rvx = ROOMBA_SPEED;
@@ -152,20 +141,18 @@ export class Roomba extends EncounterBase {
     if (!this.active) return;
     const dt = delta / 1000;
 
-    // Move Caius toward target
-    const dx = this.targetX - this.caiusX;
-    const dy = this.targetY - this.caiusY;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    if (dist > 2) {
-      const step = Math.min(dist, CAIUS_SPEED * dt);
-      this.caiusX += (dx / dist) * step;
-      this.caiusY += (dy / dist) * step;
+    // Move Caius with the D-pad
+    const v = this.controls.getVector();
+    if (v.x !== 0 || v.y !== 0) {
+      this.caiusX = Phaser.Math.Clamp(this.caiusX + v.x * CAIUS_SPEED * dt, this.playArea.x + 16, this.playArea.x + this.playArea.w - 16);
+      this.caiusY = Phaser.Math.Clamp(this.caiusY + v.y * CAIUS_SPEED * dt, this.playArea.y + 16, this.playArea.y + this.playArea.h - 16);
       this.caius.setPosition(this.caiusX, this.caiusY);
     }
 
-    // Move roomba
-    this.roomba.x += this.rvx * dt;
-    this.roomba.y += this.rvy * dt;
+    // Move roomba — ramps up to ROOMBA_SPEED_RAMP_MAX over the round.
+    const ramp = 1 + (ROOMBA_SPEED_RAMP_MAX - 1) * Math.min(1, (this.time.now - this.startMs) / DURATION_MS);
+    this.roomba.x += this.rvx * ramp * dt;
+    this.roomba.y += this.rvy * ramp * dt;
     // Bounce off play area
     const minX = this.playArea.x + 22;
     const maxX = this.playArea.x + this.playArea.w - 22;

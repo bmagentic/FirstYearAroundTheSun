@@ -14,6 +14,10 @@ class SettingsManagerImpl {
     } catch {
       this.state = { ...DEFAULT };
     }
+    // Sound always starts OFF each session — the title screen promises "Sound starts off.
+    // Unmute anytime." So we never restore an "unmuted" preference across a restart; the
+    // mute toggle controls the current session only. Guarantees a silent fresh start.
+    this.state.muted = true;
     return this.state;
   }
 

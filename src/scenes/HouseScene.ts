@@ -6,6 +6,7 @@ import { deriveMobility, speedFor, bonusChapterReady } from '../systems/PlayerSt
 import { track } from '../systems/Analytics';
 import { DevMode } from '../systems/DevMode';
 import { TouchControls } from '../ui/TouchControls';
+import { freezeScene } from '../ui/sceneFreeze';
 import { CHAPTER_SCENES } from './chapters/registry';
 import { EncounterManager } from '../systems/EncounterManager';
 import { SpriteBank } from '../systems/SpriteBank';
@@ -172,6 +173,8 @@ export class HouseScene extends Phaser.Scene {
   private hudLayer!: Phaser.GameObjects.Container;
   private player!: Phaser.GameObjects.Container;
   private playerBody: Phaser.GameObjects.Arc | null = null;
+  /** Caius's crawl sprite (early-mobility overworld); animated while moving. */
+  private playerSprite: Phaser.GameObjects.Sprite | null = null;
   private controls!: TouchControls;
   private roomLabel!: Phaser.GameObjects.Text;
   private transitioning = false;
@@ -226,6 +229,8 @@ export class HouseScene extends Phaser.Scene {
     SpriteBank.preloadInto(this, [
       // Player
       'caius',
+      'caius-crawl-l',
+      'caius-crawl-r',
       // All room backgrounds (top-down, 208×282)
       'room-nursery-bg',
       'room-master-bedroom-bg',
@@ -307,8 +312,27 @@ export class HouseScene extends Phaser.Scene {
     this.worldLayer = this.add.container(0, 0).setDepth(1);
     this.hudLayer   = this.add.container(0, 0).setDepth(100);
 
+    // 2-frame crawl cycle (alternating hands). The overworld Caius crawls in the
+    // early-mobility phase rather than sliding a static sprite.
+    if (
+      this.textures.exists('caius-crawl-l') &&
+      this.textures.exists('caius-crawl-r') &&
+      !this.anims.exists('caius-crawl')
+    ) {
+      this.anims.create({
+        key: 'caius-crawl',
+        frames: [{ key: 'caius-crawl-l' }, { key: 'caius-crawl-r' }],
+        frameRate: 5, // slow — "but slowly at first"
+        repeat: -1,
+      });
+    }
+
     this.player = this.add.container(0, 0);
-    if (SpriteBank.has(this, 'caius')) {
+    this.playerSprite = null;
+    if (this.textures.exists('caius-crawl-l')) {
+      this.playerSprite = this.add.sprite(0, 0, 'caius-crawl-l').setDisplaySize(64, 64);
+      this.player.add(this.playerSprite);
+    } else if (SpriteBank.has(this, 'caius')) {
       const sprite = this.add.image(0, 0, 'caius').setDisplaySize(64, 64);
       this.player.add(sprite);
     } else {
@@ -347,8 +371,8 @@ export class HouseScene extends Phaser.Scene {
 
     const mobility = deriveMobility(this.profile);
     const speed    = speedFor(mobility);
+    const v        = this.controls.getVector();
     if (speed > 0) {
-      const v  = this.controls.getVector();
       const dt = delta / 1000;
       const nx = this.player.x + v.x * speed * dt;
       const ny = this.player.y + v.y * speed * dt;
@@ -361,6 +385,18 @@ export class HouseScene extends Phaser.Scene {
         this.player.setPosition(this.player.x, ny);
       } else if (DevMode.isEnabled()) {
         this.logWalkRejection(this.player.x, this.player.y, nx, ny);
+      }
+    }
+
+    // Crawl animation: play while actually moving, freeze on a frame when idle.
+    if (this.playerSprite && this.anims.exists('caius-crawl')) {
+      const moving = speed > 0 && (v.x !== 0 || v.y !== 0);
+      if (moving) {
+        if (!this.playerSprite.anims.isPlaying) this.playerSprite.play('caius-crawl');
+        if (v.x !== 0) this.playerSprite.setFlipX(v.x < 0);
+      } else if (this.playerSprite.anims.isPlaying) {
+        this.playerSprite.anims.stop();
+        this.playerSprite.setTexture('caius-crawl-l');
       }
     }
 
@@ -450,9 +486,9 @@ export class HouseScene extends Phaser.Scene {
     const speed = speedFor(deriveMobility(this.profile));
 
     if (speed > 0) {
-      // Mobility just unlocked (rolling from Ch4). Show the one-time movement hint.
+      // Mobility just unlocked (rolling from Ch4). Show the one-time full-screen hint.
       if (this.profile.completedChapters.includes(4) && !this.profile.movementHintShown) {
-        this.showToast('You can move now! Roll to a glowing circle to play.');
+        this.showMobilityOverlay();
         const updated = SaveManager.markMovementHintShown();
         if (updated) this.profile = updated;
       }
@@ -1205,6 +1241,53 @@ export class HouseScene extends Phaser.Scene {
       case 'left':   return { x: bounds.x - wallPad,                       y: bounds.y + bounds.height * door.position };
       case 'right':  return { x: bounds.x + bounds.width  + wallPad,       y: bounds.y + bounds.height * door.position };
     }
+  }
+
+  /** One-time full-screen overlay (IntroPanel-styled) when Caius first gains mobility. */
+  private showMobilityOverlay(): void {
+    const W = this.scale.width;
+    const H = this.scale.height;
+    const thaw = freezeScene(this); // project rule: never tweens.pauseAll()
+
+    const c = this.add.container(0, 0).setDepth(600);
+    const scrim = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.8).setInteractive();
+    c.add(scrim);
+
+    const body = this.add
+      .text(W / 2, H * 0.4, 'Caius has learned how to move now... but slowly at first.', {
+        fontFamily: 'system-ui, sans-serif',
+        fontSize: '20px',
+        color: '#fde68a',
+        fontStyle: 'bold',
+        align: 'center',
+        wordWrap: { width: W - 80 },
+      })
+      .setOrigin(0.5);
+    c.add(body);
+
+    const btnW = 280;
+    const btnH = 64;
+    const btn = this.add.container(W / 2, H * 0.62);
+    const g = this.add.graphics();
+    g.fillStyle(0xfbbf24, 1);
+    g.fillRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, 18);
+    const label = this.add
+      .text(0, 0, "Let's get crawling!", {
+        fontFamily: 'system-ui, sans-serif',
+        fontSize: '20px',
+        color: '#1c1410',
+        fontStyle: 'bold',
+      })
+      .setOrigin(0.5);
+    const hit = this.add.rectangle(0, 0, btnW, btnH, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    hit.on('pointerdown', () => {
+      thaw();
+      c.destroy();
+    });
+    btn.add([g, label, hit]);
+    c.add(btn);
+
+    this.tweens.add({ targets: btn, scaleX: 1.04, scaleY: 1.04, duration: 750, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
   }
 
   private showToast(message: string): void {

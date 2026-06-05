@@ -33,11 +33,12 @@ const DOG_SPRITE_KEYS: Record<DogId, string> = {
   soka: 'soka-south',
 };
 
-// Velocity-moving dogs get a real walk cycle (fixes the static-sprite "slide"). Soka
-// teleport-dashes rather than walking, so it stays on its static sprite.
-const DOG_WALK_IDS: DogId[] = ['finn', 'nugget', 'eevee'];
-const WALK_FRAME_COUNT = 9; // finn/eevee/nugget each have walk/<dir>/0..8 (64x64)
+// All four dogs get a real walk cycle (fixes the static-sprite "slide"); Soka now glides
+// toward toys via velocity instead of teleporting.
+const DOG_WALK_IDS: DogId[] = ['finn', 'nugget', 'eevee', 'soka'];
+const WALK_FRAME_COUNT = 9; // each dog has walk/<dir>/0..8 (64x64)
 const DOG_WALK_FPS = 12; // brisk Gen-3-ish stride
+const DOG_SIZE = 72; // ~3x the previous tiny dogs
 
 export class Ch06_GrabBag extends ChapterBase {
   private toys: Toy[] = [];
@@ -92,6 +93,7 @@ export class Ch06_GrabBag extends ChapterBase {
     // Floor
     this.add.rectangle(W / 2, this.playArea.y + this.playArea.h / 2, this.playArea.w, this.playArea.h, 0x8a6540);
 
+    // Score centered, timer in the top-right — distinct, non-overlapping.
     this.scoreText = this.add
       .text(W / 2, 60, '0 grabbed', {
         fontFamily: 'system-ui, sans-serif',
@@ -101,12 +103,12 @@ export class Ch06_GrabBag extends ChapterBase {
       })
       .setOrigin(0.5);
     this.timerText = this.add
-      .text(W / 2, 84, '60', {
+      .text(W - 18, 60, '60', {
         fontFamily: 'system-ui, sans-serif',
         fontSize: '13px',
         color: '#fde68a',
       })
-      .setOrigin(0.5)
+      .setOrigin(1, 0.5)
       .setAlpha(0.7);
 
     // Spawn dogs
@@ -125,9 +127,9 @@ export class Ch06_GrabBag extends ChapterBase {
 
       if (this.anims.exists(`dog-${def.id}-walk`)) {
         // Square aspect (64x64 frames) preserved; walk anim driven in driveDog().
-        obj = this.add.sprite(sx, sy, `dog-${def.id}-walk-0`).setDisplaySize(26, 26);
+        obj = this.add.sprite(sx, sy, `dog-${def.id}-walk-0`).setDisplaySize(DOG_SIZE, DOG_SIZE);
       } else if (SpriteBank.has(this, spriteKey)) {
-        obj = this.add.image(sx, sy, spriteKey).setDisplaySize(22, 18);
+        obj = this.add.image(sx, sy, spriteKey).setDisplaySize(DOG_SIZE, DOG_SIZE * 0.82);
       } else {
         obj = this.add.rectangle(sx, sy, 22, 18, def.color).setStrokeStyle(1, 0xfde68a, 0.4);
         this.add.text(sx, sy, def.label[0]!, {
@@ -237,14 +239,18 @@ export class Ch06_GrabBag extends ChapterBase {
           break;
         }
         case 'soka': {
-          // Short teleport dashes
+          // Glide toward the closest toy (no more teleport snapping)
           if (closest) {
-            obj.x = Phaser.Math.Clamp(closest.x + Phaser.Math.Between(-30, 30), this.playArea.x + 16, this.playArea.x + this.playArea.w - 16);
-            obj.y = Phaser.Math.Clamp(closest.y + Phaser.Math.Between(-30, 30), this.playArea.y + 16, this.playArea.y + this.playArea.h - 16);
+            const dx = closest.x - obj.x;
+            const dy = closest.y - obj.y;
+            const len = Math.sqrt(dx * dx + dy * dy) || 1;
+            dog.vx = (dx / len) * 85;
+            dog.vy = (dy / len) * 85;
+          } else {
+            dog.vx = Phaser.Math.Between(-40, 40);
+            dog.vy = Phaser.Math.Between(-40, 40);
           }
-          dog.vx = 0;
-          dog.vy = 0;
-          dog.nextActionAt = this.time.now + 1600;
+          dog.nextActionAt = this.time.now + 1100;
           break;
         }
       }

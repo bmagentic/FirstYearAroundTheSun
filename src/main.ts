@@ -188,6 +188,9 @@ const hud = new HUD(hudRoot, pauseMenuEl, {
   },
   onMuteChange: (muted) => {
     game.sound.mute = muted;
+    // Muting must silence anything already in flight (e.g. a lullaby clone), not just
+    // block new plays.
+    if (muted) SoundBank.stopAll();
   },
 });
 

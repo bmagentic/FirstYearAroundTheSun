@@ -48,7 +48,7 @@ export class Ch05_HoliDadInn extends ChapterBase {
   }
 
   preload(): void {
-    SpriteBank.preloadInto(this, ['bed', 'chelsea-asleep', 'dad-airplane', 'caius', 'caius-crawl-l', 'caius-crawl-r']);
+    SpriteBank.preloadInto(this, ['bed', 'chelsea-asleep', 'dad-airplane', 'brandon-idle', 'caius', 'caius-crawl-l', 'caius-crawl-r']);
     SoundBank.preload('lullaby');
   }
 
@@ -65,10 +65,11 @@ export class Ch05_HoliDadInn extends ChapterBase {
     this.bedY = H / 2 - 40;
     this.bedRect = this.add.image(this.bedX, this.bedY, 'bed').setDisplaySize(this.bedW, this.bedH);
 
-    // Chelsea on her side of the bed (silent background presence)
+    // Chelsea standing beside the bed (a present parent, not floating in the middle of it).
     // FLAG: chelsea-asleep maps to chelsea_rocking.png — no true sleeping pose on disk
-    const chelX = this.bedX - this.bedW / 2 + 56;
-    this.chelsea = this.add.image(chelX, this.bedY, 'chelsea-asleep').setDisplaySize(60, 100);
+    const chelX = this.bedX - this.bedW / 2 - 16;
+    const chelY = this.bedY + 24;
+    this.chelsea = this.add.image(chelX, chelY, 'chelsea-asleep').setDisplaySize(64, 104);
     // Gentle breathing
     this.tweens.add({
       targets: this.chelsea,
@@ -83,7 +84,8 @@ export class Ch05_HoliDadInn extends ChapterBase {
     this.caiusX = this.bedX + 40;
     this.caiusY = this.bedY + 10;
     this.caius = this.add.container(this.caiusX, this.caiusY);
-    this.caius.add(this.add.image(0, 0, 'caius').setDisplaySize(28, 28));
+    const caiusKey = SpriteBank.has(this, 'caius-crawl-l') ? 'caius-crawl-l' : 'caius';
+    this.caius.add(this.add.image(0, 0, caiusKey).setDisplaySize(56, 56)); // ~2x bigger, crawling pose
 
     this.timerText = this.add
       .text(W / 2, 60, '20', {
@@ -155,9 +157,12 @@ export class Ch05_HoliDadInn extends ChapterBase {
     this.cameras.main.flash(360, 250, 230, 200);
     this.bedRect.setAngle(0);
 
-    // Dad on the right side
+    // Dad on the right side — WAITING (arms open, no baby) until Caius arrives. The
+    // airplane/held pose (dad-airplane already has a baby baked in) appears only after the
+    // crawl completes, so there's never a second baby on screen.
     const dadX = this.bedX + this.bedW / 2 - 60;
-    this.dad = this.add.image(dadX, this.bedY, 'dad-airplane').setDisplaySize(60, 100);
+    const dadKey = SpriteBank.has(this, 'brandon-idle') ? 'brandon-idle' : 'dad-airplane';
+    this.dad = this.add.image(dadX, this.bedY, dadKey).setDisplaySize(60, 100);
 
     // Move Caius back to start of crawl
     this.caiusX = this.bedX - this.bedW / 2 + 100;
@@ -232,6 +237,10 @@ export class Ch05_HoliDadInn extends ChapterBase {
         duration: 600,
         ease: 'Sine.easeInOut',
         onComplete: () => {
+          // Reunion: dad scoops him into the airplane/held pose; the crawling baby is now
+          // the one in dad's arms, so hide the separate sprite. One baby on screen.
+          if (this.textures.exists('dad-airplane')) this.dad.setTexture('dad-airplane');
+          this.caius.setVisible(false);
           this.cameras.main.fadeOut(900, 250, 230, 180);
           this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
             this.completeChapter();

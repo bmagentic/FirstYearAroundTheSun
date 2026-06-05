@@ -185,6 +185,43 @@ flipX for L/R — full directional walk could follow.
 
 ---
 
+## BUCKET A+ FIXES (6/5)
+
+1. **Sound starts OFF every session.** `SettingsManager.load()` now forces `muted = true`
+   regardless of any persisted value — the title promises "Sound starts off." The prior
+   bug: a persisted `muted:false` made it start loud while the HUD glyph (set at the
+   construction-time default `true`) stayed stale as 🔇. All audio already routes through
+   `SoundBank.play()`, which returns early when muted. **RULE:** muted is the single
+   global audio gate; sound is opt-in per session via the mute toggle. Mute now also
+   `SoundBank.stopAll()`s in-flight clips.
+2. Interlude01 closing caption → "She was the rock that held this household together."
+3. Ch02 First Focus instruction → "Focus on Mama."
+4. **Overlapping HUD text fixed.** Roomba: removed the `showLabel` whose title/subtitle
+   (y=60/86) collided with the timer/status; intro() gate carries title+instruction. Ch06:
+   moved the timer to the top-right so it can't double with the centered score.
+5. **Dog game:** dogs ~3x (`DOG_SIZE=72`); Soka now glides toward toys via velocity (no
+   teleport) and walk-animates like the others.
+6. **Mo4 = Ch04_RollOut** rebuilt (same win): hand-authored 4-divider serpentine maze
+   (alternating gaps, always solvable), **D-pad** movement (TouchControls + axis-separated
+   wall collision, swipe removed), Caius ~2.5x (`caius-roll`, 66px).
+7. **Mobility unlock:** small toast → **full-screen overlay** (IntroPanel-styled) — body
+   "Caius has learned how to move now... but slowly at first.", button "Let's get crawling!".
+   Overworld Caius now plays a **2-frame crawl animation** (`caius-crawl-l/r`, three-place,
+   5fps, flipX) while moving — crawls instead of sliding.
+8. **Ch05 HoliDad Inn staging:** Mom moved from floating in the bed to standing beside it;
+   Caius 28→56px (crawl sprite); **dad waits as `brandon-idle` (no baby)** during the crawl
+   and only switches to the `dad-airplane` held pose (which has a baby baked in) on arrival,
+   with the crawling sprite hidden → one baby on screen always. **Side-effect fix:**
+   BonusChapter's dad switched from `dad-airplane` (would double the baby) to `brandon-idle`.
+9. **Washcloth (FaceWash):** opposite-dodge → **perpendicular dodge** — horizontal wipe
+   dodged up/down, vertical wipe left/right; Caius steps one space aside then auto-returns;
+   stepping along the wipe axis = hit. Win/lose structure unchanged.
+10. **Roomba difficulty:** kept off-swipe controls (converted tap-to-move → **D-pad** for
+    reactive dodging) and added a tunable **speed ramp** (`ROOMBA_SPEED_RAMP_MAX=1.9`, 1x→max
+    over the round). Starts easy, gets tense, still first-try winnable.
+
+---
+
 ## FLAGGED — open items
 - [ ] `chelsea-asleep` maps to `chelsea_rocking.png` — no true sleeping pose on disk. Ch05 uses it as-is (stand-in).
 - [ ] Ch06 dog directional walk — finn/nugget/eevee now walk-animate (south frames + flipX); full 8-direction walk still optional. Soka still static (teleporter).

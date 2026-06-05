@@ -102,7 +102,7 @@ export class Ch02_FirstSmile extends ChapterBase {
       this.pointerDown = false;
     });
 
-    void this.intro('First Focus', 'Find her face.').then(() => {
+    void this.intro('First Focus', 'Focus on Mama.').then(() => {
       this.started = true;
     });
   }

@@ -15,6 +15,8 @@ import type Phaser from 'phaser';
 const MANIFEST: Record<string, string> = {
   // ── Characters ──────────────────────────────────────────────────────────────
   'caius':              '/assets/sprites/caius-blue/south.png',
+  'caius-crawl-l':      '/assets/sprites/caius-crawl-l.png',
+  'caius-crawl-r':      '/assets/sprites/caius-crawl-r.png',
   'chelsea-idle':       '/assets/sprites/chelsea/south.png',
   'chelsea-asleep':     '/assets/sprites/chelsea_scrubs/chelsea_rocking.png',
   'chelsea-bath':       '/assets/sprites/chelsea_scrubs/chelsea_bath.png',
