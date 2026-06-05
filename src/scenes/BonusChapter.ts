@@ -36,7 +36,7 @@ export class BonusChapter extends ChapterBase {
   }
 
   preload(): void {
-    SpriteBank.preloadInto(this, ['caius', 'obj-cape-red']);
+    SpriteBank.preloadInto(this, ['caius', 'obj-cape-red', 'dad-airplane']);
   }
 
   create(): void {
@@ -55,14 +55,16 @@ export class BonusChapter extends ChapterBase {
     }
     this.add.rectangle(W / 2, H - 30, W, 40, 0x6b8e5a);
 
-    // Caius with cape + Dad's airplane arms
+    // Dad airplane-lifting the caped Super Baby (real sprite below/behind, baby on top).
     this.caius = this.add.container(W / 2, H - 150);
-    const dadArms = this.add.rectangle(0, 22, 120, 16, 0xe6c4a0).setStrokeStyle(1, 0x6b4530);
+    const dad = SpriteBank.has(this, 'dad-airplane')
+      ? this.add.image(0, 34, 'dad-airplane').setDisplaySize(64, 64)
+      : this.add.ellipse(0, 24, 90, 16, 0xe6c4a0);
     const cape = SpriteBank.has(this, 'obj-cape-red')
       ? this.add.image(0, 6, 'obj-cape-red').setDisplaySize(38, 42)
       : this.add.triangle(0, -4, -20, 0, 20, 0, 0, 36, 0xb91c1c).setStrokeStyle(1, 0xfde68a);
     const body = this.add.image(0, 0, 'caius').setDisplaySize(32, 32);
-    this.caius.add([dadArms, cape, body]);
+    this.caius.add([dad, cape, body]);
     this.dragX = W / 2;
 
     this.scoreText = this.add

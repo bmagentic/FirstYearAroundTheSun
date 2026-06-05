@@ -157,7 +157,7 @@ a room change; single 64x64 frames, square-preserved, gentle motion):
 `emote-sparkle`.
 
 **Text-emoji audit** (NOT changed — Brandon's call which to swap to emote sprites):
-- `Ch10_Chatterbox.ts:340` — `♥`/`♡` lives display → could use `emote-heart`.
+- `Ch10_Chatterbox.ts` — lives display **now uses `emote-heart` sprites** (full = alive, dim+dark-tint = lost); count/positions/update logic unchanged.
 - `Ch05_HoliDadInn.ts:290` — `✈ Super Baby!` win banner.
 - `Ch06_GrabBag.ts:307` — `★ STAR!` win banner.
 - `HouseScene.ts:908` — `★` completed-chapter marker.
@@ -175,12 +175,10 @@ flipX for L/R — full directional walk could follow.
   (60x100) on the bed; the "crawl to Dad's shoulder" phase targets it. Wired.
 - **Ch10 Chatterbox**: `brandon-idle` = `brandon/south.png` is the "Dad" word-match target.
   Wired.
-- **BonusChapter (Crime Fighting Super Baby)**: Dad's airplane arms are a **code-drawn tan
-  rectangle** (`0xe6c4a0`, 120x16) inside the Caius container — Brandon NOT used here.
-  **Recommended:** replace that rectangle with the existing `dad-airplane`
-  (`brandon_airplane.png`) as a full lifting-dad figure below the caped Super Baby (key
-  already in manifest — no three-place needed). Composition shifts from "arms only" to
-  "dad lifting baby" (more legible).
+- **BonusChapter (Crime Fighting Super Baby)**: the code-drawn tan-rectangle "dad's airplane
+  arms" is **now replaced** with the `dad-airplane` sprite (`brandon_airplane.png`, 64x64) —
+  a full lifting-dad figure below/behind the caped Super Baby (baby on top). Rectangle
+  removed. Position/scale may want a visual tweak (flip/offset) once eyeballed on device.
 - On-disk Brandon: `brandon_airplane` (used), `brandon/south` (used), `brandon_bath`
   (unused — bath beat uses chelsea_bath), + 8-dir + 72-frame walk set (overworld; Brandon
   isn't a walkable character — unused).

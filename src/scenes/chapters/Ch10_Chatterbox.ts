@@ -74,7 +74,7 @@ export class Ch10_Chatterbox extends ChapterBase {
   private collectedNicknames = new Set<Nickname>();
   private active = false;
   private statusText!: Phaser.GameObjects.Text;
-  private heartsText!: Phaser.GameObjects.Text;
+  private hearts: Phaser.GameObjects.Image[] = [];
   private nicknameText!: Phaser.GameObjects.Text;
 
   private retryPopup!: RetryPopup;
@@ -95,6 +95,7 @@ export class Ch10_Chatterbox extends ChapterBase {
       'nugget-south',
       'eevee-south',
       'soka-south',
+      'emote-heart',
     ]);
   }
 
@@ -154,14 +155,13 @@ export class Ch10_Chatterbox extends ChapterBase {
       })
       .setOrigin(0.5);
 
-    this.heartsText = this.add
-      .text(W / 2, 72, '', {
-        fontFamily: 'system-ui, sans-serif',
-        fontSize: '16px',
-        color: '#f87171',
-        fontStyle: 'bold',
-      })
-      .setOrigin(0.5);
+    // Lives = a row of emote-heart sprites (full = life left, dim = lost).
+    const HEART_GAP = 24;
+    this.hearts = [];
+    for (let i = 0; i < MAX_MISSES; i++) {
+      const hx = W / 2 + (i - (MAX_MISSES - 1) / 2) * HEART_GAP;
+      this.hearts.push(this.add.image(hx, 72, 'emote-heart').setDisplaySize(20, 20));
+    }
     this.updateHearts();
 
     this.nicknameText = this.add
@@ -337,7 +337,11 @@ export class Ch10_Chatterbox extends ChapterBase {
 
   private updateHearts(): void {
     const remaining = Math.max(0, MAX_MISSES - this.misses);
-    this.heartsText.setText('♥'.repeat(remaining) + '♡'.repeat(MAX_MISSES - remaining));
+    this.hearts.forEach((h, i) => {
+      const alive = i < remaining;
+      h.setAlpha(alive ? 1 : 0.25);
+      h.setTint(alive ? 0xffffff : 0x555555); // lost = dark/desaturated
+    });
   }
 
   private dropBrutusSpeck(x: number, y: number): void {
