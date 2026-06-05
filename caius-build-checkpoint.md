@@ -9,6 +9,7 @@
 ## TL;DR — where this actually is
 
 - All art generation is COMPLETE (PixelLab work done; only regenerate if playtest surfaces something).
+- **First Touch discovery game sprites generated** — `public/assets/sprites/objects/` contains 5 reaction sprite sheets (448×64, 7 frames each): obj_crinklebook_react, obj_rattle_react, obj_poe_react, obj_bumpyball_react, obj_oball_react. Not yet wired into any scene; build + sound design comes next.
 - Top-down room system is built and proven: floor zones, foot-anchored sprites, depth sorting by feet, dev-mode drag-to-position tool.
 - **ALL TEN ROOMS placed and baked** — nursery, master-bedroom, bathroom, hallway-upper, hallway-lower, kitchen, dining, living-room, play-area, garage. Objects drag-tuned, arrays committed.
 - All chapter scenes and encounters wired to real sprites via SpriteBank (circle/rect primitives removed).
