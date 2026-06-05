@@ -6,7 +6,11 @@ import { SpriteBank } from '../../systems/SpriteBank';
 const FOCUS_FILL_RATE = 0.085; // meter/sec while the reticle holds on her (~12s to fill)
 const FOCUS_DECAY_RATE = 0.04; // meter/sec while off her — slow + forgiving, never a loss
 const MAX_BLUR = 6; // postFX blur offset at an empty meter (0 = fully sharp)
-const FOCUS_RADIUS = 80; // how close the reticle center must be to her to count
+// chelsea_encouraging_standing is a 64x64 square sprite; display it square (no stretch).
+// 290 ≈ +16% over the previous 250-tall framing.
+const MOM_DISPLAY = 290;
+// Overlap radius scaled with her rendered size (was 80 for ~250) so focus-fill feels identical.
+const FOCUS_RADIUS = Math.round(MOM_DISPLAY * 0.32); // ≈93
 const RETICLE_RADIUS = 64;
 
 /**
@@ -37,7 +41,7 @@ export class Ch02_FirstSmile extends ChapterBase {
   }
 
   preload(): void {
-    SpriteBank.preloadInto(this, ['chelsea-idle', 'caius']);
+    SpriteBank.preloadInto(this, ['chelsea-encouraging-standing']);
   }
 
   create(): void {
@@ -51,8 +55,10 @@ export class Ch02_FirstSmile extends ChapterBase {
     this.ampX = W * 0.26;
     this.ampY = H * 0.15;
 
-    // Mom = the real Chelsea sprite, starts heavily blurred.
-    this.chelsea = this.add.image(this.cx, this.cy, 'chelsea-idle').setDisplaySize(150, 250);
+    // Mom = the real Chelsea sprite (encouraging/standing), starts heavily blurred.
+    this.chelsea = this.add
+      .image(this.cx, this.cy, 'chelsea-encouraging-standing')
+      .setDisplaySize(MOM_DISPLAY, MOM_DISPLAY);
 
     // Blur path: the game is Phaser.AUTO, which resolves to WebGL on every target
     // device (modern phones / iOS Safari), so we use postFX blur and drive its offset

@@ -18,6 +18,7 @@ const MANIFEST: Record<string, string> = {
   'chelsea-idle':       '/assets/sprites/chelsea/south.png',
   'chelsea-asleep':     '/assets/sprites/chelsea_scrubs/chelsea_rocking.png',
   'chelsea-bath':       '/assets/sprites/chelsea_scrubs/chelsea_bath.png',
+  'chelsea-encouraging-standing': '/assets/sprites/chelsea_scrubs/chelsea_encouraging_standing.png',
   'chelsea-doorway':    '/assets/sprites/chelsea/chelsea-doorway.png',
 
   // ── Portables ───────────────────────────────────────────────────────────────

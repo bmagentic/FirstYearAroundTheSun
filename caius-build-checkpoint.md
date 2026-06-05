@@ -113,7 +113,7 @@ scene is on screen; any exit to a menu fully stops the gameplay scene(s) and the
 scratch. The retired mechanic ("tap when her smile peaks", code-drawn circle faces,
 mood rounds, soft-fail) is **gone**.
 
-**First Focus** — Caius's newborn POV. The real `chelsea-idle` sprite drifts on a lazy
+**First Focus** — Caius's newborn POV. The `chelsea-encouraging-standing` sprite drifts on a lazy
 two-sine path, heavily blurred. The player holds + drags a soft focus reticle; while it
 overlaps her, a focus meter fills and the blur resolves toward sharp. Off-target, the
 meter decays slowly (never empties to a loss). Filling the meter = win: she snaps sharp,
@@ -152,8 +152,9 @@ scenes:
 
 **chelsea_scrubs/** (single-pose Chelsea, scrubs outfit, 64×64 — prime scene candidates)
 - `chelsea_bath.png` — Chelsea + tub. **NOW WIRED** (`chelsea-bath`, Interlude01 bath beat).
-- `chelsea_encouraging.png` — Chelsea cheering/encouraging pose. (NB: task asked for a
-  `chelsea_encouraging_standing.png` that is NOT on disk — only this one exists.)
+- `chelsea_encouraging.png` — Chelsea cheering/encouraging pose (unused).
+- `chelsea_encouraging_standing.png` — standing variant. **NOW WIRED** (`chelsea-encouraging-standing`,
+  First Focus / Ch02 drifting mom).
 - `chelsea_feeding.png` — Chelsea feeding the baby.
 - `chelsea_holding.png` — Chelsea holding the baby (alt to chelsea_rocking).
 - plus the full scrubs 8-dir + walk set (orphaned; overworld uses `chelsea/south.png`).
