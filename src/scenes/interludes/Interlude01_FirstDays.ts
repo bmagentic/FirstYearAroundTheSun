@@ -3,6 +3,19 @@ import { InterludeBase } from './InterludeBase';
 import { SoundBank } from '../../systems/SoundBank';
 import { SpriteBank } from '../../systems/SpriteBank';
 
+// Each beat gets its own Chelsea pose (baby-in-arms sprites) so the figure varies, not
+// just the room. Closest-match notes: 'Welcome home' and 'I've got you' have no dedicated
+// pose, so they use holding (cradling) and rocking (comforting) respectively.
+type Pose = 'holding' | 'feeding' | 'rocking' | 'bath' | 'shoulder';
+
+const POSE_SPRITE: Record<Pose, string> = {
+  holding: 'chelsea-holding', // chelsea_holding.png
+  feeding: 'chelsea-feeding', // chelsea_feeding.png
+  rocking: 'chelsea-asleep', // chelsea_rocking.png (single 64x64 frame → sway, not animated)
+  bath: 'chelsea-bath', // chelsea_bath.png (tub baked in)
+  shoulder: 'chelsea-shoulder', // chelsea_shoulder.png (quiet finale)
+};
+
 type Beat = {
   setting: string;
   caption: string;
@@ -10,17 +23,17 @@ type Beat = {
   warm: boolean;
   /** Baked, already-manifested room texture dimmed behind the spotlight. */
   room: string;
-  /** Use the chelsea_bath sprite (Chelsea + tub baked in) instead of the rocking pose. */
-  bath?: boolean;
+  pose: Pose;
 };
 
 // Every beat is grounded in a dimmed baked room (no lone-sprite-on-flat-fill beats).
 const BEATS: Beat[] = [
-  { setting: '3 AM', caption: 'Welcome home.', warm: false, room: 'room-nursery-bg' },
-  { setting: 'Sunrise', caption: "I've got you.", warm: true, room: 'room-master-bedroom-bg' },
-  { setting: 'Noon', caption: 'We figured out the swaddle.', warm: true, room: 'room-living-room-bg' },
-  { setting: 'Sunset', caption: 'First bath, we both cried.', warm: true, room: 'room-bathroom-bg', bath: true },
-  { setting: 'Late night', caption: 'She got him through the first weeks.', warm: false, room: 'room-nursery-bg' },
+  { setting: '3 AM', caption: 'Welcome home.', warm: false, room: 'room-nursery-bg', pose: 'holding' },
+  { setting: 'Sunrise', caption: "I've got you.", warm: true, room: 'room-master-bedroom-bg', pose: 'rocking' },
+  { setting: 'Noon', caption: 'We figured out the swaddle.', warm: true, room: 'room-living-room-bg', pose: 'holding' },
+  { setting: 'Sunset', caption: 'First bath, we both cried.', warm: true, room: 'room-bathroom-bg', pose: 'bath' },
+  { setting: 'NIGHT', caption: 'Every two hours. Around the clock.', warm: false, room: 'room-nursery-bg', pose: 'feeding' },
+  { setting: 'Late night', caption: 'She got him through the first weeks.', warm: false, room: 'room-nursery-bg', pose: 'shoulder' },
 ];
 
 const CLOSING_ROOM = 'room-nursery-bg';
@@ -38,6 +51,9 @@ export class Interlude01_FirstDays extends InterludeBase {
     SpriteBank.preloadInto(this, [
       'chelsea-asleep', // chelsea_rocking.png — Chelsea rocking with the baby baked in
       'chelsea-bath', // chelsea_bath.png — Chelsea + tub baked in (bath beat)
+      'chelsea-holding', // chelsea_holding.png — cradling
+      'chelsea-feeding', // chelsea_feeding.png — feeding beat
+      'chelsea-shoulder', // chelsea_shoulder.png — over-the-shoulder, quiet finale
       'room-nursery-bg',
       'room-master-bedroom-bg',
       'room-living-room-bg',
@@ -99,61 +115,48 @@ export class Interlude01_FirstDays extends InterludeBase {
       layer.add(this.backdrop(beat.warm));
     }
     layer.add(this.addSpotlight(cx, cy, 560, beat.warm ? 0xffe6b0 : 0xb8c4e8));
-    layer.add(beat.bath ? this.drawBathScene(cx, cy) : this.drawRockingMother(cx, cy));
+    layer.add(this.drawPose(cx, cy, beat.pose));
 
     return layer;
   }
 
-  /** Bath beat: the chelsea_bath sprite (Chelsea + tub baked in) over the dimmed bathroom. */
-  private drawBathScene(cx: number, cy: number): Phaser.GameObjects.GameObject[] {
-    let scene: Phaser.GameObjects.GameObject;
-    if (SpriteBank.has(this, 'chelsea-bath')) {
-      // Square aspect (64x64) preserved — no crop/stretch.
-      scene = this.add.image(cx, cy, 'chelsea-bath').setDisplaySize(230, 230).setOrigin(0.5);
-    } else {
-      scene = this.add.circle(cx, cy, 70, 0x7c5fb0).setStrokeStyle(2, 0xfde68a, 0.6);
-    }
-    // Gentle bob (no rotation — a tilting tub looks wrong).
-    this.tweens.add({
-      targets: scene,
-      y: cy - 4,
-      duration: 2000,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut',
-    });
-    return [scene];
-  }
-
   /**
-   * Chelsea rocking with Caius already cradled in her arms — the baby is baked into the
-   * chelsea_rocking sprite, so there is no separate composited Caius (no more baby-on-face,
-   * no double-baby). The file is a single 64x64 frame, so we add a gentle sway tween rather
-   * than playing animation frames.
+   * Draw the beat's Chelsea pose (each is a single 64x64 baby-in-arms sprite, square aspect
+   * preserved). Rocking sways (no animation frames in the file); the others get a gentle bob;
+   * the shoulder finale bobs very subtly.
    */
-  private drawRockingMother(cx: number, cy: number): Phaser.GameObjects.GameObject[] {
-    const parts: Phaser.GameObjects.GameObject[] = [];
-
+  private drawPose(cx: number, cy: number, pose: Pose): Phaser.GameObjects.GameObject[] {
+    const key = POSE_SPRITE[pose];
     let mom: Phaser.GameObjects.GameObject;
-    if (SpriteBank.has(this, 'chelsea-asleep')) {
-      // Keep the sprite's square aspect (64x64) — do not crop or stretch.
-      mom = this.add.image(cx, cy, 'chelsea-asleep').setDisplaySize(230, 230).setOrigin(0.5);
+    if (SpriteBank.has(this, key)) {
+      mom = this.add.image(cx, cy, key).setDisplaySize(230, 230).setOrigin(0.5);
     } else {
       mom = this.add.circle(cx, cy, 70, 0x7c5fb0).setStrokeStyle(2, 0xfde68a, 0.6);
     }
-    parts.push(mom);
 
-    // Gentle rocking sway.
-    this.tweens.add({
-      targets: mom,
-      angle: { from: -2.5, to: 2.5 },
-      duration: 1900,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut',
-    });
+    if (pose === 'rocking') {
+      this.tweens.add({
+        targets: mom,
+        angle: { from: -2.5, to: 2.5 },
+        duration: 1900,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      });
+    } else {
+      // Gentle vertical bob — subtler for the shoulder finale, no rotation for the tub.
+      const dy = pose === 'shoulder' ? 2 : pose === 'bath' ? 4 : 3;
+      this.tweens.add({
+        targets: mom,
+        y: cy - dy,
+        duration: pose === 'feeding' ? 2400 : 2000,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      });
+    }
 
-    return parts;
+    return [mom];
   }
 
   private finish(): void {

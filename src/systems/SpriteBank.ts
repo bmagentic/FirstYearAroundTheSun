@@ -18,8 +18,15 @@ const MANIFEST: Record<string, string> = {
   'chelsea-idle':       '/assets/sprites/chelsea/south.png',
   'chelsea-asleep':     '/assets/sprites/chelsea_scrubs/chelsea_rocking.png',
   'chelsea-bath':       '/assets/sprites/chelsea_scrubs/chelsea_bath.png',
+  'chelsea-holding':    '/assets/sprites/chelsea_scrubs/chelsea_holding.png',
+  'chelsea-feeding':    '/assets/sprites/chelsea_scrubs/chelsea_feeding.png',
+  'chelsea-shoulder':   '/assets/sprites/chelsea_scrubs/chelsea_shoulder.png',
   'chelsea-encouraging-standing': '/assets/sprites/chelsea_scrubs/chelsea_encouraging_standing.png',
   'chelsea-doorway':    '/assets/sprites/chelsea/chelsea-doorway.png',
+
+  // ── Emotes (32x32) ────────────────────────────────────────────────────────────
+  'emote-heart':        '/assets/sprites/emotes/emote-heart.png',
+  'emote-sparkle':      '/assets/sprites/emotes/emote-sparkle.png',
 
   // ── Portables ───────────────────────────────────────────────────────────────
   'obj-cape-red':       '/assets/sprites/portables/obj-cape-red.png',

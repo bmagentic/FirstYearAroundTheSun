@@ -131,9 +131,64 @@ re-litigated.
 
 ---
 
+## INTERLUDE POSES + EMOTES + DOG WALK + BRANDON RECON (6/5)
+
+**Interlude01 per-beat pose map** (each beat its own baby-in-arms Chelsea sprite, not just
+a room change; single 64x64 frames, square-preserved, gentle motion):
+| Beat | Caption | Pose sprite | Motion |
+|---|---|---|---|
+| 3 AM | Welcome home. | `chelsea-holding` (closest match) | bob |
+| Sunrise | I've got you. | `chelsea-asleep`/rocking (closest match) | sway |
+| Noon | We figured out the swaddle. | `chelsea-holding` | bob |
+| Sunset | First bath, we both cried. | `chelsea-bath` | bob (no rotation) |
+| **NIGHT (new)** | **Every two hours. Around the clock.** | `chelsea-feeding` | slow bob |
+| Late night | She got him through the first weeks. | `chelsea-shoulder` | very subtle bob (quiet finale) |
+
+- **New feeding beat** inserted between bath and late-night (setting pill "NIGHT", dimmed
+  nursery, standard vignette). Six beats total; adjacent beats always differ visually
+  (`holding` recurs on the two cradling beats — noted).
+- `chelsea_rocking.png` re-export to a 128x64 two-frame sheet **did not land** (still a
+  single 64x64 frame), so rocking stays sway-tween, not animated. New manifest keys:
+  `chelsea-holding`, `chelsea-feeding`, `chelsea-shoulder`.
+
+**Emote sprites wired** (Ch02 First Focus win): text `♥`/`✨` replaced with `emote-heart` /
+`emote-sparkle` (32x32) via an `emote()` helper with text fallback. Keys `emote-heart`,
+`emote-sparkle`.
+
+**Text-emoji audit** (NOT changed — Brandon's call which to swap to emote sprites):
+- `Ch10_Chatterbox.ts:340` — `♥`/`♡` lives display → could use `emote-heart`.
+- `Ch05_HoliDadInn.ts:290` — `✈ Super Baby!` win banner.
+- `Ch06_GrabBag.ts:307` — `★ STAR!` win banner.
+- `HouseScene.ts:908` — `★` completed-chapter marker.
+- `Interlude02_Mama.ts` — task icons (👚📞🍽🐶☕🤍): no matching emote sprites on disk.
+
+**Ch06 dog walk animation** (fixes the static-sprite slide): `finn`/`nugget`/`eevee` now
+load their 9-frame `walk/south/*` sequences (loaded directly in Ch06, not the manifest —
+a frame sequence, not a single sprite), create the project's FIRST Phaser anims
+(`dog-<id>-walk`, 12fps loop), render as `Sprite`s, play while moving + flipX for left,
+idle on frame 0. Soka teleport-dashes (no velocity) → stays static. South frames only;
+flipX for L/R — full directional walk could follow.
+
+**Brandon recon** (task premise corrected — Brandon is NOT entirely unreferenced):
+- **Ch05 HoliDad Inn**: Dad already renders as `dad-airplane` = `brandon_airplane.png`
+  (60x100) on the bed; the "crawl to Dad's shoulder" phase targets it. Wired.
+- **Ch10 Chatterbox**: `brandon-idle` = `brandon/south.png` is the "Dad" word-match target.
+  Wired.
+- **BonusChapter (Crime Fighting Super Baby)**: Dad's airplane arms are a **code-drawn tan
+  rectangle** (`0xe6c4a0`, 120x16) inside the Caius container — Brandon NOT used here.
+  **Recommended:** replace that rectangle with the existing `dad-airplane`
+  (`brandon_airplane.png`) as a full lifting-dad figure below the caped Super Baby (key
+  already in manifest — no three-place needed). Composition shifts from "arms only" to
+  "dad lifting baby" (more legible).
+- On-disk Brandon: `brandon_airplane` (used), `brandon/south` (used), `brandon_bath`
+  (unused — bath beat uses chelsea_bath), + 8-dir + 72-frame walk set (overworld; Brandon
+  isn't a walkable character — unused).
+
+---
+
 ## FLAGGED — open items
 - [ ] `chelsea-asleep` maps to `chelsea_rocking.png` — no true sleeping pose on disk. Ch05 uses it as-is (stand-in).
-- [ ] Ch06 dog walk-frames — dogs use south-facing sprites only; could use directional frames.
+- [ ] Ch06 dog directional walk — finn/nugget/eevee now walk-animate (south frames + flipX); full 8-direction walk still optional. Soka still static (teleporter).
 - [ ] Programmatic stand-ins (no art on disk): Ch07 food circles, Ch08 stuffies, Ch09 walker frame.
 - [ ] Kitchen vs living-room object split (open-concept): some objects may overlap visually.
 
@@ -159,8 +214,10 @@ scenes:
 - `chelsea_holding.png` — Chelsea holding the baby (alt to chelsea_rocking).
 - plus the full scrubs 8-dir + walk set (orphaned; overworld uses `chelsea/south.png`).
 
-**brandon/** (Dad — ENTIRELY UNUSED, 72 files: `brandon_bath.png` + 8-dir + walk set).
+**brandon/** (Dad — PARTIALLY used: `brandon_airplane.png`=`dad-airplane` in Ch05,
+`brandon/south.png`=`brandon-idle` in Ch10. Unused: `brandon_bath.png` + 8-dir + walk set).
 `brandon_bath.png` flagged unused (do NOT composite with chelsea_bath — both bake a tub).
+See Brandon recon above for the BonusChapter wiring opportunity.
 
 **caius emotional variants** (unused): `caius-happy/`, `caius-sad/`, `caius-blue-happy/`,
 `caius-blue-sad/` — happy/sad Caius with bounce + rock animations (8-dir each).

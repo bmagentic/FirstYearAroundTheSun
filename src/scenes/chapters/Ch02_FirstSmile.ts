@@ -41,7 +41,17 @@ export class Ch02_FirstSmile extends ChapterBase {
   }
 
   preload(): void {
-    SpriteBank.preloadInto(this, ['chelsea-encouraging-standing']);
+    SpriteBank.preloadInto(this, ['chelsea-encouraging-standing', 'emote-heart', 'emote-sparkle']);
+  }
+
+  /** Emote sprite (32x32) at a target pixel size, falling back to the text glyph. */
+  private emote(x: number, y: number, key: string, sizePx: number, glyph: string): Phaser.GameObjects.Image | Phaser.GameObjects.Text {
+    if (SpriteBank.has(this, key)) {
+      return this.add.image(x, y, key).setDisplaySize(sizePx, sizePx).setOrigin(0.5);
+    }
+    return this.add
+      .text(x, y, glyph, { fontFamily: 'system-ui, sans-serif', fontSize: `${sizePx}px`, color: '#ff8fa3' })
+      .setOrigin(0.5);
   }
 
   create(): void {
@@ -159,13 +169,7 @@ export class Ch02_FirstSmile extends ChapterBase {
 
   private emitHearts(x: number, y: number): void {
     for (let i = 0; i < 4; i++) {
-      const heart = this.add
-        .text(x + Phaser.Math.Between(-40, 40), y, '♥', {
-          fontFamily: 'system-ui, sans-serif',
-          fontSize: `${Phaser.Math.Between(20, 30)}px`,
-          color: '#ff8fa3',
-        })
-        .setOrigin(0.5)
+      const heart = this.emote(x + Phaser.Math.Between(-40, 40), y, 'emote-heart', Phaser.Math.Between(24, 32), '♥')
         .setDepth(30)
         .setAlpha(0);
       this.tweens.add({
@@ -180,26 +184,15 @@ export class Ch02_FirstSmile extends ChapterBase {
     }
   }
 
-  /** Caius's smile reward (no caius_happy sprite in manifest → heart + sparkle bloom). */
+  /** Caius's smile reward: emote heart + sparkle bloom (no caius_happy sprite in manifest). */
   private caiusSmile(): void {
     const W = this.scale.width;
     const H = this.scale.height;
-    const bloom = this.add
-      .text(W / 2, H * 0.74, '♥', {
-        fontFamily: 'system-ui, sans-serif',
-        fontSize: '64px',
-        color: '#ff8fa3',
-      })
-      .setOrigin(0.5)
-      .setDepth(40)
-      .setAlpha(0)
-      .setScale(0.4);
-    const sparkles = this.add
-      .text(W / 2, H * 0.74, '✨', { fontFamily: 'system-ui, sans-serif', fontSize: '40px' })
-      .setOrigin(0.5)
-      .setDepth(40)
-      .setAlpha(0);
-    this.tweens.add({ targets: bloom, alpha: 1, scale: 1, duration: 500, ease: 'Back.easeOut' });
+    const bloom = this.emote(W / 2, H * 0.74, 'emote-heart', 72, '♥').setDepth(40).setAlpha(0);
+    const full = bloom.scaleX;
+    bloom.setScale(full * 0.4); // pop-in
+    const sparkles = this.emote(W / 2, H * 0.74, 'emote-sparkle', 48, '✨').setDepth(40).setAlpha(0);
+    this.tweens.add({ targets: bloom, alpha: 1, scale: full, duration: 500, ease: 'Back.easeOut' });
     this.tweens.add({ targets: sparkles, alpha: { from: 0, to: 0.9 }, duration: 600, delay: 200, yoyo: true });
     this.time.delayedCall(1100, () => this.completeChapter());
   }

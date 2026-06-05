@@ -7,7 +7,7 @@ type DogId = 'finn' | 'nugget' | 'eevee' | 'soka';
 
 type Dog = {
   id: DogId;
-  obj: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle;
+  obj: Phaser.GameObjects.Sprite | Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle;
   vx: number;
   vy: number;
   nextActionAt: number;
@@ -33,6 +33,12 @@ const DOG_SPRITE_KEYS: Record<DogId, string> = {
   soka: 'soka-south',
 };
 
+// Velocity-moving dogs get a real walk cycle (fixes the static-sprite "slide"). Soka
+// teleport-dashes rather than walking, so it stays on its static sprite.
+const DOG_WALK_IDS: DogId[] = ['finn', 'nugget', 'eevee'];
+const WALK_FRAME_COUNT = 9; // finn/eevee/nugget each have walk/<dir>/0..8 (64x64)
+const DOG_WALK_FPS = 12; // brisk Gen-3-ish stride
+
 export class Ch06_GrabBag extends ChapterBase {
   private toys: Toy[] = [];
   private dogs: Dog[] = [];
@@ -51,6 +57,26 @@ export class Ch06_GrabBag extends ChapterBase {
 
   preload(): void {
     SpriteBank.preloadInto(this, Object.values(DOG_SPRITE_KEYS));
+    // Walk-cycle frames are a 9-frame sequence per dog (not a single manifest sprite), so
+    // load them directly. South-facing frames; flipX handles left/right while moving.
+    for (const id of DOG_WALK_IDS) {
+      for (let i = 0; i < WALK_FRAME_COUNT; i++) {
+        this.load.image(`dog-${id}-walk-${i}`, `/assets/sprites/${id}/walk/south/${i}.png`);
+      }
+    }
+  }
+
+  private createDogAnims(): void {
+    for (const id of DOG_WALK_IDS) {
+      if (this.textures.exists(`dog-${id}-walk-0`) && !this.anims.exists(`dog-${id}-walk`)) {
+        this.anims.create({
+          key: `dog-${id}-walk`,
+          frames: Array.from({ length: WALK_FRAME_COUNT }, (_, i) => ({ key: `dog-${id}-walk-${i}` })),
+          frameRate: DOG_WALK_FPS,
+          repeat: -1,
+        });
+      }
+    }
   }
 
   create(): void {
@@ -84,6 +110,7 @@ export class Ch06_GrabBag extends ChapterBase {
       .setAlpha(0.7);
 
     // Spawn dogs
+    this.createDogAnims();
     const dogDefs: Array<{ id: DogId; color: number; label: string }> = [
       { id: 'finn', color: 0x6b3a1a, label: 'Finn' },
       { id: 'nugget', color: 0xc9a35d, label: 'Nugget' },
@@ -94,9 +121,12 @@ export class Ch06_GrabBag extends ChapterBase {
       const sx = Phaser.Math.Between(this.playArea.x + 30, this.playArea.x + this.playArea.w - 30);
       const sy = Phaser.Math.Between(this.playArea.y + 30, this.playArea.y + this.playArea.h - 30);
       const spriteKey = DOG_SPRITE_KEYS[def.id];
-      let obj: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle;
+      let obj: Phaser.GameObjects.Sprite | Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle;
 
-      if (SpriteBank.has(this, spriteKey)) {
+      if (this.anims.exists(`dog-${def.id}-walk`)) {
+        // Square aspect (64x64 frames) preserved; walk anim driven in driveDog().
+        obj = this.add.sprite(sx, sy, `dog-${def.id}-walk-0`).setDisplaySize(26, 26);
+      } else if (SpriteBank.has(this, spriteKey)) {
         obj = this.add.image(sx, sy, spriteKey).setDisplaySize(22, 18);
       } else {
         obj = this.add.rectangle(sx, sy, 22, 18, def.color).setStrokeStyle(1, 0xfde68a, 0.4);
@@ -222,6 +252,18 @@ export class Ch06_GrabBag extends ChapterBase {
 
     obj.x += dog.vx * dt;
     obj.y += dog.vy * dt;
+
+    // Walk cycle: legs move while translating (no slide); idle freezes on frame 0.
+    if (obj instanceof Phaser.GameObjects.Sprite) {
+      const moving = Math.abs(dog.vx) + Math.abs(dog.vy) > 8;
+      if (moving) {
+        if (!obj.anims.isPlaying) obj.play(`dog-${dog.id}-walk`);
+        obj.setFlipX(dog.vx < 0);
+      } else if (obj.anims.isPlaying) {
+        obj.anims.stop();
+        obj.setTexture(`dog-${dog.id}-walk-0`);
+      }
+    }
 
     const minX = this.playArea.x + 16;
     const maxX = this.playArea.x + this.playArea.w - 16;
