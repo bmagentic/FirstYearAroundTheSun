@@ -1,6 +1,6 @@
 # Caius Birthday Game — Build Checkpoint (CONSOLIDATED)
 
-**Updated:** 2026-06-04
+**Updated:** 2026-06-05
 **Birthday:** 6/4 · **Party / true ship:** 6/6
 **Status:** Single source of truth for the build. Lives in the repo; both the Mac session and the browser session read and update THIS file.
 
@@ -13,6 +13,7 @@
 - **ALL TEN ROOMS placed and baked** — nursery, master-bedroom, bathroom, hallway-upper, hallway-lower, kitchen, dining, living-room, play-area, garage. Objects drag-tuned, arrays committed.
 - All chapter scenes and encounters wired to real sprites via SpriteBank (circle/rect primitives removed).
 - Fail states + RetryPopup standard across every minigame and encounter.
+- **Opening = newborn auto-launch sequence** (Ch1 auto → Ch2/Ch3 beat-and-launch while stationary → free roam from Ch4). Chapter flow runs through three shared components: **MonthCard → IntroPanel → game** (retries skip the cards).
 - Chelsea-doorway and cape sprites wired. Door-label fog-of-war and marker re-arm guard active.
 - Deployed on Vercel Pro (single project, duplicate deleted).
 
@@ -42,7 +43,7 @@ Shared `RetryPopup` component (dims scene, shows message, pauses timers/tweens, 
 | Ch07 FirstBites | Wrong responses (early-out) | Can't reach 10 |
 | Ch08 SleepTraining | Urge misses (ph2) | 3 misses → restart night |
 | Ch09 MazeWalker | Obstacle collisions | 5 hits (500ms cooldown) |
-| Ch10 Chatterbox | Queue empty, not enough matches | <5 base matches |
+| Ch10 Chatterbox | Missed matches (hearts) | 5 misses (win = 15 matches) |
 | Ch11 Ledges | Early grip releases | 3 slips |
 | Ch12 Liftoff | **No fail state** | Finale is not losable |
 | BonusChapter | Missed toys | >6 misses (of 20 drops, need 14) |
@@ -61,13 +62,33 @@ Shared `RetryPopup` component (dims scene, shows message, pauses timers/tweens, 
 
 ---
 
+## SECOND-WAVE WORK (6/4–6/5 session)
+
+### Opening flow — newborn auto-launch sequence
+Fresh profiles are `stationary` (speed 0) until rolling unlocks at Ch4, so early chapters can't be walked to. On entering the nursery while immobile (and not DevMode), the room holds a ~1.5s establishing beat, pulls the camera to the next incomplete chapter's marker, then auto-launches it: **Ch1 auto → Ch2 → Ch3 → Ch4**, each still gated by the IntroPanel Start tap. Once rolling unlocks (Ch4 done, speed > 0) auto-launch stops and a one-time "you can move now" hint shows; player free-roams from there. Resumes correctly on reload mid-sequence (e.g. Ch2 done/Ch3 not → beats then launches Ch3). DevMode keeps its walking shortcut and is exempt. Dead `canTraverse()` removed from PlayerState.
+
+### Three shared chapter-flow components
+**MonthCard + IntroPanel + RetryPopup.** Fresh chapter entry: **trigger (marker or auto-launch) → MonthCard → IntroPanel → game.**
+- **MonthCard** — full-screen "Month N" title (N = chapter#; chapters only, never interludes/encounters/bonus). First-ever play per profile holds a mandatory 2.0s (no skip) then auto-advances; replays are tap-to-continue. Tracked via `seenChapterCards` on the save.
+- **IntroPanel** — instructions + Start button; freezes scene until tapped.
+- **RetryPopup** — fail-state retry. **Retries skip the MonthCard + IntroPanel** (via `ChapterBase.retry()` setting a skip flag — Phaser re-sends scene data on `restart()`, so an instance flag distinguishes retry from fresh entry); gameplay resets directly. Ch12's bespoke flow integrates unchanged.
+
+### Other infra
+- **Pause menu Home button** → autosave → return to profile select.
+- **Sound interstitial** (SoundNoticeScene) shown after the first tap.
+- **Spawn-door fix** — re-entry spawns at the door whose `to === room you exited` (matched by destination room id, not wall side) with per-door re-arm; fixes wrong-door spawn on walls with two doors (hallway-lower).
+- **M8 marker** moved to the nursery right column, clear of the spawn point.
+- **Ch10 Chatterbox** — real sprite targets, 15-match win, miss-based fail (5-miss hearts).
+
+---
+
 ## FLAGGED — open items
-- [ ] `chelsea-asleep` maps to `chelsea_rocking.png` — no true sleeping pose on disk. Ch05 uses it as-is.
-- [ ] Ch06 dog walk-frame polish — dogs use south-facing sprites only, could use directional frames.
-- [ ] Ch09 has no walker sprite — uses programmatic shapes (circle body + rect frame). No walker art exists on disk.
-- [ ] Ch08 stuffies are programmatic circles — no stuffy sprites on disk.
-- [ ] Food circles in Ch07 are programmatic — no food sprites.
+- [ ] `chelsea-asleep` maps to `chelsea_rocking.png` — no true sleeping pose on disk. Ch05 uses it as-is (stand-in).
+- [ ] Ch06 dog walk-frames — dogs use south-facing sprites only; could use directional frames.
+- [ ] Programmatic stand-ins (no art on disk): Ch07 food circles, Ch08 stuffies, Ch09 walker frame.
 - [ ] Kitchen vs living-room object split (open-concept): some objects may overlap visually.
+
+**Resolved this session:** dead `src/ui/ChapterCard.ts` removed (refit into `MonthCard`).
 
 ---
 
@@ -82,7 +103,7 @@ Shared `RetryPopup` component (dims scene, shows message, pauses timers/tweens, 
 | Tailwind | v4, @tailwindcss/vite, no config file |
 | iOS audio unlock | Boot/Menu before Ch1; tilt prompt + mandatory swipe fallback |
 | Wild encounters | 3-10%, 60-sec cooldown |
-| Ch10 win | 5 of 6 word matches |
+| Ch10 win | 15 matches (sprite targets); fail at 5 misses (hearts) |
 | Poe | Travels with Caius (companion); in Ch5 stays in nursery |
 | Ch12 intro words | "Mama. Dada." · Post-credits word: "Mama!" (joyful) |
 | Cut order if behind | Ch3 → cutscene first; drop BottleWait + FaceWash; NEVER cut interludes / post-credits / Ch1 audio / Ch5 lullaby |
