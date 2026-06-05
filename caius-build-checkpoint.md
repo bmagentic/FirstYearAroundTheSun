@@ -107,6 +107,30 @@ scene is on screen; any exit to a menu fully stops the gameplay scene(s) and the
 
 ---
 
+## MONTH 2 GAME REDESIGN — "First Focus" (6/5)
+
+`Ch02_FirstSmile` (the Month 2 chapter; MonthCard shows "Month 2") was rebuilt from
+scratch. The retired mechanic ("tap when her smile peaks", code-drawn circle faces,
+mood rounds, soft-fail) is **gone**.
+
+**First Focus** — Caius's newborn POV. The real `chelsea-idle` sprite drifts on a lazy
+two-sine path, heavily blurred. The player holds + drags a soft focus reticle; while it
+overlaps her, a focus meter fills and the blur resolves toward sharp. Off-target, the
+meter decays slowly (never empties to a loss). Filling the meter = win: she snaps sharp,
+a warm pulse + hearts rise, then his own smile blooms (heart + sparkle — no `caius_happy`
+sprite exists), then `completeChapter()`. **No fail state, no RetryPopup** (fill-to-win;
+party-safe). Tunables at the top of the file (`FOCUS_FILL_RATE` ≈12s fill, `FOCUS_DECAY_RATE`,
+`MAX_BLUR`). Blur uses **WebGL `postFX.addBlur`** driven by the meter (game is `Phaser.AUTO`
+→ WebGL on all targets); Canvas fallback is a haze overlay that clears with focus.
+MonthCard + IntroPanel wiring unchanged; IntroPanel instruction is "Find her face."
+
+**⚠️ Spec divergence:** `caius-first-year-spec.md` and `edits-v1.1` still describe the
+retired "smile peak" mechanic for this month. **The build is the source of truth** — the
+spec is out of date for Month 2 / First Focus. Spec not edited; recorded here so it isn't
+re-litigated.
+
+---
+
 ## FLAGGED — open items
 - [ ] `chelsea-asleep` maps to `chelsea_rocking.png` — no true sleeping pose on disk. Ch05 uses it as-is (stand-in).
 - [ ] Ch06 dog walk-frames — dogs use south-facing sprites only; could use directional frames.
@@ -133,6 +157,7 @@ scene is on screen; any exit to a menu fully stops the gameplay scene(s) and the
 | iOS audio unlock | Boot/Menu before Ch1; tilt prompt + mandatory swipe fallback |
 | Wild encounters | 3-10%, 60-sec cooldown |
 | Ch10 win | 15 matches (sprite targets); fail at 5 misses (hearts) |
+| Month 2 game | "First Focus" (newborn vision: drag a focus reticle onto blurred Chelsea to sharpen her; fill-to-win, NO fail state). Replaced the retired "tap when smile peaks" game. Build is source of truth; spec/edits-v1.1 diverge for this month. |
 | Poe | Travels with Caius (companion); in Ch5 stays in nursery |
 | Ch12 intro words | "Mama. Dada." · Post-credits word: "Mama!" (joyful) |
 | Cut order if behind | Ch3 → cutscene first; drop BottleWait + FaceWash; NEVER cut interludes / post-credits / Ch1 audio / Ch5 lullaby |
