@@ -147,8 +147,10 @@ a room change; single 64x64 frames, square-preserved, gentle motion):
 - **New feeding beat** inserted between bath and late-night (setting pill "NIGHT", dimmed
   nursery, standard vignette). Six beats total; adjacent beats always differ visually
   (`holding` recurs on the two cradling beats — noted).
-- `chelsea_rocking.png` re-export to a 128x64 two-frame sheet **did not land** (still a
-  single 64x64 frame), so rocking stays sway-tween, not animated. New manifest keys:
+- The rocking re-export landed as `chelsea_rocking (1).png` (duplicate-name upload), still
+  a single 64x64 frame (not a 128x64 sheet), so rocking stays sway-tween, not animated.
+  `chelsea-asleep` now references `chelsea_rocking (1).png` (the re-export) per request —
+  the spaced filename is URL-encoded at load (Vite serves it 200). New manifest keys:
   `chelsea-holding`, `chelsea-feeding`, `chelsea-shoulder`.
 
 **Emote sprites wired** (Ch02 First Focus win): text `♥`/`✨` replaced with `emote-heart` /

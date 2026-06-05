@@ -16,7 +16,7 @@ const MANIFEST: Record<string, string> = {
   // ── Characters ──────────────────────────────────────────────────────────────
   'caius':              '/assets/sprites/caius-blue/south.png',
   'chelsea-idle':       '/assets/sprites/chelsea/south.png',
-  'chelsea-asleep':     '/assets/sprites/chelsea_scrubs/chelsea_rocking.png',
+  'chelsea-asleep':     '/assets/sprites/chelsea_scrubs/chelsea_rocking (1).png',
   'chelsea-bath':       '/assets/sprites/chelsea_scrubs/chelsea_bath.png',
   'chelsea-holding':    '/assets/sprites/chelsea_scrubs/chelsea_holding.png',
   'chelsea-feeding':    '/assets/sprites/chelsea_scrubs/chelsea_feeding.png',
