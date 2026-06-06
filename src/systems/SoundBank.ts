@@ -47,12 +47,17 @@ class SoundBankImpl {
     console.log('[SoundBank] unlocked, state=', ctx.state);
   }
 
-  preload(id: string): void {
+  /**
+   * Preload a sampled clip. Defaults to `/assets/audio/{id}.ogg`; pass an explicit `url`
+   * for clips that live elsewhere or use a different format (e.g. the First Touch sfx in
+   * `/assets/audio/sfx/*.m4a`). Either way play(id) routes through the global mute gate.
+   */
+  preload(id: string, url?: string): void {
     if (this.entries.has(id)) return;
     const entry: Entry = { status: 'pending' };
     this.entries.set(id, entry);
 
-    const audio = new Audio(`/assets/audio/${id}.ogg`);
+    const audio = new Audio(url ?? `/assets/audio/${id}.ogg`);
     audio.preload = 'auto';
     audio.addEventListener(
       'canplaythrough',

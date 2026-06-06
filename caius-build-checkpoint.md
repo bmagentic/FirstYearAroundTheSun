@@ -132,6 +132,35 @@ re-litigated.
 
 ---
 
+## MONTH 3 GAME — "First Touch" (6/6)
+
+`Ch03_EyesOpen` (Month 3; class/key/id kept, like Ch02's First Focus rename precedent) was
+rebuilt. The retired mechanic ("soft cloud / 6 pages" card-flip with labeled circles — it
+named textures the screen couldn't show) is gone.
+
+**First Touch** — Caius sits at the bottom; 5 baby objects sit in a loose arc on a play-mat.
+Tap an object → it plays its 7-frame reaction animation + its sound together (texture
+conveyed through reaction, not labels). First tap of each = "discovered": emote-sparkle pop
++ one of 5 counter dots fills. All 5 discovered → heart/sparkle celebration → `completeChapter()`.
+**No fail state, no timer, no RetryPopup.** IntroPanel instruction: "Touch everything!"
+Generous explicit 128px hit rects per object (Ch03 hit-area lesson). MonthCard/IntroPanel/
+completion wiring unchanged.
+
+- **Objects + sounds:** crinklebook (scrunch), rattle (shake), poe (squish), bumpyball
+  (wobble), oball (spin) — sheets `/assets/sprites/objects/obj_<id>_react.png` (448×64, 7×
+  64px frames, loaded as spritesheets directly in the scene), sounds `/assets/audio/sfx/<id>.m4a`.
+- **Audio:** Brandon's 5 `.m4a` files moved from `public/` root → `public/assets/audio/sfx/`;
+  stray 1-byte `public/Audio` deleted. `SoundBank.preload(id, url?)` gained a custom-URL param
+  so these route through SoundBank and respect the global mute flag (muted = silent reactions,
+  animation still plays).
+- **DUCKED CHAPTER:** the 5 reaction sfx are mechanic sounds — code comment marks this chapter
+  music-ducked for when the music system lands.
+
+**⚠️ Spec divergence** (same as Ch02): `caius-first-year-spec.md` / `edits-v1.1` still describe
+the retired card mechanic for Month 3. Build is source of truth; spec not edited.
+
+---
+
 ## INTERLUDE POSES + EMOTES + DOG WALK + BRANDON RECON (6/5)
 
 **Interlude01 per-beat pose map** (each beat its own baby-in-arms Chelsea sprite, not just
@@ -298,6 +327,8 @@ rocket_landed) — for cut/unbuilt backyard + front-yard rooms.
 | Wild encounters | 3-10%, 60-sec cooldown |
 | Ch10 win | 15 matches (sprite targets); fail at 5 misses (hearts) |
 | Month 2 game | "First Focus" (newborn vision: drag a focus reticle onto blurred Chelsea to sharpen her; fill-to-win, NO fail state). Replaced the retired "tap when smile peaks" game. Build is source of truth; spec/edits-v1.1 diverge for this month. |
+| Month 3 game | "First Touch" (discovery: tap 5 objects → reaction anim + sound; discover all 5 to win, NO fail state). Replaced the retired "soft cloud / 6 pages" card game. DUCKED chapter (mechanic sfx). Build is source of truth; spec/edits-v1.1 diverge. |
+| Audio sfx | Mechanic sound clips live in `/assets/audio/sfx/*.m4a`; load via `SoundBank.preload(id, url)`. ALL audio routes through `SoundBank.play` (gated by the global mute flag). "DUCKED chapter" = a code comment tagging scenes whose sfx should duck under music later. |
 | Poe | Travels with Caius (companion); in Ch5 stays in nursery |
 | Ch12 intro words | "Mama. Dada." · Post-credits word: "Mama!" (joyful) |
 | Cut order if behind | Ch3 → cutscene first; drop BottleWait + FaceWash; NEVER cut interludes / post-credits / Ch1 audio / Ch5 lullaby |
