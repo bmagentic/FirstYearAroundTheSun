@@ -23,7 +23,8 @@
 ## CANONICAL HOUSE (rooms.ts matches this — verified)
 Upstairs: nursery, master-bedroom, bathroom — all off hallway-upper. Stairs to hallway-lower.
 Main floor: hallway-lower → kitchen + living-room (open-concept direct door). Dining + play-area off kitchen. **Garage off living-room = M12 finale.** Backyard CUT.
-Chapter homes: nursery M2/M3/M4/M8 · master M5 · dining M7 · living M6/M9/M11 + Super Baby bonus · garage M12 · bathroom + kitchen carry wild encounters.
+Chapter homes: nursery M1/M2/M3/M4 (contiguous block) · master M5/M8 · dining M7 · living M6/M9/M11 + Super Baby bonus · garage M12 · bathroom + kitchen carry wild encounters.
+**Wayfinding:** M8 (sleep training) lives in master-bedroom, NOT nursery — the old nursery gap (1,2,3,4,8) made players think 8 was next instead of leaving after 4. Keep nursery a clean 1-2-3-4 block; master holds M5+M8 (thematic: Soka naps on the master bed). Do not move M8 back. Ch08 uses a neutral dark bg + a code-drawn crib (no nursery-specific art), so it stages fine from either room; there's no completion-prereq lock — markers launch on contact, gating is purely spatial.
 
 ---
 
