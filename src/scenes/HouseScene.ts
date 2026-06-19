@@ -942,30 +942,77 @@ export class HouseScene extends Phaser.Scene {
     }
   }
 
+  /**
+   * Strict sequential marker gate: chapter N is playable only once N-1 is complete (M1
+   * always playable; completed chapters stay playable for replay). DevMode unlocks all.
+   * This is purely the marker/launch gate — capability reveals (rolling/crawl/walk/garage)
+   * and the Ch12 rocket trigger + Bonus toychest keep their own conditions untouched.
+   */
+  private isChapterPlayable(n: number): boolean {
+    if (DevMode.isEnabled()) return true;
+    if (n <= 1) return true;
+    if (this.profile.completedChapters.includes(n)) return true;
+    return this.profile.completedChapters.includes(n - 1);
+  }
+
   private drawMarkers(def: RoomDef): void {
     const bounds = this.roomBounds();
     for (const marker of def.markers) {
-      const x    = bounds.x + bounds.width  * marker.x;
-      const y    = bounds.y + bounds.height * marker.y;
+      const x = bounds.x + bounds.width * marker.x;
+      const y = bounds.y + bounds.height * marker.y;
       const done = this.profile.completedChapters.includes(marker.chapter);
-      const color = done ? 0xfde68a : def.accentColor;
-      const ring  = this.add.circle(x, y, 18, color, done ? 0.5 : 0.25).setStrokeStyle(2, color, 0.9);
+      const playable = !done && this.isChapterPlayable(marker.chapter);
+      // locked = !done && !playable
+
+      // Three visual states: done (amber ★, settled) · playable (accent number, pulsing
+      // to draw the eye) · locked (dim grey + lock glyph, no pulse — a visible signpost).
+      let ringColor: number;
+      let ringAlpha: number;
+      let strokeAlpha: number;
+      let glyph: string;
+      let glyphColor: string;
+      if (done) {
+        ringColor = 0xfde68a;
+        ringAlpha = 0.5;
+        strokeAlpha = 0.9;
+        glyph = '★';
+        glyphColor = '#3a2a1a';
+      } else if (playable) {
+        ringColor = def.accentColor;
+        ringAlpha = 0.25;
+        strokeAlpha = 0.9;
+        glyph = String(marker.chapter);
+        glyphColor = '#3a2a1a';
+      } else {
+        ringColor = 0x5a5a64;
+        ringAlpha = 0.18;
+        strokeAlpha = 0.45;
+        glyph = '🔒';
+        glyphColor = '#d8d8e0';
+      }
+
+      const ring = this.add.circle(x, y, 18, ringColor, ringAlpha).setStrokeStyle(2, ringColor, strokeAlpha);
       const label = this.add
-        .text(x, y, done ? '★' : String(marker.chapter), {
+        .text(x, y, glyph, {
           fontFamily: 'system-ui, sans-serif',
-          fontSize: '14px',
-          color: '#3a2a1a',
+          fontSize: glyph === '🔒' ? '15px' : '14px',
+          color: glyphColor,
           fontStyle: 'bold',
         })
         .setOrigin(0.5);
-      this.tweens.add({
-        targets: ring,
-        scale: 1.15,
-        duration: 900 + marker.chapter * 50,
-        yoyo: true,
-        repeat: -1,
-        ease: 'Sine.easeInOut',
-      });
+
+      // Only the playable (next) marker pulses, so it stands out as "go here".
+      if (playable) {
+        this.tweens.add({
+          targets: ring,
+          scale: 1.15,
+          duration: 900 + marker.chapter * 50,
+          yoyo: true,
+          repeat: -1,
+          ease: 'Sine.easeInOut',
+        });
+      }
+
       this.worldLayer.add([ring, label]);
       this.markers.push({ chapter: marker.chapter, x, y });
     }
@@ -980,7 +1027,17 @@ export class HouseScene extends Phaser.Scene {
       const dist = Phaser.Math.Distance.Between(this.player.x, this.player.y, marker.x, marker.y);
       if (dist < 26) {
         anyActive = true;
-        if (this.markersArmed) { this.attemptLaunchChapter(marker.chapter); return; }
+        if (this.markersArmed) {
+          if (this.isChapterPlayable(marker.chapter)) {
+            this.attemptLaunchChapter(marker.chapter);
+          } else {
+            // Locked: a friendly nudge, no launch. Disarm so it shows once; re-arms when
+            // the player steps off the marker (anyActive false below).
+            this.showToast(`Finish Month ${marker.chapter - 1} first`);
+            this.markersArmed = false;
+          }
+          return;
+        }
       }
     }
     for (const trigger of this.chapterTriggerObjects) {
