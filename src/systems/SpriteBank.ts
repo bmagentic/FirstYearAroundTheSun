@@ -119,6 +119,8 @@ const MANIFEST: Record<string, string> = {
 
   // ── Caius highchair pose (Ch07) ────────────────────────────────────────────
   'caius-highchair': '/assets/sprites/caius-highchair.png',
+  // ── Caius sleeping pose (Ch08 Phase 2 — static, animation was unusable)
+  'caius-sleeping':  '/assets/sprites/caius-sleeping.png',
   // Ch09 MazeWalker idle frames (walk cycle loaded directly in Ch09 preload())
   'caius-walker-south': '/assets/sprites/caius-walker/south.png',
   'caius-walker-north': '/assets/sprites/caius-walker/north.png',
