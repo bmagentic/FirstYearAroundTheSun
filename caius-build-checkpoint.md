@@ -1,6 +1,6 @@
 # Caius Birthday Game — Build Checkpoint (CONSOLIDATED)
 
-**Updated:** 2026-06-05
+**Updated:** 2026-06-19
 **Birthday:** 6/4 · **Party / true ship:** 6/6
 **Status:** Single source of truth for the build. Lives in the repo; both the Mac session and the browser session read and update THIS file.
 
@@ -312,6 +312,49 @@ rocket_landed) — for cut/unbuilt backyard + front-yard rooms.
 
 **transitions/** (4, unused): `transition_archway`, `_babygate`, `_frontdoor`,
 `_stairs_bottom` — doorway/transition sprites.
+
+---
+
+---
+
+## MUSIC LAYER (2026-06-19)
+
+### Architecture
+- **`src/systems/MusicManager.ts`** — new singleton (separate from SoundBank).
+  SoundBank = one-shot SFX clones. MusicManager = one persistent looping HTMLAudioElement.
+  They share the global mute flag but are otherwise independent.
+- Volume tier system: **FULL / DUCKED (~28%) / OFF** — applied via `MusicManager.setTier(tier)`.
+  Default tier is FULL; DUCKED is available for mechanic-heavy chapters where game audio competes.
+- **`SCENE_MUSIC_MAP`** (exported from MusicManager.ts) — track-map dict `scene → { track, tier }`.
+  Extend this to drop in per-chapter tracks without touching any scene code.
+
+### Tracks shipped
+| Track id | File | Volume | Plays on |
+|---|---|---|---|
+| `homescreen` | `public/assets/audio/music/GameAudio_Homescreen.mp3` (1.4 MB, 64 kbps) | 0.40 | BootScene, SoundNoticeScene, MenuScene |
+| `free-roam`  | `public/assets/audio/music/GameAudio_FreeRoam.mp3`  (2.3 MB, 64 kbps) | 0.45 | HouseScene (overworld) |
+
+### Home ↔ House transition
+- **Entering house** (MenuScene → HouseScene): `crossfadeTo('free-roam', 500)` — homescreen fades out in first 250 ms, free-roam fades in over next 250 ms. Never both at full.
+- **Returning home** (Home button → MenuScene): MenuScene.create() calls `play('homescreen')` — stops free-roam immediately and starts homescreen (brief natural silence during scene transition is acceptable per spec).
+
+### Free-roam handoff rules
+| Event | Music behaviour |
+|---|---|
+| Enter chapter | Music **continues** under MonthCard + IntroPanel; stops (400 ms fade) when player taps **Start** (gameplay begins) — wired in `ChapterBase.intro()` callback |
+| Enter encounter | Same pattern — continues under encounter IntroPanel, stops on Start tap — wired in `EncounterBase.intro()` callback |
+| Enter interlude / cutscene | Stops immediately (350 ms fade) in `InterludeBase.setupInterlude()` |
+| Enter PostCreditsScene | Stops immediately (500 ms fade) in PostCreditsScene.create() |
+| Return to free-roam | HouseScene.create() → `crossfadeTo('free-roam', 500)` — resumes from beginning |
+| Mute toggle | `MusicManager.setMuted()` pauses/resumes the active element; wired in main.ts `onMuteChange` |
+
+### API (MusicManager)
+- `preload()` — buffer both tracks (call once from main.ts on READY, before any user gesture)
+- `play(id)` — start looping track; no-ops if already playing; remembers intent when muted
+- `crossfadeTo(id, fadeMs?)` — fade out current, fade in new; falls back to play() if silent
+- `stop(fadeMs?)` — stop with optional fade
+- `setMuted(bool)` — called by main.ts onMuteChange; pauses/resumes active element
+- `setTier(tier)` — FULL / DUCKED / OFF; applies immediately to active track
 
 ---
 

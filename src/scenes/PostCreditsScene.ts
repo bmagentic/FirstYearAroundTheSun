@@ -3,6 +3,7 @@ import { SaveManager } from '../systems/SaveManager';
 import { SoundBank } from '../systems/SoundBank';
 import { SpriteBank } from '../systems/SpriteBank';
 import { track } from '../systems/Analytics';
+import { MusicManager } from '../systems/MusicManager';
 import type { SaveProfile } from '../types';
 
 const PHASE_TIMES = {
@@ -45,6 +46,7 @@ export class PostCreditsScene extends Phaser.Scene {
   create(): void {
     this.cameras.main.setBackgroundColor('#02030a');
     this.cameras.main.fadeIn(900, 0, 0, 0);
+    MusicManager.stop(500);
     this.runSequence().catch((err) => {
       console.error('[post-credits] sequence error:', err);
       this.scene.start('HouseScene', { profile: SaveManager.getActiveProfile() });

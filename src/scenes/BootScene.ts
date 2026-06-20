@@ -3,6 +3,7 @@ import { initAnalytics, track } from '../systems/Analytics';
 import { SaveManager } from '../systems/SaveManager';
 import { SettingsManager } from '../systems/Settings';
 import { SoundBank } from '../systems/SoundBank';
+import { MusicManager } from '../systems/MusicManager';
 
 export class BootScene extends Phaser.Scene {
   constructor() {
@@ -13,6 +14,7 @@ export class BootScene extends Phaser.Scene {
     SaveManager.load();
     SettingsManager.load();
     initAnalytics();
+    MusicManager.play('homescreen');
 
     const { width, height } = this.scale;
 

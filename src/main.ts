@@ -31,6 +31,7 @@ import { SettingsManager } from './systems/Settings';
 import { SaveManager } from './systems/SaveManager';
 import { DevMode } from './systems/DevMode';
 import { SoundBank } from './systems/SoundBank';
+import { MusicManager } from './systems/MusicManager';
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -88,6 +89,7 @@ game.events.once(Phaser.Core.Events.READY, () => {
   if (sm.context) {
     SoundBank.useContext(sm.context);
   }
+  MusicManager.preload();
 });
 
 function topActiveScene(): Phaser.Scene | null {
@@ -191,6 +193,7 @@ const hud = new HUD(hudRoot, pauseMenuEl, {
     // Muting must silence anything already in flight (e.g. a lullaby clone), not just
     // block new plays.
     if (muted) SoundBank.stopAll();
+    MusicManager.setMuted(muted);
   },
 });
 

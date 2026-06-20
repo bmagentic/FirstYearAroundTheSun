@@ -4,6 +4,7 @@ import { track } from '../../systems/Analytics';
 import { IntroPanel } from '../../ui/IntroPanel';
 import { MonthCard } from '../../ui/MonthCard';
 import { SoundBank } from '../../systems/SoundBank';
+import { MusicManager } from '../../systems/MusicManager';
 import type { SaveProfile } from '../../types';
 
 export abstract class ChapterBase extends Phaser.Scene {
@@ -62,7 +63,13 @@ export abstract class ChapterBase extends Phaser.Scene {
     return this.showMonthCard().then(
       () =>
         new Promise<void>((resolve) => {
-          this.introPanel.show(heading, subhead ?? '', () => resolve());
+          // Music continues under MonthCard and IntroPanel; stops the moment gameplay
+          // starts (when the player taps Start). On retry skipIntroOnce short-circuits
+          // above so this callback is never re-reached — music is already silent.
+          this.introPanel.show(heading, subhead ?? '', () => {
+            MusicManager.stop(400);
+            resolve();
+          });
         }),
     );
   }

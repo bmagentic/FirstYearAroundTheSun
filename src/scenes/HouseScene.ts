@@ -10,6 +10,7 @@ import { freezeScene } from '../ui/sceneFreeze';
 import { CHAPTER_SCENES } from './chapters/registry';
 import { EncounterManager } from '../systems/EncounterManager';
 import { SpriteBank } from '../systems/SpriteBank';
+import { MusicManager } from '../systems/MusicManager';
 import type { RoomId, SaveProfile } from '../types';
 
 // ── Scale constants ──────────────────────────────────────────────────────────
@@ -358,6 +359,9 @@ export class HouseScene extends Phaser.Scene {
     if (this.fromEncounter) this.encounters.onEncounterCleared(performance.now());
 
     this.enterRoom(this.profile.currentRoom, { firstLoad: true });
+    // Crossfade from whatever was playing (homescreen on first entry, nothing on
+    // chapter return) to the free-roam theme. Falls back to play() when silent.
+    MusicManager.crossfadeTo('free-roam', 500);
   }
 
   override update(_time: number, delta: number): void {

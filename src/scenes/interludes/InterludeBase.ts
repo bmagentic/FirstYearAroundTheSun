@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { SaveManager } from '../../systems/SaveManager';
 import { track } from '../../systems/Analytics';
 import { CaptionBand } from '../../ui/CaptionBand';
+import { MusicManager } from '../../systems/MusicManager';
 import type { InterludeId, SaveProfile } from '../../types';
 
 const SPOTLIGHT_KEY = 'interlude-spotlight';
@@ -27,6 +28,7 @@ export abstract class InterludeBase extends Phaser.Scene {
   protected setupInterlude(): void {
     this.cameras.main.fadeIn(450, 0, 0, 0);
     this.captionBand = new CaptionBand(this);
+    MusicManager.stop(350);
     track('interlude_started', {
       interlude_id: this.interludeId,
       profile_name: this.profile.name,

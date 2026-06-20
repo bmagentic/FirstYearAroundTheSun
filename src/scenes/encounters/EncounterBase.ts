@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { SaveManager } from '../../systems/SaveManager';
 import { track } from '../../systems/Analytics';
 import { SoundBank } from '../../systems/SoundBank';
+import { MusicManager } from '../../systems/MusicManager';
 import { IntroPanel } from '../../ui/IntroPanel';
 import type { EncounterId, SaveProfile } from '../../types';
 
@@ -40,7 +41,10 @@ export abstract class EncounterBase extends Phaser.Scene {
    */
   protected intro(title: string, instruction: string): Promise<void> {
     return new Promise((resolve) => {
-      this.introPanel.show(title, instruction, () => resolve());
+      this.introPanel.show(title, instruction, () => {
+        MusicManager.stop(400);
+        resolve();
+      });
     });
   }
 

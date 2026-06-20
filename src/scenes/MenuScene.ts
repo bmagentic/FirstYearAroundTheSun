@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { identify, track } from '../systems/Analytics';
 import { ProfilePicker } from '../ui/ProfilePicker';
+import { MusicManager } from '../systems/MusicManager';
 
 export class MenuScene extends Phaser.Scene {
   private picker: ProfilePicker | null = null;
@@ -12,6 +13,7 @@ export class MenuScene extends Phaser.Scene {
   create(): void {
     this.cameras.main.setBackgroundColor('#1c1410');
     this.cameras.main.fadeIn(300, 0, 0, 0);
+    MusicManager.play('homescreen');
 
     const overlay = document.getElementById('profile-picker');
     if (!overlay) {
