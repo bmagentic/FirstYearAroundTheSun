@@ -1,6 +1,6 @@
 # Caius Birthday Game — Build Checkpoint (CONSOLIDATED)
 
-**Updated:** 2026-06-19 (sound interstitial + unmuted default)
+**Updated:** 2026-06-20 (Ch12 hardening + CinematicScene robustness + M8 Phase 2 staging)
 **Birthday:** 6/4 · **Party / true ship:** 6/6
 **Status:** Single source of truth for the build. Lives in the repo; both the Mac session and the browser session read and update THIS file.
 
@@ -438,7 +438,7 @@ All 5 mood tracks + finale wired. `SCENE_MUSIC_MAP` is the single place to adjus
 | Cut order if behind | Ch3 → cutscene first; drop BottleWait + FaceWash; NEVER cut interludes / post-credits / Ch1 audio / Ch5 lullaby |
 | Dedication | "For Chelsea, who made all of this possible." — non-negotiable |
 | Deploy | Vercel Pro, single project (duplicate deleted), pushes to main trigger deploy |
-| M12 finale | Ch12 completes → **CinematicScene** (src/scenes/CinematicScene.ts) plays the hosted painted film from Vercel Blob. PostCreditsScene is RETIRED (still in repo, not reachable). Film is streamed (not committed). Music stops (MusicManager.stop) before film; homescreen music resumes on exit. Skip ›  appears after 5 s. iOS: playsinline + webkit-playsinline; autoplay-blocked fallback "Tap to play". Network error → message → home in 2.5 s. Audio: respects global mute at start time (video.muted = SettingsManager.get().muted). |
+| M12 finale | Ch12 completes → **CinematicScene** (src/scenes/CinematicScene.ts) plays the hosted painted film from Vercel Blob. PostCreditsScene is RETIRED (still in repo, not reachable). Film is streamed (not committed). **Ch12 launch SFX removed** — no beep before cinematic; launch is camera shake + flame, then silence into the film. Ch12 also has a `panelOpen` guard so rapid taps can't stack subsystem panels. **CinematicScene hardened (2026-06-20):** (a) **Loading state** — "Loading…" text shown while video buffers, fades out on first `playing` event. (b) **Stall guard** — 15-second timeout fires `showError()` if the video never starts (network hang → recovers to home). (c) **`recovering` flag** prevents double-call to `showError()` if both stall timer and `error` event fire. (d) **`clearLoadState()`** is idempotent and cancels both the indicator and the stall timer. (e) **Cleanup** also clears stall timer + loadingEl on SHUTDOWN. Music stops (MusicManager.stop 300ms) before film; homescreen music resumes on exit. Skip › appears after 5s. iOS: playsinline + webkit-playsinline; autoplay-blocked fallback "Tap to play". Network error → message → home in 2.5s. Audio: respects global mute at start time (video.muted = SettingsManager.get().muted); mid-film mute toggle is NOT synced to video (overlay sits above HUD). |
 
 **Room status:** ALL TEN ROOMS PLACED AND BAKED — nursery, master-bedroom, bathroom, hallway-upper, hallway-lower, kitchen, dining, living-room, play-area, garage.
 
