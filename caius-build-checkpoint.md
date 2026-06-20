@@ -260,7 +260,8 @@ flipX for L/R — full directional walk could follow.
 ## FLAGGED — open items
 - [ ] `chelsea-asleep` maps to `chelsea_rocking.png` — no true sleeping pose on disk. Ch05 uses it as-is (stand-in).
 - [ ] Ch06 dog directional walk — finn/nugget/eevee now walk-animate (south frames + flipX); full 8-direction walk still optional. Soka still static (teleporter).
-- [ ] Programmatic stand-ins: Ch07 food circles (sprites generated, browser-session wiring pending), Ch09 walker frame.
+- [ ] Programmatic stand-ins: Ch09 walker frame.
+- **Ch07 First Bites staged:** real food sprites (food-puree/banana/cheerios/avocado/sweetpotato good; food-chili/lemon/broccoli-raw bad), caius-highchair seated pose in chair, chelsea-feeding at chair side, dimmed room-dining-bg backdrop. Mechanic/fail logic unchanged.
 - [ ] Kitchen vs living-room object split (open-concept): some objects may overlap visually.
 - **Overworld plushies (nursery + play-area):** all 6 real sprites wired (manifest + preload + room arrays). Wired in prior session; confirmed correct as of 2026-06-19.
 - **Ch08 stuffies:** 7 real sprites wired (6 plushies + Poe). Layout 4/3 rows computed from roster length. Win = all 7 tucked. Labels removed. Tuck = dark tint + scale/alpha tween.

@@ -7,18 +7,17 @@ type FoodKind = 'good' | 'bad';
 type Food = {
   key: string;
   kind: FoodKind;
-  color: number;
-  label: string;
 };
 
 const FOODS: Food[] = [
-  { key: 'strawberry', kind: 'good', color: 0xdc2626, label: 'berry' },
-  { key: 'blueberry', kind: 'good', color: 0x4a3a8f, label: 'berry' },
-  { key: 'blackberry', kind: 'good', color: 0x2a1530, label: 'berry' },
-  { key: 'cheerio', kind: 'good', color: 0xfde68a, label: 'Cheerio' },
-  { key: 'chicken', kind: 'good', color: 0xe6c4a0, label: 'chicken' },
-  { key: 'puree', kind: 'bad', color: 0x8a6540, label: 'purée' },
-  { key: 'mush', kind: 'bad', color: 0x6b4530, label: 'mush' },
+  { key: 'food-puree',        kind: 'good' },
+  { key: 'food-banana',       kind: 'good' },
+  { key: 'food-cheerios',     kind: 'good' },
+  { key: 'food-avocado',      kind: 'good' },
+  { key: 'food-sweetpotato',  kind: 'good' },
+  { key: 'food-chili',        kind: 'bad'  },
+  { key: 'food-lemon',        kind: 'bad'  },
+  { key: 'food-broccoli-raw', kind: 'bad'  },
 ];
 
 const TOTAL_SPOONS = 12;
@@ -42,7 +41,13 @@ export class Ch07_FirstBites extends ChapterBase {
   }
 
   preload(): void {
-    SpriteBank.preloadInto(this, ['caius', 'chelsea-idle', 'obj-dining-highchair']);
+    SpriteBank.preloadInto(this, [
+      'caius-highchair',
+      'chelsea-feeding',
+      'obj-dining-highchair',
+      'room-dining-bg',
+      ...FOODS.map(f => f.key),
+    ]);
   }
 
   create(): void {
@@ -58,24 +63,41 @@ export class Ch07_FirstBites extends ChapterBase {
 
     this.setup();
     this.retryPopup = new RetryPopup(this);
-    this.cameras.main.setBackgroundColor('#3a2515');
+    this.cameras.main.setBackgroundColor('#1c1008');
 
     const W = this.scale.width;
     const H = this.scale.height;
 
-    // Kitchen
-    this.add.rectangle(W / 2, H / 2 - 60, W - 40, 200, 0x6b4530).setStrokeStyle(2, 0xb88c5a, 0.4);
+    // Dimmed dining-room background — same treatment as interlude room backdrops.
+    if (SpriteBank.has(this, 'room-dining-bg')) {
+      const bg = this.add.image(W / 2, H / 2, 'room-dining-bg');
+      const cover = Math.max(W / bg.width, H / bg.height);
+      bg.setScale(cover).setTint(0x555555);
+    }
 
-    // Caius in high chair
+    // High chair — drawn behind Caius so he composites inside it.
     this.add.image(W / 2, H / 2 + 60, 'obj-dining-highchair').setDisplaySize(160, 200);
-    const tray = this.add.rectangle(W / 2, H / 2 + 10, 180, 16, 0x8a6540);
-    this.add.image(W / 2, H / 2 - 20, 'caius').setDisplaySize(48, 48);
 
-    // Chelsea on left side (the spoon holder)
-    this.add.image(60, H / 2, 'chelsea-idle').setDisplaySize(50, 120);
+    // Caius seated in the chair — highchair pose (52x52 sprite, upscaled).
+    const chairCaiusX = W / 2;
+    const chairCaiusY = H / 2 + 14;
+    if (SpriteBank.has(this, 'caius-highchair')) {
+      this.add.image(chairCaiusX, chairCaiusY, 'caius-highchair').setDisplaySize(82, 82);
+    } else {
+      this.add.circle(chairCaiusX, chairCaiusY, 24, 0xf7c6a3).setStrokeStyle(2, 0x402c1d);
+    }
+
+    // Chelsea in feeding pose — positioned at the chair side, offering the spoon.
+    const chelseaX = 72;
+    const chelseaY = H / 2 + 30;
+    if (SpriteBank.has(this, 'chelsea-feeding')) {
+      this.add.image(chelseaX, chelseaY, 'chelsea-feeding').setDisplaySize(110, 110);
+    } else {
+      this.add.image(chelseaX, chelseaY, 'chelsea-idle').setDisplaySize(50, 120);
+    }
 
     this.chelseaReact = this.add
-      .text(60, H / 2 + 60, '', {
+      .text(72, H / 2 + 92, '', {
         fontFamily: 'system-ui, sans-serif',
         fontSize: '10px',
         color: '#fde68a',
@@ -118,8 +140,6 @@ export class Ch07_FirstBites extends ChapterBase {
     void this.intro('First Bites', 'Tap to eat the good stuff. Swipe the bad stuff away.').then(() => {
       this.nextSpoon();
     });
-
-    void tray;
   }
 
   private nextSpoon(): void {
@@ -143,18 +163,15 @@ export class Ch07_FirstBites extends ChapterBase {
 
     this.spoonContainer = this.add.container(startX, startY);
     const handle = this.add.rectangle(20, 0, 60, 8, 0xc9a35d);
-    const head = this.add.circle(50, 0, 16, food.color).setStrokeStyle(2, 0x2a1410);
-    const lbl = this.add
-      .text(50, 0, food.label, {
-        fontFamily: 'system-ui, sans-serif',
-        fontSize: '9px',
-        color: '#1c1410',
-        fontStyle: 'bold',
-      })
-      .setOrigin(0.5);
-    this.spoonContainer.add([handle, head, lbl]);
-    head.setInteractive({ useHandCursor: true });
-    head.on('pointerdown', () => this.handleTap());
+    // Real food sprite (or fallback circle if not loaded).
+    const foodVisual: Phaser.GameObjects.Image | Phaser.GameObjects.Arc = SpriteBank.has(this, food.key)
+      ? this.add.image(50, 0, food.key).setDisplaySize(34, 34)
+      : this.add.circle(50, 0, 16, 0xfde68a).setStrokeStyle(2, 0x2a1410);
+    // Hit zone: project rule — interactive Rectangle with origin 0.5, never pixel-perfect.
+    const hitZone = this.add.rectangle(50, 0, 44, 44, 0xffffff, 0).setOrigin(0.5)
+      .setInteractive({ useHandCursor: true });
+    hitZone.on('pointerdown', () => this.handleTap());
+    this.spoonContainer.add([handle, foodVisual, hitZone]);
 
     this.accepting = true;
 

@@ -117,6 +117,19 @@ const MANIFEST: Record<string, string> = {
   'obj-plush-ribbie':      '/assets/sprites/plushies/obj_plush_ribbie.png',
   'obj-plush-poe':         '/assets/sprites/poe/poe_base_down.png',
 
+  // ── Caius highchair pose (Ch07) ────────────────────────────────────────────
+  'caius-highchair': '/assets/sprites/caius-highchair.png',
+
+  // ── Ch07 food sprites ─────────────────────────────────────────────────────
+  'food-puree':        '/assets/sprites/food/food_puree.png',
+  'food-banana':       '/assets/sprites/food/food_banana.png',
+  'food-cheerios':     '/assets/sprites/food/food_cheerios.png',
+  'food-avocado':      '/assets/sprites/food/food_avocado.png',
+  'food-sweetpotato':  '/assets/sprites/food/food_sweetpotato.png',
+  'food-chili':        '/assets/sprites/food/food_chili.png',
+  'food-lemon':        '/assets/sprites/food/food_lemon.png',
+  'food-broccoli-raw': '/assets/sprites/food/food_broccoli_raw.png',
+
   // ── Living room object sprites ─────────────────────────────────────────────
   'obj-livingroom-sectional':      '/assets/sprites/rooms/living_kitchen/obj_livingroom_sectional.png',
   'obj-livingroom-sectional-west': '/assets/sprites/rooms/living_kitchen/obj_livingroom_sectional_west.png',
