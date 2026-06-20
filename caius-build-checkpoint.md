@@ -260,7 +260,7 @@ flipX for L/R — full directional walk could follow.
 ## FLAGGED — open items
 - [ ] `chelsea-asleep` maps to `chelsea_rocking.png` — no true sleeping pose on disk. Ch05 uses it as-is (stand-in).
 - [ ] Ch06 dog directional walk — finn/nugget/eevee now walk-animate (south frames + flipX); full 8-direction walk still optional. Soka still static (teleporter).
-- [ ] Programmatic stand-ins: Ch09 walker frame.
+- **Ch09 MazeWalker staged:** walker-Caius directional walk animations (N/S/E/W, 5-frame cycle at 9fps; dominant-axis D-pad direction, idle on stop), real chelsea-encouraging-standing at goal (no purple rect/label), styled walls (rounded corners, warm leather brown, inner shadow — visual only, collision unchanged).
 - **Ch07 First Bites staged:** real food sprites (food-puree/banana/cheerios/avocado/sweetpotato good; food-chili/lemon/broccoli-raw bad), caius-highchair seated pose, chelsea-feeding at chair side, dimmed room-dining-bg backdrop. Mechanic/fail logic unchanged.
   - `caius-highchair` sprite includes its own baked-in chair — scene draws NO separate obj-dining-highchair. `CAIUS_CHAIR_DISPLAY = 170` constant controls the single chair scale. Spoon target aligned to tray level (H/2+25).
 - [ ] Kitchen vs living-room object split (open-concept): some objects may overlap visually.
