@@ -20,6 +20,16 @@ const HALO_COLOR = 0xffe6a8; // soft warm gold
 const HALO_MIN_ALPHA = 0.05; // empty meter — barely there
 const HALO_MAX_ALPHA = 0.85; // full — bright warm glow
 
+// Top progress bar — scrubs-purple, pinned to the top of the play area.
+// Fills left-to-right with the focus meter; empty portion shows as a dark track.
+// Brightened/saturated vs pure scrubs so it reads clearly on the dark bg (#1a1a24).
+const BAR_FILL_COLOR  = 0xc084fc; // vivid lavender-purple — Chelsea's color, visible on dark
+const BAR_TRACK_COLOR = 0x3b1b6e; // dark deep purple — empty portion contrast
+const BAR_Y           = 18;       // px from top (below the CSS HUD overlay at top-3)
+const BAR_HEIGHT      = 7;        // slim — part of the scene, not a HUD slab
+const BAR_PADDING_X   = 24;       // left + right margin from screen edges
+const BAR_CORNER      = 3.5;      // subtle rounded ends
+
 /**
  * Month 2 — "First Focus" (replaces the retired "tap when her smile peaks" game).
  * Caius's newborn POV: Chelsea drifts by, heavily blurred. The player holds + drags a
@@ -33,6 +43,7 @@ export class Ch02_FirstSmile extends ChapterBase {
   private hazeFallback: Phaser.GameObjects.Rectangle | null = null;
   private reticle!: Phaser.GameObjects.Container;
   private halo!: Phaser.GameObjects.Image;
+  private barGraphics!: Phaser.GameObjects.Graphics;
   private meter = 0;
   private won = false;
   private started = false;
@@ -105,6 +116,10 @@ export class Ch02_FirstSmile extends ChapterBase {
     const inner = this.add.circle(0, 0, RETICLE_RADIUS * 0.45, 0xffffff, 0).setStrokeStyle(1, 0xfde68a, 0.4);
     this.reticle.add([ring, inner]); // no progress meter on the reticle — that's the halo's job now
 
+    // Top progress bar — hidden until IntroPanel clears; fades in with gameplay start.
+    // Single Graphics for track + fill so alpha tweens both together.
+    this.barGraphics = this.add.graphics().setDepth(50).setAlpha(0);
+
     this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
       if (!this.started) return;
       this.pointerDown = true;
@@ -122,6 +137,7 @@ export class Ch02_FirstSmile extends ChapterBase {
 
     void this.intro('First Focus', 'Focus on Mama.').then(() => {
       this.started = true;
+      this.tweens.add({ targets: this.barGraphics, alpha: 1, duration: 400 });
     });
   }
 
@@ -146,6 +162,7 @@ export class Ch02_FirstSmile extends ChapterBase {
     );
     this.applyBlur(1 - this.meter); // slow atmospheric resolve (mood/payoff)
     this.updateHalo(); // immediate linear progress cue on Mama
+    this.updateBar(); // top scrubs-purple progress bar
 
     if (this.meter >= 1) this.win();
   }
@@ -164,6 +181,20 @@ export class Ch02_FirstSmile extends ChapterBase {
   private updateHalo(): void {
     this.halo.setPosition(this.chelsea.x, this.chelsea.y);
     this.halo.setAlpha(HALO_MIN_ALPHA + (HALO_MAX_ALPHA - HALO_MIN_ALPHA) * this.meter);
+  }
+
+  /** Slim scrubs-purple bar at the top — precise left-to-right progress readout. */
+  private updateBar(): void {
+    const barW = this.scale.width - BAR_PADDING_X * 2;
+    this.barGraphics.clear();
+    // Track: full-width dark purple so the empty portion is always visible.
+    this.barGraphics.fillStyle(BAR_TRACK_COLOR, 1);
+    this.barGraphics.fillRoundedRect(BAR_PADDING_X, BAR_Y, barW, BAR_HEIGHT, BAR_CORNER);
+    // Fill: bright lavender, grows left-to-right with meter.
+    if (this.meter > 0.005) {
+      this.barGraphics.fillStyle(BAR_FILL_COLOR, 1);
+      this.barGraphics.fillRoundedRect(BAR_PADDING_X, BAR_Y, barW * this.meter, BAR_HEIGHT, BAR_CORNER);
+    }
   }
 
   private ensureHaloTexture(): void {
