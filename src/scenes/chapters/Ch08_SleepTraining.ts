@@ -1,15 +1,33 @@
 import Phaser from 'phaser';
 import { ChapterBase } from './ChapterBase';
 import { SoundBank } from '../../systems/SoundBank';
+import { SpriteBank } from '../../systems/SpriteBank';
 import { RetryPopup } from '../../ui/RetryPopup';
 
 type Phase = 'stuffies' | 'night';
 
-const STUFFY_COUNT = 6;
+// 7-stuffie roster — win condition derives from length, not a hard-coded 6.
+const STUFFIES: Array<{ key: string }> = [
+  { key: 'obj-plush-francois' },
+  { key: 'obj-plush-foxamillion' },
+  { key: 'obj-plush-deeno' },
+  { key: 'obj-plush-persephone' },
+  { key: 'obj-plush-moomoo' },
+  { key: 'obj-plush-ribbie' },
+  { key: 'obj-plush-poe' },
+];
+
+const STUFFY_COUNT = STUFFIES.length; // 7
+
 const NIGHT_DURATION_MS = 45_000;
 const URGE_INTERVAL_MS = 7_500;
 const SUCKER_TIMES_MS = [16_000, 32_000];
 const MAX_URGE_MISSES = 3;
+
+// Layout constants — computed from roster so adding a stuffie never needs coord surgery.
+const DISPLAY = 90;  // sprite display px (square; setDisplaySize keeps it uniform)
+const STEP    = 112; // center-to-center spacing (px)
+const HIT     = 120; // tap zone size (px) — project rule: generous, never pixel-perfect
 
 export class Ch08_SleepTraining extends ChapterBase {
   private phase: Phase = 'stuffies';
@@ -37,6 +55,7 @@ export class Ch08_SleepTraining extends ChapterBase {
 
   preload(): void {
     SoundBank.preload('lullaby');
+    SpriteBank.preloadInto(this, STUFFIES.map(s => s.key));
   }
 
   create(): void {
@@ -61,36 +80,57 @@ export class Ch08_SleepTraining extends ChapterBase {
     this.phase = 'stuffies';
     const W = this.scale.width;
     const H = this.scale.height;
-    // 6 stuffies on a soft mat
-    const colors = [0xeb9a8a, 0xfde68a, 0x4ade80, 0x9ec3e6, 0xa855f7, 0xfb923c];
-    const labels = ['poe', 'bear', 'bunny', 'whale', 'puppy', 'star'];
-    for (let i = 0; i < STUFFY_COUNT; i++) {
-      const col = i % 3;
-      const row = Math.floor(i / 3);
-      const x = W / 2 + (col - 1) * 110;
-      const y = H / 2 - 30 + row * 110;
-      const c = this.add.container(x, y);
-      const body = this.add.circle(0, 0, 28, colors[i] ?? 0xfde68a).setStrokeStyle(2, 0x2a1410);
-      const lbl = this.add
-        .text(0, 0, labels[i] ?? '', {
-          fontFamily: 'system-ui, sans-serif',
-          fontSize: '11px',
-          color: '#1c1410',
-          fontStyle: 'bold',
-        })
-        .setOrigin(0.5);
-      body.setInteractive({ useHandCursor: true });
-      body.on('pointerdown', () => this.tuck(c, body));
-      c.add([body, lbl]);
+
+    // 4 / 3 layout — both rows horizontally centered on screen.
+    // Row 1: first 4 stuffies. Row 2: remaining 3, centered under the row-1 gap.
+    const row1Count = 4;
+    const row2Count = STUFFY_COUNT - row1Count; // 3
+    const row1Y = Math.round(H * 0.36);
+    const row2Y = row1Y + STEP + 14;
+
+    const positions: Array<{ x: number; y: number }> = [
+      ...Array.from({ length: row1Count }, (_, i) => ({
+        x: Math.round(W / 2 + (i - (row1Count - 1) / 2) * STEP),
+        y: row1Y,
+      })),
+      ...Array.from({ length: row2Count }, (_, i) => ({
+        x: Math.round(W / 2 + (i - (row2Count - 1) / 2) * STEP),
+        y: row2Y,
+      })),
+    ];
+
+    STUFFIES.forEach(({ key }, i) => {
+      const pos = positions[i]!;
+      const c = this.add.container(pos.x, pos.y);
+
+      // Real sprite scaled to DISPLAY×DISPLAY; aspect is square so setDisplaySize is safe.
+      const sprite: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle =
+        SpriteBank.has(this, key)
+          ? this.add.image(0, 0, key).setDisplaySize(DISPLAY, DISPLAY)
+          : this.add.rectangle(0, 0, DISPLAY, DISPLAY, 0xfde68a).setStrokeStyle(2, 0x2a1410);
+
+      // Transparent Rectangle hit zone — project rule: interactive Rectangle with
+      // origin 0.5, sized to the tap target, never pixel-perfect on the sprite itself.
+      const hitZone = this.add
+        .rectangle(0, 0, HIT, HIT, 0xffffff, 0)
+        .setOrigin(0.5)
+        .setInteractive({ useHandCursor: true });
+      hitZone.on('pointerdown', () => this.tuck(c));
+
+      c.add([sprite, hitZone]);
       this.stuffies.push(c);
-    }
+    });
   }
 
-  private tuck(c: Phaser.GameObjects.Container, body: Phaser.GameObjects.Arc): void {
+  private tuck(c: Phaser.GameObjects.Container): void {
     if (c.getData('tucked')) return;
     c.setData('tucked', true);
-    body.setFillStyle(0x3a2a1a, 0.7);
-    this.tweens.add({ targets: c, scale: 0.9, alpha: 0.55, duration: 220 });
+    // Dim the stuffie sprite to show it's asleep (dark tint + shrink + fade).
+    const sprite = c.list.find(o => o instanceof Phaser.GameObjects.Image) as
+      | Phaser.GameObjects.Image
+      | undefined;
+    if (sprite) sprite.setTint(0x3a4055);
+    this.tweens.add({ targets: c, scale: 0.88, alpha: 0.55, duration: 220 });
     this.tucked++;
     if (this.tucked >= STUFFY_COUNT) {
       this.time.delayedCall(700, () => this.startNight());
@@ -144,7 +184,7 @@ export class Ch08_SleepTraining extends ChapterBase {
 
     // Clock 8pm → 6am
     const startH = 20; // 8pm in 24h
-    const endH = 30; // 6am next day
+    const endH = 30;   // 6am next day
     const hour = Phaser.Math.Linear(startH, endH, progress);
     const display = this.formatHour(hour);
     this.clockText.setText(display);
@@ -246,7 +286,6 @@ export class Ch08_SleepTraining extends ChapterBase {
     this.chelseaIcon?.destroy();
     this.chelseaIcon = null;
     this.nextUrgeAt = this.time.now + URGE_INTERVAL_MS;
-    // Brief glow
     const flash = this.add.rectangle(this.scale.width / 2, this.scale.height / 2, this.scale.width, this.scale.height, 0xa855f7, 0.2);
     this.tweens.add({ targets: flash, alpha: 0, duration: 600, onComplete: () => flash.destroy() });
   }

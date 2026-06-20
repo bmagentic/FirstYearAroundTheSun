@@ -115,6 +115,7 @@ const MANIFEST: Record<string, string> = {
   'obj-plush-persephone':  '/assets/sprites/plushies/obj_plush_persephone.png',
   'obj-plush-moomoo':      '/assets/sprites/plushies/obj_plush_moomoo.png',
   'obj-plush-ribbie':      '/assets/sprites/plushies/obj_plush_ribbie.png',
+  'obj-plush-poe':         '/assets/sprites/poe/poe_base_down.png',
 
   // ── Living room object sprites ─────────────────────────────────────────────
   'obj-livingroom-sectional':      '/assets/sprites/rooms/living_kitchen/obj_livingroom_sectional.png',
