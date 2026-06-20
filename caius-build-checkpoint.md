@@ -1,6 +1,6 @@
 # Caius Birthday Game — Build Checkpoint (CONSOLIDATED)
 
-**Updated:** 2026-06-20 (Ch12 hardening + CinematicScene robustness + M8 Phase 2 staging)
+**Updated:** 2026-06-20 (M8 fully staged; sleeping-Caius sprite; snot-sucker removed)
 **Birthday:** 6/4 · **Party / true ship:** 6/6
 **Status:** Single source of truth for the build. Lives in the repo; both the Mac session and the browser session read and update THIS file.
 
@@ -265,7 +265,13 @@ flipX for L/R — full directional walk could follow.
   - `caius-highchair` sprite includes its own baked-in chair — scene draws NO separate obj-dining-highchair. `CAIUS_CHAIR_DISPLAY = 170` constant controls the single chair scale. Spoon target aligned to tray level (H/2+25).
 - [ ] Kitchen vs living-room object split (open-concept): some objects may overlap visually.
 - **Overworld plushies (nursery + play-area):** all 6 real sprites wired (manifest + preload + room arrays). Wired in prior session; confirmed correct as of 2026-06-19.
-- **Ch08 stuffies:** 7 real sprites wired (6 plushies + Poe). Layout 4/3 rows computed from roster length. Win = all 7 tucked. Labels removed. Tuck = dark tint + scale/alpha tween.
+- **Ch08 fully staged (2026-06-20):**
+  - Phase 1 stuffies: 7 real sprites (6 plushies + Poe), 4/3 row layout, tuck = dark tint + scale/alpha tween.
+  - Phase 2 night cycle: sleeping-Caius sprite (`caius-sleeping`, 64×64, baby on back, blue onesie, star blanket — static, animation was broken/unusable) replaces peach-circle placeholder at 88px. Star blanket reads as crib bed; code-drawn rectangle box removed.
+  - Chelsea soothe target: real `chelsea-idle` sprite + transparent hit zone (project hit-area rule).
+  - Urge button: styled glowing red pill (not flat circle).
+  - **Snot-sucker removed from M8** — `SUCKER_TIMES_MS`, `suckerScheduled`, `swoopSucker()`, and all references fully deleted. Standalone `SnotSucker` wild encounter (src/scenes/encounters/SnotSucker.ts) untouched.
+  - Win = pure soothe-to-morning (45s clock). Fail = 3 urge misses → retry via resetNight(). Reset cleans correctly (no dangling snot state).
 
 **Resolved this session:** dead `src/ui/ChapterCard.ts` removed (refit into `MonthCard`).
 
