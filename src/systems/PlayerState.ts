@@ -18,21 +18,23 @@ export function deriveMobility(profile: SaveProfile): MobilityState {
   return 'stationary';
 }
 
+// All non-zero speeds bumped +15% (2026-06-20 — movement felt too slow).
+// Values in px/s; relative progression (rolling < crawling < walker < walking) preserved.
 export function speedFor(state: MobilityState): number {
   switch (state) {
     case 'stationary':
     case 'eyes-only':
       return 0;
     case 'rolling':
-      return 60;
+      return 69;
     case 'crawling':
-      return 100;
+      return 115;
     case 'walker':
-      return 140;
+      return 161;
     case 'cruising':
-      return 80;
+      return 92;
     case 'walking':
-      return 160;
+      return 184;
   }
 }
 
