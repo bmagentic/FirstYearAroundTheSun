@@ -176,8 +176,8 @@ export class HouseScene extends Phaser.Scene {
   private playerBody: Phaser.GameObjects.Arc | null = null;
   /** Caius's crawl sprite (early-mobility overworld); animated while moving. */
   private playerSprite: Phaser.GameObjects.Sprite | null = null;
-  /** Current crawl facing; texture swaps only on horizontal-direction change (never per tick). */
-  private crawlFacing: 'l' | 'r' = 'l';
+  /** Current crawl facing; texture swaps only on direction change (never per tick). */
+  private crawlFacing: 'l' | 'r' | 'up' | 'down' = 'l';
   /** Gentle bob tween while crawling; managed directly (never tweens.pauseAll). */
   private crawlBob: Phaser.Tweens.Tween | null = null;
   private controls!: TouchControls;
@@ -236,6 +236,8 @@ export class HouseScene extends Phaser.Scene {
       'caius',
       'caius-crawl-l',
       'caius-crawl-r',
+      'caius-crawl-up',
+      'caius-crawl-down',
       // All room backgrounds (top-down, 208×282)
       'room-nursery-bg',
       'room-master-bedroom-bg',
@@ -317,9 +319,9 @@ export class HouseScene extends Phaser.Scene {
     this.worldLayer = this.add.container(0, 0).setDepth(1);
     this.hudLayer   = this.add.container(0, 0).setDepth(100);
 
-    // caius-crawl-l / caius-crawl-r are opposite-FACING poses (left / right), NOT frames of
-    // a crawl cycle — do NOT loop them (that strobed east<->west). Facing is swapped on
-    // horizontal-direction change only; a bob tween conveys motion (see update()).
+    // Four crawl poses (l, r, up, down) are single-facing stills, NOT animation frames.
+    // Texture swaps only on direction change (dominant-axis rule in update()); bob tween
+    // conveys motion. Never loop them — that caused the east/west strobe.
     this.player = this.add.container(0, 0);
     this.playerSprite = null;
     this.crawlFacing = 'l';
@@ -386,17 +388,26 @@ export class HouseScene extends Phaser.Scene {
       }
     }
 
-    // Crawl: face the travel direction (swap texture ONLY on horizontal-direction change;
-    // keep the last facing for pure N/S), and bob gently while moving. No looping the two
-    // facings — that's what caused the east/west strobe.
+    // Crawl: face the travel direction using the dominant axis; swap texture ONLY on
+    // direction change (never per tick — that caused the east/west strobe).
+    // Dominant-axis rule: |vx| >= |vy| && vx != 0 → horizontal (l/r, prefer over diagonal);
+    //                     |vy| > |vx|             → vertical (up = away, down = toward camera).
     if (this.playerSprite) {
       const moving = speed > 0 && (v.x !== 0 || v.y !== 0);
-      if (v.x > 0 && this.crawlFacing !== 'r' && this.textures.exists('caius-crawl-r')) {
-        this.crawlFacing = 'r';
-        this.playerSprite.setTexture('caius-crawl-r');
-      } else if (v.x < 0 && this.crawlFacing !== 'l' && this.textures.exists('caius-crawl-l')) {
-        this.crawlFacing = 'l';
-        this.playerSprite.setTexture('caius-crawl-l');
+      const absVx = Math.abs(v.x);
+      const absVy = Math.abs(v.y);
+      let wantFacing: 'l' | 'r' | 'up' | 'down' | null = null;
+      if (v.x !== 0 && absVx >= absVy) {
+        wantFacing = v.x > 0 ? 'r' : 'l';
+      } else if (absVy > absVx) {
+        wantFacing = v.y < 0 ? 'up' : 'down';
+      }
+      if (wantFacing !== null && wantFacing !== this.crawlFacing) {
+        const key = `caius-crawl-${wantFacing}`;
+        if (this.textures.exists(key)) {
+          this.crawlFacing = wantFacing;
+          this.playerSprite.setTexture(key);
+        }
       }
       if (moving && !this.crawlBob) {
         this.crawlBob = this.tweens.add({

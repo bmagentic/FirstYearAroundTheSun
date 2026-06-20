@@ -17,6 +17,8 @@ const MANIFEST: Record<string, string> = {
   'caius':              '/assets/sprites/caius-blue/south.png',
   'caius-crawl-l':      '/assets/sprites/caius-crawl-l.png',
   'caius-crawl-r':      '/assets/sprites/caius-crawl-r.png',
+  'caius-crawl-up':     '/assets/sprites/caius-crawl-up.png',
+  'caius-crawl-down':   '/assets/sprites/caius-crawl-down.png',
   'chelsea-idle':       '/assets/sprites/chelsea/south.png',
   'chelsea-asleep':     '/assets/sprites/chelsea_scrubs/chelsea_rocking.png',
   'chelsea-bath':       '/assets/sprites/chelsea_scrubs/chelsea_bath.png',
