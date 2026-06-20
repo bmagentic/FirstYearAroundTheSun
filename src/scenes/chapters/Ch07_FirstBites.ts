@@ -24,6 +24,11 @@ const TOTAL_SPOONS = 12;
 const WIN = 10;
 const SPOON_TRAVEL_MS = 1600;
 
+// Layout tunables — adjust here without hunting through create().
+// caius-highchair sprite bakes Caius + chair together; CAIUS_CHAIR_DISPLAY sets the
+// single chair scale. Bump to taste; tray Y is derived from it below.
+const CAIUS_CHAIR_DISPLAY = 170;
+
 export class Ch07_FirstBites extends ChapterBase {
   private spoonIndex = 0;
   private correct = 0;
@@ -44,7 +49,6 @@ export class Ch07_FirstBites extends ChapterBase {
     SpriteBank.preloadInto(this, [
       'caius-highchair',
       'chelsea-feeding',
-      'obj-dining-highchair',
       'room-dining-bg',
       ...FOODS.map(f => f.key),
     ]);
@@ -75,21 +79,20 @@ export class Ch07_FirstBites extends ChapterBase {
       bg.setScale(cover).setTint(0x555555);
     }
 
-    // High chair — drawn behind Caius so he composites inside it.
-    this.add.image(W / 2, H / 2 + 60, 'obj-dining-highchair').setDisplaySize(160, 200);
-
-    // Caius seated in the chair — highchair pose (52x52 sprite, upscaled).
-    const chairCaiusX = W / 2;
-    const chairCaiusY = H / 2 + 14;
+    // caius-highchair sprite has the chair baked in — no separate chair needed.
+    // Scale to CAIUS_CHAIR_DISPLAY so the baked chair fills the same visual space
+    // the old obj-dining-highchair occupied. Center Y grounds the chair on screen.
+    const chairX = W / 2;
+    const chairY = H / 2 + 50; // grounded — tray ~H/2+25 (Caius mouth/tray ~35% down sprite)
     if (SpriteBank.has(this, 'caius-highchair')) {
-      this.add.image(chairCaiusX, chairCaiusY, 'caius-highchair').setDisplaySize(82, 82);
+      this.add.image(chairX, chairY, 'caius-highchair').setDisplaySize(CAIUS_CHAIR_DISPLAY, CAIUS_CHAIR_DISPLAY);
     } else {
-      this.add.circle(chairCaiusX, chairCaiusY, 24, 0xf7c6a3).setStrokeStyle(2, 0x402c1d);
+      this.add.circle(chairX, chairY, 40, 0xf7c6a3).setStrokeStyle(3, 0x402c1d);
     }
 
-    // Chelsea in feeding pose — positioned at the chair side, offering the spoon.
+    // Chelsea in feeding pose — at the chair's left side, at tray height.
     const chelseaX = 72;
-    const chelseaY = H / 2 + 30;
+    const chelseaY = H / 2 + 50; // matches chair Y so she reads as seated beside it
     if (SpriteBank.has(this, 'chelsea-feeding')) {
       this.add.image(chelseaX, chelseaY, 'chelsea-feeding').setDisplaySize(110, 110);
     } else {
@@ -97,7 +100,7 @@ export class Ch07_FirstBites extends ChapterBase {
     }
 
     this.chelseaReact = this.add
-      .text(72, H / 2 + 92, '', {
+      .text(72, H / 2 + 115, '', {
         fontFamily: 'system-ui, sans-serif',
         fontSize: '10px',
         color: '#fde68a',
@@ -157,9 +160,9 @@ export class Ch07_FirstBites extends ChapterBase {
 
     this.spoonContainer?.destroy();
     const startX = 60 + 18;
-    const startY = this.scale.height / 2;
+    const startY = this.scale.height / 2 + 30; // from Chelsea's arm/hand level
     const targetX = this.scale.width / 2 - 60;
-    const targetY = this.scale.height / 2 - 14;
+    const targetY = this.scale.height / 2 + 25; // tray level: ~35% down the 170px chair sprite
 
     this.spoonContainer = this.add.container(startX, startY);
     const handle = this.add.rectangle(20, 0, 60, 8, 0xc9a35d);
