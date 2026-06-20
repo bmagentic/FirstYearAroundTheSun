@@ -169,8 +169,21 @@ const hud = new HUD(hudRoot, pauseMenuEl, {
     const key = pausedSceneKey;
     pausedSceneKey = null;
     if (!key) return;
-    game.scene.resume(key);
-    if (key !== 'HouseScene') game.scene.start('HouseScene');
+    // Resume first so the scene exits from a running state (Phaser's stop on a
+    // paused scene is safe, but resume lets cleanup hooks run reliably).
+    if (game.scene.isPaused(key)) game.scene.resume(key);
+    // Kill timers/tweens so nothing leaks into HouseScene, then stop the chapter.
+    // Without this stop, both the chapter AND HouseScene run simultaneously with
+    // the chapter on top — the root cause of "Exit to House does nothing."
+    const exiting = game.scene.getScene(key);
+    if (exiting) {
+      exiting.time.removeAllEvents();
+      exiting.tweens.killAll();
+    }
+    if (key !== 'HouseScene') game.scene.stop(key);
+    // Start HouseScene with the active profile so it resumes at the current room.
+    const profile = SaveManager.getActiveProfile();
+    game.scene.start('HouseScene', profile ? { profile } : undefined);
   },
   onHomeRequested: () => {
     pausedSceneKey = null;
