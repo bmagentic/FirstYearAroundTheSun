@@ -35,9 +35,12 @@ export class Ch01_Arrival extends ChapterBase {
 
   preload(): void {
     SpriteBank.preloadInto(this, ['caius']);
-    SoundBank.preload('chelsea-heartbeat');
-    SoundBank.preload('dad-voice');
-    SoundBank.preload('dog-bark');
+    // Real recordings — URL passed so SoundBank loads the mp3 instead of falling back
+    // to the synthesized placeholder (which played when no URL was given and the .ogg
+    // path returned 404 → entry.status = 'missing' → playSynth).
+    SoundBank.preload('chelsea-heartbeat', '/assets/audio/sfx/moms_heartbeat.mp3');
+    SoundBank.preload('dad-voice',         '/assets/audio/sfx/dads_voice.mp3');
+    SoundBank.preload('dog-bark',          '/assets/audio/sfx/dog_barking.mp3');
   }
 
   create(): void {

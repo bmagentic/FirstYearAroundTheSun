@@ -425,6 +425,7 @@ All 5 mood tracks + finale wired. `SCENE_MUSIC_MAP` is the single place to adjus
 | Tailwind | v4, @tailwindcss/vite, no config file |
 | iOS audio unlock | Boot interstitial tap is the gesture; music starts after interstitial tap (SoundNoticeScene advance) |
 | Sound default | **UNMUTED** (was forced-off). Persisted mute preference respected on return. Fresh = sound on. |
+| M1 sound-localization audio | Real sounds wired: moms_heartbeat.mp3 / dads_voice.mp3 / dog_barking.mp3 (renamed from MomsHeartbeat/DadsVoice/DogBarking — path-safe lowercase). Bug was: preload() calls omitted URL → SoundBank tried /<id>.ogg → 404 → entry.status=missing → playSynth fallback. Fix: pass /assets/audio/sfx/<file>.mp3 URLs. Music already DUCKED (tender+DUCKED in SCENE_MUSIC_MAP). Audio+ring already synced in playRound(). |
 | Swipe input (mouse) | All swipe scenes use Phaser's unified pointer events (pointerdown/pointerup — fire for both mouse and touch). **Ch07 was the only broken scene**: hitZone.on('pointerdown', handleTap) fired immediately on mouse button down, blocking the drag-to-swipe on bad food. Fixed: tap detection moved to scene-level pointerup with a distance threshold (≤35px = tap, >35px = swipe) + food proximity check. SnotSucker, Ch12 swipe zone, FaceWash tap-buttons all work with mouse already. |
 | Wild encounters | 3-10%, 60-sec cooldown |
 | Ch10 win | 15 matches (sprite targets); fail at 5 misses (hearts) |
