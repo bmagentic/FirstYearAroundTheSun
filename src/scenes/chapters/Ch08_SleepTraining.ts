@@ -21,7 +21,6 @@ const STUFFY_COUNT = STUFFIES.length; // 7
 
 const NIGHT_DURATION_MS = 45_000;
 const URGE_INTERVAL_MS = 7_500;
-const SUCKER_TIMES_MS = [16_000, 32_000];
 const MAX_URGE_MISSES = 3;
 
 // Layout constants — computed from roster so adding a stuffie never needs coord surgery.
@@ -44,7 +43,6 @@ export class Ch08_SleepTraining extends ChapterBase {
   private urgeDeadline = 0;
   private chelseaIcon: Phaser.GameObjects.Container | null = null;
   private nextUrgeAt = 0;
-  private suckerScheduled = [...SUCKER_TIMES_MS];
   private statusText!: Phaser.GameObjects.Text;
   private urgeMisses = 0;
   private retryPopup!: RetryPopup;
@@ -55,7 +53,7 @@ export class Ch08_SleepTraining extends ChapterBase {
 
   preload(): void {
     SoundBank.preload('lullaby');
-    SpriteBank.preloadInto(this, [...STUFFIES.map(s => s.key), 'chelsea-idle']);
+    SpriteBank.preloadInto(this, [...STUFFIES.map(s => s.key), 'chelsea-idle', 'caius-sleeping']);
   }
 
   create(): void {
@@ -147,9 +145,13 @@ export class Ch08_SleepTraining extends ChapterBase {
     const H = this.scale.height;
     this.cameras.main.flash(450, 5, 5, 20);
 
-    // Crib + Caius
-    this.add.rectangle(W / 2, H / 2, 200, 140).setStrokeStyle(3, 0x4a3a26, 0.85);
-    this.add.circle(W / 2, H / 2, 18, 0xf7c6a3).setStrokeStyle(2, 0x402c1d);
+    // Sleeping Caius — real sprite (star blanket baked in reads as crib; no code box needed).
+    if (SpriteBank.has(this, 'caius-sleeping')) {
+      this.add.image(W / 2, H / 2, 'caius-sleeping').setDisplaySize(88, 88);
+    } else {
+      this.add.rectangle(W / 2, H / 2, 200, 140).setStrokeStyle(3, 0x4a3a26, 0.85);
+      this.add.circle(W / 2, H / 2, 18, 0xf7c6a3).setStrokeStyle(2, 0x402c1d);
+    }
 
     // Clock display
     this.clockText = this.add
@@ -195,12 +197,6 @@ export class Ch08_SleepTraining extends ChapterBase {
       return;
     }
 
-    // Snot sucker schedule
-    if (this.suckerScheduled.length > 0 && elapsed >= (this.suckerScheduled[0] ?? Infinity)) {
-      this.suckerScheduled.shift();
-      this.swoopSucker();
-    }
-
     // Urge timing
     if (!this.urgeButton && this.time.now >= this.nextUrgeAt) {
       this.spawnUrge();
@@ -226,7 +222,6 @@ export class Ch08_SleepTraining extends ChapterBase {
     this.urgeMisses = 0;
     this.nightStartMs = this.time.now;
     this.nextUrgeAt = this.time.now + 3000;
-    this.suckerScheduled = [...SUCKER_TIMES_MS];
     this.p2Active = true;
   }
 
@@ -308,36 +303,4 @@ export class Ch08_SleepTraining extends ChapterBase {
     this.tweens.add({ targets: flash, alpha: 0, duration: 600, onComplete: () => flash.destroy() });
   }
 
-  private swoopSucker(): void {
-    const W = this.scale.width;
-    const H = this.scale.height;
-    const c = this.add.container(-40, H / 2);
-    const body = this.add.rectangle(0, 0, 40, 24, 0x6b3a1a).setStrokeStyle(2, 0xfde68a);
-    const lbl = this.add
-      .text(0, 0, 'snot', {
-        fontFamily: 'system-ui, sans-serif',
-        fontSize: '9px',
-        color: '#fde68a',
-        fontStyle: 'bold',
-      })
-      .setOrigin(0.5);
-    c.add([body, lbl]);
-    body.setInteractive({ useHandCursor: true });
-    let dodged = false;
-    body.on('pointerdown', () => {
-      dodged = true;
-      this.tweens.add({ targets: c, y: c.y + 80, alpha: 0, duration: 300, onComplete: () => c.destroy() });
-    });
-
-    this.tweens.add({
-      targets: c,
-      x: W + 60,
-      duration: 1600,
-      ease: 'Sine.easeInOut',
-      onComplete: () => {
-        if (!dodged) this.softFail('sucker-hit', 'Snot sucker got him! Keep going.');
-        c.destroy();
-      },
-    });
-  }
 }
