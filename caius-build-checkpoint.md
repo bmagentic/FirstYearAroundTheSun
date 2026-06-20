@@ -118,7 +118,11 @@ mood rounds, soft-fail) is **gone**.
 **First Focus** — Caius's newborn POV. The `chelsea-encouraging-standing` sprite drifts on a lazy
 two-sine path, heavily blurred. The player holds + drags a soft focus reticle; while it
 overlaps her, a focus meter fills and the blur resolves toward sharp. Off-target, the
-meter decays slowly (never empties to a loss). Filling the meter = win: she snaps sharp,
+meter decays slowly (never empties to a loss). **Progress is shown as a soft warm halo on
+Mama** whose alpha tracks the meter LINEARLY (`HALO_MIN/MAX_ALPHA`, behind her, SCREEN-blend,
+anchored to her drift) — NOT an arc ring on the reticle (that sat under the thumb on mobile,
+and the blur resolves too slowly to read as progress early). The blur is kept purely for
+atmosphere/payoff; the halo is the immediate readable cue. Filling the meter = win: she snaps sharp,
 a warm pulse + hearts rise, then his own smile blooms (heart + sparkle — no `caius_happy`
 sprite exists), then `completeChapter()`. **No fail state, no RetryPopup** (fill-to-win;
 party-safe). Tunables at the top of the file (`FOCUS_FILL_RATE` ≈12s fill, `FOCUS_DECAY_RATE`,

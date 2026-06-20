@@ -13,6 +13,13 @@ const MOM_DISPLAY = 290;
 const FOCUS_RADIUS = Math.round(MOM_DISPLAY * 0.32); // ≈93
 const RETICLE_RADIUS = 64;
 
+// Progress halo on Mama: an immediate LINEAR cue (the blur resolves too slowly to read as
+// progress in the first seconds). Soft warm glow behind her, alpha tracks the focus meter.
+const HALO_DIAMETER = 380; // larger than MOM_DISPLAY so the glow surrounds her
+const HALO_COLOR = 0xffe6a8; // soft warm gold
+const HALO_MIN_ALPHA = 0.05; // empty meter — barely there
+const HALO_MAX_ALPHA = 0.85; // full — bright warm glow
+
 /**
  * Month 2 — "First Focus" (replaces the retired "tap when her smile peaks" game).
  * Caius's newborn POV: Chelsea drifts by, heavily blurred. The player holds + drags a
@@ -25,7 +32,7 @@ export class Ch02_FirstSmile extends ChapterBase {
   private blurFX: Phaser.FX.Blur | null = null;
   private hazeFallback: Phaser.GameObjects.Rectangle | null = null;
   private reticle!: Phaser.GameObjects.Container;
-  private meterArc!: Phaser.GameObjects.Graphics;
+  private halo!: Phaser.GameObjects.Image;
   private meter = 0;
   private won = false;
   private started = false;
@@ -65,10 +72,22 @@ export class Ch02_FirstSmile extends ChapterBase {
     this.ampX = W * 0.26;
     this.ampY = H * 0.15;
 
+    // Progress halo BEHIND Mama — its alpha tracks the focus meter (see update). Soft warm
+    // additive glow so she reads as "coming into focus," anchored to her (not the thumb).
+    this.ensureHaloTexture();
+    this.halo = this.add
+      .image(this.cx, this.cy, 'focus-halo')
+      .setDisplaySize(HALO_DIAMETER, HALO_DIAMETER)
+      .setTint(HALO_COLOR)
+      .setBlendMode(Phaser.BlendModes.SCREEN)
+      .setAlpha(HALO_MIN_ALPHA)
+      .setDepth(1);
+
     // Mom = the real Chelsea sprite (encouraging/standing), starts heavily blurred.
     this.chelsea = this.add
       .image(this.cx, this.cy, 'chelsea-encouraging-standing')
-      .setDisplaySize(MOM_DISPLAY, MOM_DISPLAY);
+      .setDisplaySize(MOM_DISPLAY, MOM_DISPLAY)
+      .setDepth(2);
 
     // Blur path: the game is Phaser.AUTO, which resolves to WebGL on every target
     // device (modern phones / iOS Safari), so we use postFX blur and drive its offset
@@ -84,8 +103,7 @@ export class Ch02_FirstSmile extends ChapterBase {
     this.reticle = this.add.container(this.cx, H * 0.72).setDepth(20);
     const ring = this.add.circle(0, 0, RETICLE_RADIUS, 0xffffff, 0.04).setStrokeStyle(3, 0xfde68a, 0.7);
     const inner = this.add.circle(0, 0, RETICLE_RADIUS * 0.45, 0xffffff, 0).setStrokeStyle(1, 0xfde68a, 0.4);
-    this.meterArc = this.add.graphics();
-    this.reticle.add([ring, inner, this.meterArc]);
+    this.reticle.add([ring, inner]); // no progress meter on the reticle — that's the halo's job now
 
     this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
       if (!this.started) return;
@@ -126,8 +144,8 @@ export class Ch02_FirstSmile extends ChapterBase {
       0,
       1,
     );
-    this.applyBlur(1 - this.meter);
-    this.drawMeter();
+    this.applyBlur(1 - this.meter); // slow atmospheric resolve (mood/payoff)
+    this.updateHalo(); // immediate linear progress cue on Mama
 
     if (this.meter >= 1) this.win();
   }
@@ -142,19 +160,31 @@ export class Ch02_FirstSmile extends ChapterBase {
     }
   }
 
-  private drawMeter(): void {
-    this.meterArc.clear();
-    if (this.meter <= 0.001) return;
-    this.meterArc.lineStyle(5, 0xfde68a, 0.95);
-    this.meterArc.beginPath();
-    this.meterArc.arc(0, 0, RETICLE_RADIUS + 8, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * this.meter);
-    this.meterArc.strokePath();
+  /** Halo follows Mama and brightens linearly with the meter — readable from frame one. */
+  private updateHalo(): void {
+    this.halo.setPosition(this.chelsea.x, this.chelsea.y);
+    this.halo.setAlpha(HALO_MIN_ALPHA + (HALO_MAX_ALPHA - HALO_MIN_ALPHA) * this.meter);
+  }
+
+  private ensureHaloTexture(): void {
+    if (this.textures.exists('focus-halo')) return;
+    const size = 256;
+    const tex = this.textures.createCanvas('focus-halo', size, size);
+    if (!tex) return;
+    const ctx = tex.getContext();
+    const g = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+    g.addColorStop(0, 'rgba(255,255,255,0.95)');
+    g.addColorStop(0.45, 'rgba(255,255,255,0.4)');
+    g.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, size, size);
+    tex.refresh();
   }
 
   private win(): void {
     this.won = true;
     this.pointerDown = false;
-    this.meterArc.clear();
+    this.halo.setAlpha(HALO_MAX_ALPHA); // full bright — she's in focus
     this.applyBlur(0); // snap fully sharp
 
     // She "smiles": a warm pulse + hearts rising from her.
