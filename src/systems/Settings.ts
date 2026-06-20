@@ -2,7 +2,7 @@ import type { Settings } from '../types';
 
 const KEY = 'caius-game-settings';
 
-const DEFAULT: Settings = { muted: true };
+const DEFAULT: Settings = { muted: false };
 
 class SettingsManagerImpl {
   private state: Settings = { ...DEFAULT };
@@ -14,10 +14,8 @@ class SettingsManagerImpl {
     } catch {
       this.state = { ...DEFAULT };
     }
-    // Sound always starts OFF each session — the title screen promises "Sound starts off.
-    // Unmute anytime." So we never restore an "unmuted" preference across a restart; the
-    // mute toggle controls the current session only. Guarantees a silent fresh start.
-    this.state.muted = true;
+    // Fresh profile = unmuted (game is recommended with sound).
+    // Persisted preference is respected — a player who explicitly muted gets muted=true back.
     return this.state;
   }
 

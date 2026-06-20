@@ -5,8 +5,6 @@ import Phaser from 'phaser';
  * audio, and before profile selection. Audio is already unlocked by BootScene's
  * first tap — this screen only delivers the sound notice and waits for a second
  * tap to advance. It must NOT touch the audio-unlock path.
- *
- * Notice copy is a placeholder ("Sound starts off…") pending final wording.
  */
 export class SoundNoticeScene extends Phaser.Scene {
   constructor() {
@@ -32,9 +30,9 @@ export class SoundNoticeScene extends Phaser.Scene {
 
     // Same size + color as the "Caius's First Year" title on the first screen.
     this.add
-      .text(width / 2, height / 2 - 20, 'Sound starts off…', {
+      .text(width / 2, height / 2 - 20, 'This game is recommended to be played with sound.', {
         fontFamily: 'system-ui, sans-serif',
-        fontSize: '34px',
+        fontSize: '28px',
         color: '#fcd34d',
         fontStyle: 'bold',
         align: 'center',

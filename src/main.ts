@@ -197,8 +197,17 @@ const hud = new HUD(hudRoot, pauseMenuEl, {
   },
 });
 
-// Apply initial mute state to Phaser sound manager
+// Pre-init mute from default (muted=false). BootScene emits 'settings-loaded'
+// after SettingsManager.load() so we resync to the persisted preference (or the
+// fresh default) before any audio actually plays.
 game.sound.mute = SettingsManager.get().muted;
+
+game.events.once('settings-loaded', () => {
+  const muted = SettingsManager.get().muted;
+  game.sound.mute = muted;
+  MusicManager.setMuted(muted);
+  hud.refreshMute();
+});
 
 // Drive HUD visibility from scene state: the gameplay HUD exists ONLY while a gameplay
 // scene is on screen, and is hidden on boot/title, sound-notice, and profile screens.

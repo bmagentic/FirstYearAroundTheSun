@@ -1,6 +1,6 @@
 # Caius Birthday Game — Build Checkpoint (CONSOLIDATED)
 
-**Updated:** 2026-06-19
+**Updated:** 2026-06-19 (sound interstitial + unmuted default)
 **Birthday:** 6/4 · **Party / true ship:** 6/6
 **Status:** Single source of truth for the build. Lives in the repo; both the Mac session and the browser session read and update THIS file.
 
@@ -417,7 +417,8 @@ All 5 mood tracks + finale wired. `SCENE_MUSIC_MAP` is the single place to adjus
 | Kitchen fridge | Two-tone Samsung Bespoke (blue upper / white lower). SMEG red = garage reveal |
 | Generation | Mac only (PixelLab MCP). Browser session flags missing art, never generates |
 | Tailwind | v4, @tailwindcss/vite, no config file |
-| iOS audio unlock | Boot/Menu before Ch1; tilt prompt + mandatory swipe fallback |
+| iOS audio unlock | Boot interstitial tap is the gesture; music starts after interstitial tap (SoundNoticeScene advance) |
+| Sound default | **UNMUTED** (was forced-off). Persisted mute preference respected on return. Fresh = sound on. |
 | Wild encounters | 3-10%, 60-sec cooldown |
 | Ch10 win | 15 matches (sprite targets); fail at 5 misses (hearts) |
 | Month 2 game | "First Focus" (newborn vision: drag a focus reticle onto blurred Chelsea to sharpen her; fill-to-win, NO fail state). Replaced the retired "tap when smile peaks" game. Build is source of truth; spec/edits-v1.1 diverge for this month. |

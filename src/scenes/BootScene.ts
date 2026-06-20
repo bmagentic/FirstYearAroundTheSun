@@ -14,6 +14,9 @@ export class BootScene extends Phaser.Scene {
     SaveManager.load();
     SettingsManager.load();
     initAnalytics();
+    // Notify main.ts so it can sync game.sound.mute, MusicManager, and the HUD glyph
+    // to whatever SettingsManager.load() resolved (persisted pref or fresh default).
+    this.game.events.emit('settings-loaded');
     MusicManager.play('homescreen');
 
     const { width, height } = this.scale;
@@ -69,8 +72,8 @@ export class BootScene extends Phaser.Scene {
     // Hint about audio (with iOS silent-switch nudge when applicable)
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
     const audioHint = isIOS
-      ? 'Sound starts off. Unmute anytime. iPhone: silent switch must be off.'
-      : 'Sound starts off. You can unmute anytime.';
+      ? 'Best experienced with sound on. iPhone: silent switch must be off.'
+      : 'Best experienced with sound on. You can mute anytime.';
     this.add
       .text(width / 2, height - 60, audioHint, {
         fontFamily: 'system-ui, sans-serif',
