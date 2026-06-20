@@ -437,6 +437,7 @@ All 5 mood tracks + finale wired. `SCENE_MUSIC_MAP` is the single place to adjus
 | Cut order if behind | Ch3 → cutscene first; drop BottleWait + FaceWash; NEVER cut interludes / post-credits / Ch1 audio / Ch5 lullaby |
 | Dedication | "For Chelsea, who made all of this possible." — non-negotiable |
 | Deploy | Vercel Pro, single project (duplicate deleted), pushes to main trigger deploy |
+| M12 finale | Ch12 completes → **CinematicScene** (src/scenes/CinematicScene.ts) plays the hosted painted film from Vercel Blob. PostCreditsScene is RETIRED (still in repo, not reachable). Film is streamed (not committed). Music stops (MusicManager.stop) before film; homescreen music resumes on exit. Skip ›  appears after 5 s. iOS: playsinline + webkit-playsinline; autoplay-blocked fallback "Tap to play". Network error → message → home in 2.5 s. Audio: respects global mute at start time (video.muted = SettingsManager.get().muted). |
 
 **Room status:** ALL TEN ROOMS PLACED AND BAKED — nursery, master-bedroom, bathroom, hallway-upper, hallway-lower, kitchen, dining, living-room, play-area, garage.
 

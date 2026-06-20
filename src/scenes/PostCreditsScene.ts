@@ -19,6 +19,9 @@ const PHASE_TIMES = {
   dedication: 6000,
 };
 
+// RETIRED FROM M12 FLOW (2026-06-20): Ch12 now hands off to CinematicScene which plays
+// the hand-painted "One Trip Around the Sun" film from Vercel Blob. This scene is kept
+// in the repo for reference but is no longer reachable via normal gameplay.
 export class PostCreditsScene extends Phaser.Scene {
   private profile: SaveProfile | null = null;
 

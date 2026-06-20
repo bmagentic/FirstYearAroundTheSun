@@ -382,7 +382,7 @@ export class Ch12_Liftoff extends ChapterBase {
     this.time.delayedCall(900, () => {
       this.cameras.main.fadeOut(900, 0, 0, 10);
       this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
-        this.completeChapter({ nextScene: 'PostCreditsScene' });
+        this.completeChapter({ nextScene: 'CinematicScene' });
       });
     });
   }

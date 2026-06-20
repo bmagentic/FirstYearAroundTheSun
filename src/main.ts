@@ -20,6 +20,7 @@ import { BonusChapter } from './scenes/BonusChapter';
 import { Interlude01_FirstDays } from './scenes/interludes/Interlude01_FirstDays';
 import { Interlude02_Mama } from './scenes/interludes/Interlude02_Mama';
 import { PostCreditsScene } from './scenes/PostCreditsScene';
+import { CinematicScene } from './scenes/CinematicScene';
 import { SnotSucker } from './scenes/encounters/SnotSucker';
 import { FaceWash } from './scenes/encounters/FaceWash';
 import { BottleWait } from './scenes/encounters/BottleWait';
@@ -68,7 +69,8 @@ const config: Phaser.Types.Core.GameConfig = {
     BonusChapter,
     Interlude01_FirstDays,
     Interlude02_Mama,
-    PostCreditsScene,
+    PostCreditsScene, // retired from M12 flow; kept for reference
+    CinematicScene,
     SnotSucker,
     FaceWash,
     BottleWait,
