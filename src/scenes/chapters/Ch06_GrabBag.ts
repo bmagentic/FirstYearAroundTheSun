@@ -16,10 +16,16 @@ type Dog = {
 };
 
 type Toy = {
-  obj: Phaser.GameObjects.Arc;
+  obj: Phaser.GameObjects.Image | Phaser.GameObjects.Arc;
   x: number;
   y: number;
 };
+
+const TOY_KEYS = [
+  'toy-block', 'toy-ball', 'toy-duck', 'toy-star',
+  'toy-rattle', 'toy-car', 'toy-teether', 'toy-blocktower',
+] as const;
+const TOY_DISPLAY = 36; // display px — slightly larger than native 32 for better tappability
 
 const DURATION_MS = 60_000;
 const SPAWN_INTERVAL_MS = 1800;
@@ -57,7 +63,7 @@ export class Ch06_GrabBag extends ChapterBase {
   }
 
   preload(): void {
-    SpriteBank.preloadInto(this, Object.values(DOG_SPRITE_KEYS));
+    SpriteBank.preloadInto(this, [...Object.values(DOG_SPRITE_KEYS), ...TOY_KEYS]);
     // Walk-cycle frames are a 9-frame sequence per dog (not a single manifest sprite), so
     // load them directly. South-facing frames; flipX handles left/right while moving.
     for (const id of DOG_WALK_IDS) {
@@ -159,20 +165,26 @@ export class Ch06_GrabBag extends ChapterBase {
     const { x, y, w, h } = this.playArea;
     const tx = Phaser.Math.Between(x + 24, x + w - 24);
     const ty = Phaser.Math.Between(y + 24, y + h - 24);
-    const toy = this.add.circle(tx, ty, 12, 0xfde68a).setStrokeStyle(2, 0xfb923c);
-    toy.setInteractive({ useHandCursor: true });
-    toy.on('pointerdown', () => {
+
+    // Pick a random toy sprite; fall back to the yellow dot if not loaded.
+    const key = Phaser.Utils.Array.GetRandom([...TOY_KEYS]) as string;
+    const toyObj: Phaser.GameObjects.Image | Phaser.GameObjects.Arc = SpriteBank.has(this, key)
+      ? this.add.image(tx, ty, key).setDisplaySize(TOY_DISPLAY, TOY_DISPLAY)
+      : this.add.circle(tx, ty, 12, 0xfde68a).setStrokeStyle(2, 0xfb923c);
+
+    toyObj.setInteractive({ useHandCursor: true });
+    toyObj.on('pointerdown', () => {
       this.grabbed++;
       this.scoreText.setText(`${this.grabbed} grabbed`);
-      this.tweens.add({ targets: toy, scale: 1.6, alpha: 0, duration: 180, onComplete: () => toy.destroy() });
-      this.toys = this.toys.filter((t) => t.obj !== toy);
+      this.tweens.add({ targets: toyObj, scale: 1.6, alpha: 0, duration: 180, onComplete: () => toyObj.destroy() });
+      this.toys = this.toys.filter((t) => t.obj !== toyObj);
     });
-    this.toys.push({ obj: toy, x: tx, y: ty });
+    this.toys.push({ obj: toyObj, x: tx, y: ty });
     // Auto-decay if not grabbed in 4 sec
     this.time.delayedCall(4000, () => {
-      if (toy.active) {
-        toy.destroy();
-        this.toys = this.toys.filter((t) => t.obj !== toy);
+      if (toyObj.active) {
+        toyObj.destroy();
+        this.toys = this.toys.filter((t) => t.obj !== toyObj);
       }
     });
   }

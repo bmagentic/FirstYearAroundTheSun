@@ -130,6 +130,16 @@ const MANIFEST: Record<string, string> = {
   'food-lemon':        '/assets/sprites/food/food_lemon.png',
   'food-broccoli-raw': '/assets/sprites/food/food_broccoli_raw.png',
 
+  // ── Ch06 toy sprites (GrabBag targets) ────────────────────────────────────
+  'toy-block':      '/assets/sprites/toys/toy_block.png',
+  'toy-ball':       '/assets/sprites/toys/toy_ball.png',
+  'toy-duck':       '/assets/sprites/toys/toy_duck.png',
+  'toy-star':       '/assets/sprites/toys/toy_star.png',
+  'toy-rattle':     '/assets/sprites/toys/toy_rattle.png',
+  'toy-car':        '/assets/sprites/toys/toy_car.png',
+  'toy-teether':    '/assets/sprites/toys/toy_teether.png',
+  'toy-blocktower': '/assets/sprites/toys/toy_blocktower.png',
+
   // ── Living room object sprites ─────────────────────────────────────────────
   'obj-livingroom-sectional':      '/assets/sprites/rooms/living_kitchen/obj_livingroom_sectional.png',
   'obj-livingroom-sectional-west': '/assets/sprites/rooms/living_kitchen/obj_livingroom_sectional_west.png',
