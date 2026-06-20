@@ -163,6 +163,10 @@ export class SnotSucker extends EncounterBase {
   }
 
   private resetRound(): void {
+    // Kill any pending delayedCall (e.g. the 700ms nextSwoop after a non-fatal hit
+    // that was frozen mid-countdown by the RetryPopup) so thaw doesn't double-fire.
+    this.time.removeAllEvents();
+    this.swoopTween?.stop();
     this.swoopIndex = 0;
     this.dodged = 0;
     this.hits = 0;

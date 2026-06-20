@@ -46,6 +46,16 @@ export class Ch07_FirstBites extends ChapterBase {
   }
 
   create(): void {
+    // scene.restart() reuses the class instance — field initializers don't re-run.
+    // Reset every field that mutates during play before any logic reads them.
+    this.spoonIndex = 0;
+    this.correct = 0;
+    this.accepting = false;
+    this.currentFood = null;
+    this.spoonContainer = null;
+    this.spoonTween = null;
+    this.swipeStart = null;
+
     this.setup();
     this.retryPopup = new RetryPopup(this);
     this.cameras.main.setBackgroundColor('#3a2515');

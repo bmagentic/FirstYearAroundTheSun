@@ -433,3 +433,19 @@ All 5 mood tracks + finale wired. `SCENE_MUSIC_MAP` is the single place to adjus
 | Deploy | Vercel Pro, single project (duplicate deleted), pushes to main trigger deploy |
 
 **Room status:** ALL TEN ROOMS PLACED AND BAKED — nursery, master-bedroom, bathroom, hallway-upper, hallway-lower, kitchen, dining, living-room, play-area, garage.
+
+---
+
+## FAIL/RETRY ARCHITECTURE RULE (2026-06-20)
+
+**PROJECT RULE:** Scenes that call `this.retry()` / `scene.restart()` MUST explicitly reset ALL mutable class fields at the top of `create()` (or in an `init()` override), because Phaser reuses the class instance on restart and field initializers (`private x = 0`) only run in the constructor — they do NOT re-run on `scene.restart()`. Stale values leak into the new run.
+
+`resetRound()`-style scenes are exempt — they never restart the scene and directly zero only the fields they care about.
+
+### Bug fixes applied (2026-06-20)
+| Scene | Bug | Fix |
+|---|---|---|
+| **Ch07 FirstBites** | CRITICAL: `spoonIndex` and `correct` not reset → immediate re-fail loop on retry (nextSpoon evaluated stale spoonIndex=12 → evaluate() → retry popup again). HUD showed '0 of 12' while fail said 'Got 5'. | Reset `spoonIndex/correct/accepting/currentFood/spoonContainer/spoonTween/swipeStart` at top of `create()`. |
+| **Ch06 GrabBag** | MODERATE: `grabbed/dogs/toys` not reset → stale grabbed count caused spurious wins; stale Dog array accumulated 4 destroyed-obj entries per retry. | Reset `grabbed=0; dogs=[]; toys=[]` at top of `create()`. |
+| **SnotSucker** | LOW: `resetRound()` didn't kill pending `delayedCall` → frozen timer (thawed by RetryPopup) could double-fire `nextSwoop()` creating two concurrent swoop sequences. | Added `this.time.removeAllEvents(); this.swoopTween?.stop()` at top of `resetRound()`. |
+| **RetryPopup** | LOW: second tap during 180ms dismiss fade could start a second fade and fire `onRetry()` twice. | Added `dismissing` boolean guard; checked at entry of `dismiss()`, cleared in `onComplete` and `destroy()`. |

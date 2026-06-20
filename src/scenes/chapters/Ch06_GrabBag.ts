@@ -81,6 +81,11 @@ export class Ch06_GrabBag extends ChapterBase {
   }
 
   create(): void {
+    // scene.restart() reuses the class instance — reset all mutable fields before use.
+    this.grabbed = 0;
+    this.dogs = [];
+    this.toys = [];
+
     this.setup();
     this.retryPopup = new RetryPopup(this);
     this.cameras.main.setBackgroundColor('#2a1a0e');

@@ -5,6 +5,7 @@ export class RetryPopup {
   private scene: Phaser.Scene;
   private container: Phaser.GameObjects.Container | null = null;
   private showing = false;
+  private dismissing = false;
   private thaw: (() => void) | null = null;
 
   constructor(scene: Phaser.Scene) {
@@ -75,7 +76,8 @@ export class RetryPopup {
   }
 
   private dismiss(onRetry: () => void): void {
-    if (!this.container) return;
+    if (!this.container || this.dismissing) return;
+    this.dismissing = true;
     const c = this.container;
     this.scene.tweens.add({
       targets: c,
@@ -86,6 +88,7 @@ export class RetryPopup {
         c.destroy();
         this.container = null;
         this.showing = false;
+        this.dismissing = false;
         this.thaw?.();
         this.thaw = null;
         onRetry();
@@ -97,5 +100,6 @@ export class RetryPopup {
     this.container?.destroy();
     this.container = null;
     this.showing = false;
+    this.dismissing = false;
   }
 }
