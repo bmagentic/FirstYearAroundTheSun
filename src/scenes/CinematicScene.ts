@@ -18,11 +18,16 @@ const CINEMATIC_URL =
 
 // Seconds before the skip button fades in — give them the opening before skipping.
 const SKIP_DELAY_S = 5;
+// If playing hasn't fired within this many ms, show the error/recovery UI.
+const LOAD_TIMEOUT_MS = 15_000;
 
 export class CinematicScene extends Phaser.Scene {
   private containerEl: HTMLDivElement | null = null;
+  private loadingEl: HTMLDivElement | null = null;
+  private stallTimer: ReturnType<typeof setTimeout> | null = null;
   private profile: SaveProfile | null = null;
   private exited = false;
+  private recovering = false;
 
   constructor() {
     super({ key: 'CinematicScene' });
@@ -39,7 +44,11 @@ export class CinematicScene extends Phaser.Scene {
   }
 
   create(): void {
+    // Reset per-run state in case the scene is ever restarted.
+    this.exited = false;
+    this.recovering = false;
     this.cameras.main.setBackgroundColor('#000000');
+
     // Cinematic owns its audio — stop game music before it starts.
     MusicManager.stop(300);
 
@@ -61,7 +70,23 @@ export class CinematicScene extends Phaser.Scene {
     video.style.cssText = 'width:100%;height:100%;object-fit:contain';
     container.appendChild(video);
 
-    // Subtle skip button — hidden for SKIP_DELAY_S so they see the opening.
+    // Loading indicator — visible while video buffers, fades out on first frame.
+    const loadingEl = document.createElement('div');
+    loadingEl.style.cssText =
+      'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);' +
+      'color:rgba(253,230,138,0.65);font-size:15px;font-family:system-ui,sans-serif;' +
+      'letter-spacing:0.08em;pointer-events:none;transition:opacity 0.5s';
+    loadingEl.textContent = 'Loading…';
+    container.appendChild(loadingEl);
+    this.loadingEl = loadingEl;
+
+    // Stall guard — if playing hasn't fired in time, recover gracefully.
+    this.stallTimer = setTimeout(() => {
+      this.stallTimer = null;
+      this.showError();
+    }, LOAD_TIMEOUT_MS);
+
+    // Subtle skip button — hidden until SKIP_DELAY_S so they see the opening.
     const skipBtn = document.createElement('button');
     skipBtn.textContent = 'Skip ›';
     skipBtn.style.cssText =
@@ -82,21 +107,42 @@ export class CinematicScene extends Phaser.Scene {
 
     document.body.appendChild(container);
 
+    // First frame playing → dismiss loading state.
+    video.addEventListener('playing', () => this.clearLoadState(), { once: true });
+
     // End → home screen.
     video.addEventListener('ended', () => this.exit(), { once: true });
 
-    // Network/decode error → brief message, then home (no hanging black screen).
+    // Network/decode error → clear load state, recover gracefully.
     video.addEventListener('error', () => {
-      console.error('[cinematic] video failed to load');
+      this.clearLoadState();
       this.showError();
     }, { once: true });
 
     // Attempt autoplay. On iOS Safari, <video> audio may be blocked even after
     // AudioContext is unlocked — fall back to a tap-to-play prompt.
-    void video.play().catch(() => this.showTapToPlay(video));
+    void video.play().catch(() => {
+      this.clearLoadState();
+      this.showTapToPlay(video);
+    });
 
     // Cleanup DOM on scene shutdown (handles both normal exit and mid-scene teardown).
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.cleanup());
+  }
+
+  /** Dismiss the loading indicator and cancel the stall timer. Idempotent. */
+  private clearLoadState(): void {
+    if (this.stallTimer !== null) {
+      clearTimeout(this.stallTimer);
+      this.stallTimer = null;
+    }
+    if (this.loadingEl) {
+      this.loadingEl.style.opacity = '0';
+      const el = this.loadingEl;
+      this.loadingEl = null;
+      // Remove after fade completes; safe on a detached element.
+      setTimeout(() => el.remove(), 600);
+    }
   }
 
   /** iOS autoplay blocked — show a tap prompt before starting the film. */
@@ -125,8 +171,11 @@ export class CinematicScene extends Phaser.Scene {
     container.addEventListener('pointerdown', handler, { once: true });
   }
 
-  /** Video failed to load — brief message, then send the player home. */
+  /** Video failed to load or timed out — brief message, then send the player home. */
   private showError(): void {
+    if (this.recovering || this.exited) return;
+    this.recovering = true;
+    this.clearLoadState();
     const container = this.containerEl;
     if (!container) return;
     const msg = document.createElement('div');
@@ -142,12 +191,21 @@ export class CinematicScene extends Phaser.Scene {
   private exit(): void {
     if (this.exited) return;
     this.exited = true;
+    this.clearLoadState();
     this.cleanup();
     MusicManager.play('homescreen');
     this.scene.start('MenuScene');
   }
 
   private cleanup(): void {
+    if (this.stallTimer !== null) {
+      clearTimeout(this.stallTimer);
+      this.stallTimer = null;
+    }
+    if (this.loadingEl) {
+      this.loadingEl.remove();
+      this.loadingEl = null;
+    }
     if (this.containerEl) {
       const video = this.containerEl.querySelector('video');
       if (video) {

@@ -55,7 +55,7 @@ export class Ch08_SleepTraining extends ChapterBase {
 
   preload(): void {
     SoundBank.preload('lullaby');
-    SpriteBank.preloadInto(this, STUFFIES.map(s => s.key));
+    SpriteBank.preloadInto(this, [...STUFFIES.map(s => s.key), 'chelsea-idle']);
   }
 
   create(): void {
@@ -244,35 +244,53 @@ export class Ch08_SleepTraining extends ChapterBase {
     const x = W / 2;
     const y = H / 2 + 150;
 
+    // Glowing pill — outer soft glow + solid inner fill + highlight stroke.
     const urge = this.add.container(x, y);
-    const ring = this.add.circle(0, 0, 38, 0xb91c1c, 0.8).setStrokeStyle(3, 0xfde68a);
+    const pill = this.add.graphics();
+    pill.fillStyle(0xff3333, 0.22);
+    pill.fillRoundedRect(-56, -28, 112, 56, 18);
+    pill.fillStyle(0xb91c1c, 0.92);
+    pill.fillRoundedRect(-46, -22, 92, 44, 13);
+    pill.lineStyle(2, 0xff8888, 0.75);
+    pill.strokeRoundedRect(-46, -22, 92, 44, 13);
     const lbl = this.add
       .text(0, 0, 'urge!', {
         fontFamily: 'system-ui, sans-serif',
-        fontSize: '12px',
+        fontSize: '13px',
         color: '#fde68a',
         fontStyle: 'bold',
       })
       .setOrigin(0.5);
-    urge.add([ring, lbl]);
-    this.tweens.add({ targets: ring, scale: 1.2, duration: 500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    urge.add([pill, lbl]);
+    this.tweens.add({ targets: urge, scale: 1.15, duration: 500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     this.urgeButton = urge;
 
-    // Chelsea calming icon appears
+    // Chelsea soothe target — real sprite if available, fallback circle.
+    // Project rule: hit zone is a transparent Rectangle, not the sprite itself.
     const cx = W / 2 - 120;
     const ci = this.add.container(cx, y);
-    const cring = this.add.circle(0, 0, 28, 0xa855f7, 0.8).setStrokeStyle(2, 0xfde68a);
-    const clbl = this.add
-      .text(0, 0, 'Mama', {
-        fontFamily: 'system-ui, sans-serif',
-        fontSize: '10px',
-        color: '#fde68a',
-        fontStyle: 'bold',
-      })
-      .setOrigin(0.5);
-    ci.add([cring, clbl]);
-    cring.setInteractive({ useHandCursor: true });
-    cring.on('pointerdown', () => this.soothe());
+    if (SpriteBank.has(this, 'chelsea-idle')) {
+      const img = this.add.image(0, 0, 'chelsea-idle').setDisplaySize(68, 68);
+      const hitZone = this.add
+        .rectangle(0, 0, 84, 84, 0xffffff, 0)
+        .setOrigin(0.5)
+        .setInteractive({ useHandCursor: true });
+      hitZone.on('pointerdown', () => this.soothe());
+      ci.add([img, hitZone]);
+    } else {
+      const cring = this.add.circle(0, 0, 28, 0xa855f7, 0.8).setStrokeStyle(2, 0xfde68a);
+      const clbl = this.add
+        .text(0, 0, 'Mama', {
+          fontFamily: 'system-ui, sans-serif',
+          fontSize: '10px',
+          color: '#fde68a',
+          fontStyle: 'bold',
+        })
+        .setOrigin(0.5);
+      ci.add([cring, clbl]);
+      cring.setInteractive({ useHandCursor: true });
+      cring.on('pointerdown', () => this.soothe());
+    }
     this.chelseaIcon = ci;
 
     this.urgeDeadline = this.time.now + 2500;

@@ -1,6 +1,5 @@
 import Phaser from 'phaser';
 import { ChapterBase } from './ChapterBase';
-import { SoundBank } from '../../systems/SoundBank';
 import { SpriteBank } from '../../systems/SpriteBank';
 
 type SubsystemKind = 'tap-rhythm' | 'tap-targets' | 'swipe' | 'tap-alt' | 'hold' | 'drag-target';
@@ -33,6 +32,7 @@ export class Ch12_Liftoff extends ChapterBase {
   private launchBtn!: Phaser.GameObjects.Arc;
   private launchLabel!: Phaser.GameObjects.Text;
   private launchPressed = false;
+  private panelOpen = false;
   private statusText!: Phaser.GameObjects.Text;
 
   constructor() {
@@ -143,6 +143,8 @@ export class Ch12_Liftoff extends ChapterBase {
     status: Phaser.GameObjects.Arc,
   ): void {
     if (this.completed.has(idx)) return;
+    if (this.panelOpen) return;
+    this.panelOpen = true;
     // Open a tiny modal-ish overlay
     const dim = this.add.rectangle(this.scale.width / 2, this.scale.height / 2, this.scale.width, this.scale.height, 0x000000, 0.7).setDepth(50);
     const panel = this.add
@@ -185,6 +187,7 @@ export class Ch12_Liftoff extends ChapterBase {
 
     const interactives: Phaser.GameObjects.GameObject[] = [];
     const cleanup = () => {
+      this.panelOpen = false;
       dim.destroy();
       panel.destroy();
       title.destroy();
@@ -365,7 +368,7 @@ export class Ch12_Liftoff extends ChapterBase {
       return;
     }
     this.launchPressed = true;
-    SoundBank.play('rocket-launch');
+    // No launch SFX — cinematic audio takes over immediately after fade-out.
 
     // Ignition: shake camera, rocket lifts up
     this.cameras.main.shake(900, 0.01);
