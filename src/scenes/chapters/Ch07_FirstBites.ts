@@ -131,13 +131,30 @@ export class Ch07_FirstBites extends ChapterBase {
     this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
       this.swipeStart = { x: p.x, y: p.y };
     });
+    // Unified pointer handler — works for both mouse (click-drag) and touch (swipe).
+    // Tap vs swipe discrimination: dist ≤ 35 px → tap (check proximity to food);
+    // dist > 35 → swipe. Tap detection moved here from hitZone.pointerdown so
+    // a click-drag on bad food doesn't fire handleTap before the swipe completes.
     this.input.on('pointerup', (p: Phaser.Input.Pointer) => {
       if (!this.swipeStart) return;
-      const dx = p.x - this.swipeStart.x;
-      const dy = p.y - this.swipeStart.y;
+      const startX = this.swipeStart.x;
+      const startY = this.swipeStart.y;
+      const dx = p.x - startX;
+      const dy = p.y - startY;
       const dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist > 35) this.handleSwipe();
       this.swipeStart = null;
+      if (dist > 35) {
+        this.handleSwipe();
+      } else if (this.accepting && this.spoonContainer) {
+        // Was a tap — fire handleTap only if the DOWN press was on the food hit area.
+        const foodX = this.spoonContainer.x + 50;
+        const foodY = this.spoonContainer.y;
+        const fdx = startX - foodX;
+        const fdy = startY - foodY;
+        if (fdx * fdx + fdy * fdy < 26 * 26) { // 52 px tap diameter
+          this.handleTap();
+        }
+      }
     });
 
     void this.intro('First Bites', 'Tap to eat the good stuff. Swipe the bad stuff away.').then(() => {
@@ -170,11 +187,10 @@ export class Ch07_FirstBites extends ChapterBase {
     const foodVisual: Phaser.GameObjects.Image | Phaser.GameObjects.Arc = SpriteBank.has(this, food.key)
       ? this.add.image(50, 0, food.key).setDisplaySize(34, 34)
       : this.add.circle(50, 0, 16, 0xfde68a).setStrokeStyle(2, 0x2a1410);
-    // Hit zone: project rule — interactive Rectangle with origin 0.5, never pixel-perfect.
-    const hitZone = this.add.rectangle(50, 0, 44, 44, 0xffffff, 0).setOrigin(0.5)
-      .setInteractive({ useHandCursor: true });
-    hitZone.on('pointerdown', () => this.handleTap());
-    this.spoonContainer.add([handle, foodVisual, hitZone]);
+    // No hitZone needed — tap is detected in the scene-level pointerup handler above
+    // (with proximity check vs food position). This lets mouse click-drag register as
+    // a swipe instead of firing handleTap immediately on pointerdown.
+    this.spoonContainer.add([handle, foodVisual]);
 
     this.accepting = true;
 
