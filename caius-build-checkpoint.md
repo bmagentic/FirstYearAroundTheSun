@@ -349,12 +349,56 @@ rocket_landed) — for cut/unbuilt backyard + front-yard rooms.
 | Mute toggle | `MusicManager.setMuted()` pauses/resumes the active element; wired in main.ts `onMuteChange` |
 
 ### API (MusicManager)
-- `preload()` — buffer both tracks (call once from main.ts on READY, before any user gesture)
-- `play(id)` — start looping track; no-ops if already playing; remembers intent when muted
-- `crossfadeTo(id, fadeMs?)` — fade out current, fade in new; falls back to play() if silent
+- `preload()` — buffer all 7 tracks (call once from main.ts on READY, before any user gesture)
+- `play(id, tier?)` — start looping track; no-ops if already playing; remembers intent when muted
+- `crossfadeTo(id, fadeMs?, tier?)` — fade out current, fade in new; falls back to play() if silent
 - `stop(fadeMs?)` — stop with optional fade
 - `setMuted(bool)` — called by main.ts onMuteChange; pauses/resumes active element
 - `setTier(tier)` — FULL / DUCKED / OFF; applies immediately to active track
+
+---
+
+## PER-CHAPTER MUSIC (2026-06-19)
+
+All 5 mood tracks + finale wired. `SCENE_MUSIC_MAP` is the single place to adjust any chapter's music.
+
+### Tracks
+| File | Size | Mood | kbps |
+|---|---|---|---|
+| `game_tender.mp3`    | 3.0 MB | tender    | 320 |
+| `game_playful.mp3`   | 1.9 MB | playful   |  64 |
+| `game_tension.mp3`   | 1.8 MB | tension   | 320 |
+| `game_triumphant.mp3`| 2.7 MB | triumphant| 320 |
+| `finale.mp3`         | 4.5 MB | finale    | 320 |
+
+*`game_tension.mp3.mp3` (double extension from upload) was copied as `game_tension.mp3` — no stale refs.*
+
+### Chapter → track map (full)
+| Scene | Track | Tier | Notes |
+|---|---|---|---|
+| Ch01 Arrival | tender | DUCKED | Sound-localization game (tap where sound came from); ducked so directional audio cues read clearly. This IS the "sound-localization game with expanding rings" from the spec. |
+| Ch02 First Focus | tender | DUCKED | Focus mechanic — blur/SFX must dominate |
+| Ch03 First Touch | tender | DUCKED | Texture discovery — object SFX must dominate |
+| Ch04 RollOut | tension | FULL | Maze-roll |
+| Ch05 HoliDad Inn | playful | FULL | Tilting bed silliness, crawl to Dad |
+| Ch06 GrabBag | playful | FULL | Dog toy grab chaos |
+| Ch07 First Bites | tender | FULL | Warm family meal |
+| Ch08 SleepTraining | tender | FULL | Night-time rhythm |
+| Ch09 MazeWalker | tension | FULL | Walker obstacle maze |
+| Ch10 Chatterbox | triumphant | FULL | First words milestone |
+| Ch11 Ledges | triumphant | FULL | Cruising → first steps |
+| Ch12 Liftoff | finale | FULL | Finale, dedicated track |
+| BonusChapter | triumphant | FULL | Super Baby, heroic cape |
+| SnotSucker | tension | FULL | Healthcare threat |
+| FaceWash | playful | FULL | |
+| BottleWait | playful | FULL | |
+| ChangingTable | tension | FULL | |
+| Roomba | tension | FULL | |
+
+### Handoff
+- **Free-roam → chapter**: music continues under MonthCard + IntroPanel; on Start tap → 600 ms crossfade from free-roam to chapter track at chapter's tier (wired in ChapterBase.intro() + EncounterBase.intro() via SCENE_MUSIC_MAP lookup).
+- **Chapter → free-roam**: HouseScene.create() → crossfadeTo('free-roam', 500) handles all returns.
+- **Interludes / PostCredits**: immediate stop (unchanged from prior commit).
 
 ---
 

@@ -1,12 +1,17 @@
 import { SettingsManager } from './Settings';
 
-export type TrackId = 'homescreen' | 'free-roam';
+export type TrackId = 'homescreen' | 'free-roam' | 'tender' | 'playful' | 'tension' | 'triumphant' | 'finale';
 export type MusicTier = 'FULL' | 'DUCKED' | 'OFF';
 
 // Per-track base volume (background level — present but not overpowering SFX).
 const TRACK_VOLUME: Record<TrackId, number> = {
-  homescreen:  0.40,
-  'free-roam': 0.45,
+  homescreen:   0.40,
+  'free-roam':  0.45,
+  tender:       0.40,
+  playful:      0.45,
+  tension:      0.42,
+  triumphant:   0.45,
+  finale:       0.48,
 };
 
 const TIER_MULTIPLIER: Record<MusicTier, number> = {
@@ -15,23 +20,67 @@ const TIER_MULTIPLIER: Record<MusicTier, number> = {
   OFF:    0.0,
 };
 
-// Track map — extend this to add per-chapter songs without touching scene code.
-// null track = silence (chapters/interludes/encounters own their own audio).
+// ── Track map ───────────────────────────────────────────────────────────────────
+// Single place to configure music for every scene. Add an entry here to give a
+// scene its own track without touching any scene code.
+// null track  = silence (interludes/PostCredits own their audio; not listed here).
+// tier DUCKED = ~28% volume so SFX reads clearly over the music.
 export type SceneMusicConfig = { track: TrackId | null; tier: MusicTier };
 export const SCENE_MUSIC_MAP: Partial<Record<string, SceneMusicConfig>> = {
-  BootScene:        { track: 'homescreen', tier: 'FULL' },
-  SoundNoticeScene: { track: 'homescreen', tier: 'FULL' },
-  MenuScene:        { track: 'homescreen', tier: 'FULL' },
-  HouseScene:       { track: 'free-roam',  tier: 'FULL' },
-  // Chapter / interlude / encounter / cinematic scenes → not listed = silent
+  // ── Home screens ─────────────────────────────────────────────────────────────
+  BootScene:          { track: 'homescreen',  tier: 'FULL' },
+  SoundNoticeScene:   { track: 'homescreen',  tier: 'FULL' },
+  MenuScene:          { track: 'homescreen',  tier: 'FULL' },
+  // ── Free roam ────────────────────────────────────────────────────────────────
+  HouseScene:         { track: 'free-roam',   tier: 'FULL' },
+  // ── Chapters ─────────────────────────────────────────────────────────────────
+  // Ch01 = sound-localization (dark nursery, heartbeat/voice/bark rings) — tender mood,
+  // DUCKED so the directional audio cues read clearly over the music.
+  Ch01_Arrival:       { track: 'tender',      tier: 'DUCKED' },
+  // Ch02 First Focus: holding focus on mama — tender + DUCKED (blur/focus mechanic).
+  Ch02_FirstSmile:    { track: 'tender',      tier: 'DUCKED' },
+  // Ch03 First Touch: texture discovery — tender + DUCKED (object SFX must dominate).
+  Ch03_EyesOpen:      { track: 'tender',      tier: 'DUCKED' },
+  // Ch04 maze roll — tension (obstacle course).
+  Ch04_RollOut:       { track: 'tension',     tier: 'FULL' },
+  // Ch05 HoliDad Inn: tilting bed silliness + crawl — playful.
+  Ch05_HoliDadInn:    { track: 'playful',     tier: 'FULL' },
+  // Ch06 dog toy grab: chaotic dog-filled mini-game — playful.
+  Ch06_GrabBag:       { track: 'playful',     tier: 'FULL' },
+  // Ch07 First Bites: warm family meal with Chelsea — tender.
+  Ch07_FirstBites:    { track: 'tender',      tier: 'FULL' },
+  // Ch08 sleep training: gentle night-time rhythm — tender.
+  Ch08_SleepTraining: { track: 'tender',      tier: 'FULL' },
+  // Ch09 MazeWalker: obstacle-dodge maze to Mama — tension.
+  Ch09_MazeWalker:    { track: 'tension',     tier: 'FULL' },
+  // Ch10 Chatterbox: first words, triumphant milestone — triumphant.
+  Ch10_Chatterbox:    { track: 'triumphant',  tier: 'FULL' },
+  // Ch11 Ledges: cruising → first steps — triumphant.
+  Ch11_Ledges:        { track: 'triumphant',  tier: 'FULL' },
+  // Ch12 Liftoff: finale only — its own dedicated track.
+  Ch12_Liftoff:       { track: 'finale',      tier: 'FULL' },
+  // Bonus Crime Fighting Super Baby — triumphant (heroic + cape).
+  BonusChapter:       { track: 'triumphant',  tier: 'FULL' },
+  // ── Wild encounters ──────────────────────────────────────────────────────────
+  SnotSucker:         { track: 'tension',     tier: 'FULL' },
+  FaceWash:           { track: 'playful',     tier: 'FULL' },
+  BottleWait:         { track: 'playful',     tier: 'FULL' },
+  ChangingTable:      { track: 'tension',     tier: 'FULL' },
+  Roomba:             { track: 'tension',     tier: 'FULL' },
+  // Interludes / PostCredits → not listed = handled by InterludeBase / PostCreditsScene stop()
 };
 
 const FADE_STEP_MS = 16; // ~60 fps fade ticks
 
 function trackFile(id: TrackId): string {
   const map: Record<TrackId, string> = {
-    homescreen:  'GameAudio_Homescreen.mp3',
-    'free-roam': 'GameAudio_FreeRoam.mp3',
+    homescreen:   'GameAudio_Homescreen.mp3',
+    'free-roam':  'GameAudio_FreeRoam.mp3',
+    tender:       'game_tender.mp3',
+    playful:      'game_playful.mp3',
+    tension:      'game_tension.mp3',
+    triumphant:   'game_triumphant.mp3',
+    finale:       'finale.mp3',
   };
   return map[id];
 }
@@ -43,7 +92,7 @@ class MusicManagerImpl {
   private tier: MusicTier = 'FULL';
 
   /**
-   * Preload both tracks so first play() starts without a buffering pause.
+   * Preload all tracks so first play() starts without a buffering pause.
    * Call once from main.ts after the Phaser game READY event.
    * Preload does NOT require a user gesture — only .play() does.
    */
@@ -57,11 +106,17 @@ class MusicManagerImpl {
 
   /**
    * Start playing a track, looping.
-   * If the track is already playing, no-ops.
+   * If the track is already playing at the same tier, no-ops.
    * If muted, records intent and starts when setMuted(false) is called.
+   * Pass `tier` to set volume tier before starting (defaults to current tier).
    */
-  play(id: TrackId): void {
-    if (this.currentId === id && this.el && !this.el.paused) return;
+  play(id: TrackId, tier?: MusicTier): void {
+    if (tier !== undefined) this.tier = tier;
+    if (this.currentId === id && this.el && !this.el.paused) {
+      // Track already playing — just sync tier in case it changed.
+      if (tier !== undefined) this.el.volume = this.targetVol(id);
+      return;
+    }
     this.killFade();
     this.stopImmediate();
     this.currentId = id;
@@ -73,10 +128,15 @@ class MusicManagerImpl {
   /**
    * Crossfade from the current track to a new one.
    * fadeMs = total window; current out in the first half, new in during the second.
+   * Pass `tier` to set the new track's volume tier (defaults to current tier).
    * If muted or nothing is playing, falls back to plain play().
    */
-  crossfadeTo(id: TrackId, fadeMs = 500): void {
-    if (this.currentId === id && this.el && !this.el.paused) return;
+  crossfadeTo(id: TrackId, fadeMs = 500, tier?: MusicTier): void {
+    if (tier !== undefined) this.tier = tier;
+    if (this.currentId === id && this.el && !this.el.paused) {
+      if (tier !== undefined) this.el.volume = this.targetVol(id);
+      return;
+    }
     if (SettingsManager.get().muted || !this.el || this.el.paused) {
       this.play(id);
       return;

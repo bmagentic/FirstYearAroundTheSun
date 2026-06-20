@@ -4,7 +4,7 @@ import { track } from '../../systems/Analytics';
 import { IntroPanel } from '../../ui/IntroPanel';
 import { MonthCard } from '../../ui/MonthCard';
 import { SoundBank } from '../../systems/SoundBank';
-import { MusicManager } from '../../systems/MusicManager';
+import { MusicManager, SCENE_MUSIC_MAP } from '../../systems/MusicManager';
 import type { SaveProfile } from '../../types';
 
 export abstract class ChapterBase extends Phaser.Scene {
@@ -63,11 +63,17 @@ export abstract class ChapterBase extends Phaser.Scene {
     return this.showMonthCard().then(
       () =>
         new Promise<void>((resolve) => {
-          // Music continues under MonthCard and IntroPanel; stops the moment gameplay
-          // starts (when the player taps Start). On retry skipIntroOnce short-circuits
-          // above so this callback is never re-reached — music is already silent.
+          // Music continues under MonthCard and IntroPanel. When the player taps Start,
+          // crossfade to this chapter's mood track (from SCENE_MUSIC_MAP) at the
+          // configured tier. On retry, skipIntroOnce short-circuits above so this
+          // callback is never re-reached — the chapter track is already playing.
           this.introPanel.show(heading, subhead ?? '', () => {
-            MusicManager.stop(400);
+            const cfg = SCENE_MUSIC_MAP[this.scene.key];
+            if (cfg?.track) {
+              MusicManager.crossfadeTo(cfg.track, 600, cfg.tier);
+            } else {
+              MusicManager.stop(400);
+            }
             resolve();
           });
         }),
