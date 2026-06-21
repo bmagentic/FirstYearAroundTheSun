@@ -247,17 +247,52 @@ export class Ch12_Liftoff extends ChapterBase {
         instructionText.setText('Swipe right →');
         const start = this.add.circle(cx - 80, cy, 22, 0xfde68a, 0.4).setStrokeStyle(2, 0xfde68a).setDepth(52);
         const end = this.add.circle(cx + 80, cy, 22, 0x4ade80, 0.2).setStrokeStyle(2, 0x4ade80).setDepth(52);
-        interactives.push(start, end);
+        // Trail bar fills left→right as the drag progresses (visual feedback).
+        const trail = this.add.rectangle(cx - 80, cy, 0, 10, 0x4ade80, 0.55).setOrigin(0, 0.5).setDepth(52);
+        interactives.push(start, end, trail);
+
+        const SWIPE_THRESHOLD = 50; // comfortable: won't fire on a tap, easy for a real swipe
+        let swiping = false;
         let downX = 0;
-        const zone = this.add.zone(cx, cy, 280, 80).setOrigin(0.5).setInteractive().setDepth(52);
-        zone.on('pointerdown', (p: Phaser.Input.Pointer) => (downX = p.x));
-        zone.on('pointerup', (p: Phaser.Input.Pointer) => {
-          if (p.x - downX > 70) {
+        let downY = 0;
+
+        // Generous hit band captures the gesture START. Movement and release are
+        // tracked at SCENE level so a drag that strays off the band still counts —
+        // a GameObject 'pointerup' only fires if released over the object, which was
+        // the cause of the unreliable swipe.
+        const zone = this.add.zone(cx, cy, 300, 120).setOrigin(0.5).setInteractive().setDepth(52);
+        const onMove = (p: Phaser.Input.Pointer) => {
+          if (!swiping) return;
+          trail.width = Phaser.Math.Clamp(p.x - downX, 0, 160);
+        };
+        const onUp = (p: Phaser.Input.Pointer) => {
+          if (!swiping) return;
+          swiping = false;
+          const dx = p.x - downX;
+          const dy = p.y - downY;
+          // Rightward and horizontally dominant, with forgiving tolerance.
+          if (dx > SWIPE_THRESHOLD && Math.abs(dx) > Math.abs(dy)) {
             progress = target;
             updateProgress();
+          } else {
+            trail.width = 0; // reset feedback on an incomplete swipe
           }
+        };
+        zone.on('pointerdown', (p: Phaser.Input.Pointer) => {
+          swiping = true;
+          downX = p.x;
+          downY = p.y;
+          trail.width = 0;
         });
-        interactives.push(zone);
+        this.input.on('pointermove', onMove);
+        this.input.on('pointerup', onUp);
+        // Tear down the scene-level listeners when the panel cleans up.
+        interactives.push(zone, {
+          destroy: () => {
+            this.input.off('pointermove', onMove);
+            this.input.off('pointerup', onUp);
+          },
+        } as unknown as Phaser.GameObjects.GameObject);
         break;
       }
       case 'tap-alt': {
