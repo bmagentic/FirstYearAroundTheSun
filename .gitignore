@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# Local env files (may hold real secrets, e.g. VITE_POSTHOG_KEY). Never commit these.
+# .env.example (the empty template) stays tracked.
+.env*.local
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
