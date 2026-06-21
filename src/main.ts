@@ -80,7 +80,12 @@ const config: Phaser.Types.Core.GameConfig = {
 };
 
 DevMode.load();
-installDevModeOverlay();
+// The DEV badge / toggle is only installed in local dev. In production builds it
+// never renders, so a party guest can't reach DevMode (which would spoil
+// progression and suppress their analytics).
+if (import.meta.env.DEV) {
+  installDevModeOverlay();
+}
 
 const game = new Phaser.Game(config);
 

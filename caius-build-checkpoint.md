@@ -82,6 +82,9 @@ Fresh profiles are `stationary` (speed 0) until rolling unlocks at Ch4, so early
 - **M8 marker** moved to the nursery right column, clear of the spawn point.
 - **Ch10 Chatterbox** — real sprite targets, 15-match win, miss-based fail (5-miss hearts).
 
+### DevMode gated for production (6/21 — party-safe)
+DevMode is now fully **inert in production builds** (`import.meta.env.PROD`): the DEV badge/toggle is never installed (`main.ts` gates `installDevModeOverlay()` behind `import.meta.env.DEV`, so the code tree-shakes out of the bundle), the trigger does nothing, and any stale `caius-dev-mode: true` left in a guest's localStorage is **ignored** — `DevMode.load()` forces off and `isEnabled()` always returns `false` in PROD. A party guest therefore can't accidentally unlock all chapters/mobility/garage or suppress their own analytics. **Local dev unchanged** (`npm run dev`): badge shows, triple/toggle works, unlocks apply, and `track()` still no-ops while DevMode is on so local testing doesn't pollute analytics. Because `isEnabled()` is always false in PROD, analytics fire normally for guests. Code is NOT removed — only gated.
+
 ---
 
 ## WALKTHROUGH FIXES (6/5)
