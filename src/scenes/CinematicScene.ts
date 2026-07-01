@@ -5,16 +5,22 @@ import { SaveManager } from '../systems/SaveManager';
 import { track } from '../systems/Analytics';
 import type { SaveProfile } from '../types';
 
-// Hosted on Vercel Blob — streamed at runtime, never committed to the repo.
-// NOTE: the cinematic's audio respects the global mute flag at the moment playback
-// starts (video.muted = SettingsManager.get().muted). Mid-film muting via the HUD
-// is not synced to the video element (the overlay is above the HUD in z-order).
-// Brandon: if you want the finale to ALWAYS play with sound regardless of mute, set
-// video.muted = false unconditionally below and remove the flag check.
-const CINEMATIC_URL =
-  'https://wgqhihidrvpc9azl.private.blob.vercel-storage.com/CaiusFinale2.mp4' +
-  '?vercel-blob-delegation=eyJzdG9yZUlkIjoic3RvcmVfd0dxSGlIaWRSdnBjOUFabCIsIm93bmVySWQiOiJ0ZWFtX1hDTWpTYkk5WGNUOHZkbEFheHZobnFqQSIsInBhdGhuYW1lIjoiKiIsIm9wZXJhdGlvbnMiOlsiZ2V0IiwiaGVhZCJdLCJ2YWxpZFVudGlsIjoxNzgyMDM3OTAwMzA1LCJpYXQiOjE3ODE5OTQ3MDAzNDd9.ep92G-PrV6FboVKTJnXxT1utDyp1Vnb3h35JfwaNch8' +
-  '&vercel-blob-signature=xam05NyPvFigPkuj72SGcFNs6mIC_SFeiyo85ZqEpg8';
+// Finale film, hosted on Vercel Blob — streamed at runtime, never committed.
+//
+// IMPORTANT (why the finale broke for guests): this MUST be a PUBLIC Vercel Blob
+// URL — i.e. `https://<store>.public.blob.vercel-storage.com/<file>` with NO
+// query token. A *private* blob is only reachable via a signed URL whose
+// delegation token EXPIRES (Vercel's default lifetime is ~12h). The old build
+// used exactly such a signed private URL; its token expired 2026-06-21, so after
+// that ~12h window every guest (and eventually Brandon) got HTTP 403 and hit the
+// error/recovery path. A public blob has no token and never expires.
+//
+// The URL is read from VITE_CINEMATIC_URL so it can be swapped without a code
+// change: set it in Vercel → Settings → Environment Variables (Production) to the
+// public blob URL, then REDEPLOY (Vite inlines env vars at build time). If unset,
+// the scene skips straight to the graceful "couldn't load → home" recovery
+// instead of trying a dead URL.
+const CINEMATIC_URL = import.meta.env.VITE_CINEMATIC_URL as string | undefined;
 
 // Seconds before the skip button fades in — give them the opening before skipping.
 const SKIP_DELAY_S = 5;
@@ -59,6 +65,15 @@ export class CinematicScene extends Phaser.Scene {
       'position:fixed;top:0;left:0;width:100%;height:100%;z-index:100;' +
       'background:#000;display:flex;align-items:center;justify-content:center;overflow:hidden';
     this.containerEl = container;
+
+    // No URL configured (VITE_CINEMATIC_URL unset in this build) — don't attempt a
+    // dead request; go straight to the graceful recovery so nobody hits a black hang.
+    if (!CINEMATIC_URL) {
+      document.body.appendChild(container);
+      this.showError();
+      this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.cleanup());
+      return;
+    }
 
     // Video element — playsinline prevents iOS fullscreen-native takeover.
     const video = document.createElement('video');

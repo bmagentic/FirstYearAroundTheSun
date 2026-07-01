@@ -82,6 +82,15 @@ Fresh profiles are `stationary` (speed 0) until rolling unlocks at Ch4, so early
 - **M8 marker** moved to the nursery right column, clear of the spawn point.
 - **Ch10 Chatterbox** — real sprite targets, 15-match win, miss-based fail (5-miss hearts).
 
+### Cinematic finale broke for guests — private-blob signed URL expired (6/21) ⚠️ NEEDS BRANDON
+**Root cause:** `CinematicScene` hardcoded a **private** Vercel Blob URL (`…private.blob.vercel-storage.com/CaiusFinale2.mp4?vercel-blob-delegation=…&vercel-blob-signature=…`). A private blob is only reachable via a **signed URL whose delegation token expires** — decoded token: issued 2026-06-20 22:31 UTC, `validUntil` 2026-06-21 10:31 UTC (a **12-hour** lifetime). It worked for Brandon in the window right after he generated it; after ~12h it returned **403 for everyone**. iOS attrs (`playsinline`/`webkit-playsinline`), `preload`, tap-to-play fallback, and the stall→recover-home path were all already correct — the URL was the only fault.
+**Code fix (shipped):** URL now read from `import.meta.env.VITE_CINEMATIC_URL` (no longer hardcoded); if unset the scene skips straight to graceful "couldn't load → home" recovery instead of a dead request.
+**Brandon's manual step (REQUIRED to restore the finale):**
+1. Re-upload the finale to Vercel Blob with **`access: 'public'`** (Blob SDK `put(name, file, { access: 'public' })`, or via the dashboard set the blob public). Public URLs look like `https://<store>.public.blob.vercel-storage.com/CaiusFinale2-<suffix>.mp4` — **no token, never expires.**
+2. Copy that public URL → Vercel → Settings → Environment Variables → add `VITE_CINEMATIC_URL` (Production) = the public URL.
+3. **Redeploy** (Vite inlines env vars at build time — a redeploy is mandatory).
+4. Confirm the video is **H.264/MP4 + AAC** (universal on iOS Safari); avoid VP9/webm/HEVC. Keep file size reasonable so it doesn't stall past the 15s guard on phone data.
+
 ### Ch12 'roll' swipe-right input fixed (6/21)
 The Month 12 subsystem #3 "Roll loads boosters" (swipe-RIGHT node) was unreliable: it bound `pointerup` on the Zone itself, so releasing the drag off the band never fired (a GameObject `pointerup` only fires when released over the object), and the 70px X-only threshold was stiff. Rewrote the input: the zone captures the gesture START on `pointerdown`, but `pointermove`/`pointerup` are tracked at **scene level** so a stray drag still completes. Threshold lowered to **50px**, accepts a swipe as right when `dx > 50 && |dx| > |dy|` (dominant-axis tolerance, no perfect-horizontal needed), **no flick/velocity** required (slow deliberate drag works), generous **300×120** hit band, plus a trail bar that fills as you drag. Completion logic and the cannot-be-lost guarantee unchanged; scene-level listeners torn down on panel cleanup. Other 9 subsystems untouched.
 
