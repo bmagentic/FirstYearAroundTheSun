@@ -12,6 +12,17 @@ export class BootScene extends Phaser.Scene {
 
   create(): void {
     SaveManager.load();
+    // Test shortcut: `?seed=finale` creates (once) a Months-1–11-complete profile
+    // parked at the M12 marker, so the finale can be reached without a playthrough.
+    // The param is stripped afterward so a reload doesn't re-run it.
+    if (new URLSearchParams(window.location.search).get('seed') === 'finale') {
+      SaveManager.seedFinaleTestProfile();
+      try {
+        window.history.replaceState({}, '', window.location.pathname);
+      } catch {
+        /* ignore — non-critical URL tidy-up */
+      }
+    }
     SettingsManager.load();
     initAnalytics();
     // Notify main.ts so it can sync game.sound.mute, MusicManager, and the HUD glyph

@@ -200,6 +200,49 @@ class SaveManagerImpl {
     return { firstClear, allFive };
   }
 
+  /**
+   * Test helper (reachable via `?seed=finale`): create — once — a profile that has
+   * completed Months 1–11 and is parked in the garage at the M12 launch marker, so
+   * the finale/cinematic can be reached without a full playthrough. Idempotent by
+   * name: re-running just re-selects the existing "Finale Test" profile. Harmless in
+   * production — it only writes to the current device's localStorage.
+   */
+  seedFinaleTestProfile(): SaveProfile {
+    const existing = this.state.profiles.find((p) => p.name === 'Finale Test');
+    if (existing) {
+      this.state.activeProfileId = existing.id;
+      existing.lastPlayedAt = Date.now();
+      this.persist();
+      return existing;
+    }
+    const chapters = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+    const profile: SaveProfile = {
+      ...newProfile('Finale Test'),
+      completedChapters: [...chapters],
+      completedInterludes: ['first-days', 'mama'],
+      seenChapterCards: [...chapters],
+      movementHintShown: true,
+      currentRoom: 'garage',
+      visitedRooms: [
+        'nursery',
+        'master-bedroom',
+        'hallway-upper',
+        'hallway-lower',
+        'kitchen',
+        'living-room',
+        'dining',
+        'bathroom',
+        'garage',
+        'play-area',
+      ],
+      totalPlayTimeSeconds: 600,
+    };
+    this.state.profiles.push(profile);
+    this.state.activeProfileId = profile.id;
+    this.persist();
+    return profile;
+  }
+
   flushSessionTime(): void {
     const elapsed = Math.floor((Date.now() - this.sessionStart) / 1000);
     if (elapsed <= 0) return;
